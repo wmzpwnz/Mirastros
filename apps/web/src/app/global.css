@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --bg-color: #050505;
+    --text-color: #e0e0e0;
+    --accent-gold: #BE8F44;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    height: 100vh;
+}
+
+/* Fixed Viewport for Z-Scroll */
+.viewport {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    perspective: 1000px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Z-Scroll Sections */
+.mira-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    will-change: transform, opacity, filter;
+    pointer-events: none;
+}
+
+.mira-section.active {
+    pointer-events: auto;
+}
+
+/* Hero Section */
+.mira-hero {
+    z-index: 100;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 8vw;
+    line-height: 0.9;
+    text-align: center;
+    font-weight: 400;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.title-line-1 {
+    display: block;
+    color: #fff;
+}
+
+.title-line-2 {
+    display: block;
+    color: var(--accent-gold);
+    font-style: italic;
+}
+
+.hero-tagline {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #aaa;
+    margin-top: 1rem;
+}
+
+.hero-quote {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #999;
+    margin-top: 2rem;
+    max-width: 600px;
+}
+
+/* Work Sections */
+.section-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+}
+
+.section-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.section-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent-gold);
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    font-style: italic;
+    margin: 0.5rem 0;
+    color: #fff;
+}
+
+.section-description {
+    font-size: 0.9rem;
+    color: #aaa;
+    max-width: 500px;
+    line-height: 1.6;
+}
+
+.section-icon-placeholder {
+    font-size: 4rem;
+    opacity: 0.5;
+}
+
+/* Scroll Indicator */
+.scroll-indicator-bottom {
+    position: fixed;
+    bottom: 2rem;
+    right: 3rem;
+    z-index: 1000;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #666;
+    display: flex;
+    gap: 1rem;
+}
+
+.scroll-percent {
+    color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 12vw;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .scroll-indicator-bottom {
+        right: 1.5rem;
+        bottom: 1.5rem;
+    }
+}
+
+/* Navigation */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 1000;
+    mix-blend-mode: difference;
+}
+
+.nav-left,
+.nav-right {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-color);
+    text-transform: uppercase;
+    transition: opacity 0.3s;
+}
+
+.nav-item:hover {
+    opacity: 0.6;
+}
+
+.logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    text-decoration: none;
+    color: var(--text-color);
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    transform: scaleY(1.2);
+    display: inline-block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) scaleY(1.2);
+}
+
+/* Responsive Navbar */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1.5rem;
+    }
+
+    .nav-left,
+    .nav-right {
+        display: none;
+    }
+
+    .logo {
+        position: relative;
+        left: 0;
+        transform: scaleY(1.2);
+    }
+}

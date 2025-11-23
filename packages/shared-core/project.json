@@ -1,0 +1,22 @@
+{
+  "name": "shared-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/shared-core/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/shared-core",
+        "main": "packages/shared-core/src/index.ts",
+        "tsConfig": "packages/shared-core/tsconfig.lib.json",
+        "assets": ["packages/shared-core/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

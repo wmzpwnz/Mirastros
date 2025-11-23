@@ -1,96 +1,239 @@
-# MirastrosUniversal
+# Mirastros Universal
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+> **Mystical AI-powered esoteric services platform**
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+A premium, universal application offering astrology, tarot, and natal chart readings powered by Qwen 2.5 AI with RAG (Retrieval-Augmented Generation).
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+![Mirastros](apps/web/public/logo.png)
 
-## Run tasks
+## 🌟 Features
 
-To run tasks with Nx use:
+### 🔮 **AI Services**
+- **Daily Horoscope**: Personalized astrological predictions
+- **Tarot Readings**: Mystical card interpretations
+- **Natal Charts**: Cosmic blueprint analysis
+- **RAG-Enhanced**: Context-aware responses using vector search
 
-```sh
-npx nx <target> <project-name>
+### 🎨 **Premium Design**
+- **Sage East Scroll Effect**: GSAP-powered smooth scrolling
+- **3D Cosmic Background**: React Three Fiber starfield
+- **Glassmorphism UI**: Modern, mystical aesthetic
+- **Responsive**: Mobile-first design
+
+### ⚡ **Performance**
+- **Redis Caching**: 24h horoscope cache
+- **Vector Search**: pgvector for semantic retrieval
+- **Streaming AI**: Server-Sent Events for real-time responses
+- **Optimized**: Next.js 14 with standalone output
+
+## 🏗️ Architecture
+
+### Monorepo Structure (Nx)
+
+```
+mirastros-universal/
+├── apps/
+│   ├── web/              # Next.js landing + app
+│   ├── admin/            # Next.js admin panel
+│   ├── mobile/           # React Native (Expo)
+│   └── backend/          # FastAPI + Qwen 2.5
+├── packages/
+│   ├── ui/               # Shared components
+│   ├── config/           # Shared configs
+│   └── utils/            # Shared utilities
+└── deployment/           # Nginx, systemd, scripts
 ```
 
-For example:
+### Tech Stack
 
-```sh
-npx nx build myproject
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 14, React, TypeScript |
+| **Mobile** | React Native, Expo, NativeWind |
+| **Backend** | FastAPI, Python 3.10+ |
+| **AI** | Qwen 2.5-7B-Instruct (GGUF) |
+| **Database** | PostgreSQL + pgvector |
+| **Cache** | Redis |
+| **Styling** | Tailwind CSS, NativeWind |
+| **Animations** | GSAP, Framer Motion, Three.js |
+| **Deployment** | Nginx, Systemd, Let's Encrypt |
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- Python 3.10+
+- PostgreSQL 14+
+- Redis 6+
+
+### Local Development
+
+1. **Clone repository**:
+   ```bash
+   git clone <repo-url>
+   cd mirastros-universal
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Setup backend**:
+   ```bash
+   cd apps/backend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Setup database**:
+   ```bash
+   createdb mirastros
+   psql mirastros -c "CREATE EXTENSION vector;"
+   cd apps/backend
+   alembic upgrade head
+   ```
+
+5. **Start services**:
+   ```bash
+   # Terminal 1: Backend
+   cd apps/backend
+   source venv/bin/activate
+   uvicorn app.main:app --reload --port 8000
+
+   # Terminal 2: Web
+   npx nx serve web
+
+   # Terminal 3: Redis
+   redis-server
+   ```
+
+6. **Access**:
+   - Web: http://localhost:4200
+   - API: http://localhost:8000/docs
+   - Admin: http://localhost:3001
+
+## 📦 Production Deployment
+
+**Production Server**: 109.196.100.104 | **Domain**: www.mirastros.com
+
+### 📖 Deployment Documentation
+
+- **[DEPLOY_QUICK.md](./DEPLOY_QUICK.md)** - Quick deployment cheatsheet
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide
+- **[.kiro/specs/.../DEPLOYMENT_GUIDE.md](.kiro/specs/mirastros-universal-platform/DEPLOYMENT_GUIDE.md)** - Step-by-step instructions
+- **[.kiro/specs/.../SERVER_INFO.md](.kiro/specs/mirastros-universal-platform/SERVER_INFO.md)** - Server access & quick commands
+
+### Quick Deploy to VPS
+
+```bash
+# Connect to production server
+ssh root@109.196.100.104
+# Password: hqpQDEoEB5_hnt
+
+# Clone and deploy
+git clone <repo-url> /home/mirastros/www/mirastros-universal
+cd /home/mirastros/www/mirastros-universal
+sudo bash deployment/deploy.sh
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+This automated script will:
+- ✅ Install all system dependencies
+- ✅ Setup PostgreSQL + pgvector
+- ✅ Setup Redis
+- ✅ Build all applications
+- ✅ Install systemd services
+- ✅ Configure Nginx with SSL for www.mirastros.com
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 📚 Documentation
 
-## Add new projects
+### Deployment
+- [DEPLOY_QUICK.md](./DEPLOY_QUICK.md) - Quick deployment cheatsheet
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Complete VPS deployment guide
+- [DEPLOYMENT_GUIDE.md](.kiro/specs/mirastros-universal-platform/DEPLOYMENT_GUIDE.md) - Step-by-step instructions
+- [SERVER_INFO.md](.kiro/specs/mirastros-universal-platform/SERVER_INFO.md) - Server access info
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+### Development
+- [Backend README](./apps/backend/README.md) - API documentation
+- [Design Document](.kiro/specs/mirastros-universal-platform/design.md) - Technical architecture
+- [Tasks](.kiro/specs/mirastros-universal-platform/tasks.md) - Implementation plan
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
+## 🎯 Project Status
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+### ✅ Completed
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+- [x] **Phase 1**: Infrastructure & Monorepo setup
+- [x] **Phase 2**: Web application with GSAP scroll effects
+- [x] **Phase 3**: Backend with Qwen 2.5 + RAG + Redis
+- [x] **Phase 6**: Deployment scripts & Nginx config
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
+### 🚧 In Progress
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+- [ ] **Phase 4**: Admin panel (RAG document management)
+- [ ] **Phase 5**: Mobile app (React Native)
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🔑 Key Components
 
-## Set up CI!
+### Web Application
+- **GSAP ScrollTrigger**: Sage East-style scroll with pin/fade effects
+- **Background3D**: Cosmic starfield with Three.js
+- **Sections**: Intro, Horoscope, Tarot, Natal Chart
 
-### Step 1
+### Backend API
+- **`/api/ai/predict`**: AI predictions with RAG
+- **`/api/documents/upload`**: RAG document ingestion
+- **`/api/documents/upload-pdf`**: PDF upload & processing
 
-To connect to Nx Cloud, run the following command:
+### Services
+- **UnifiedLLMService**: Qwen 2.5 with streaming support
+- **RAGService**: Vector search & document chunking
+- **EmbeddingService**: Sentence transformers
+- **RedisClient**: Caching & session management
 
-```sh
-npx nx connect
-```
+## 🎨 Design System
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### Colors
+- **Deep Purple**: `#1E0A3C` (Primary)
+- **Gold**: `#D4AF37` (Accent)
+- **Turquoise**: `#40E0D0` (Secondary)
+- **Cosmic**: `#0F0A1F` (Background)
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Typography
+- **Headings**: Cinzel (serif)
+- **Body**: Inter (sans-serif)
 
-### Step 2
+### Animations
+- `pulse-slow`: Subtle pulsing
+- `float`: Gentle floating
+- `bounce`: Scroll indicator
 
-Use the following command to configure a CI workflow for your workspace:
+## 🔒 Security
 
-```sh
-npx nx g ci-workflow
-```
+- Non-root user (`mirastros`) for all services
+- UFW firewall (ports 22, 80, 443 only)
+- SSL/TLS via Let's Encrypt
+- Rate limiting on AI endpoints (60 req/min)
+- CORS restricted to allowed origins
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 📊 Performance
 
-## Install Nx Console
+- **Horoscope Cache**: 24h Redis TTL
+- **Vector Search**: IVFFLAT index on embeddings
+- **Static Assets**: Nginx caching with 1-year max-age
+- **Gzip Compression**: Enabled for all text assets
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+## 🤝 Contributing
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+This is a private project. For questions or issues, contact the development team.
 
-## Useful links
+## 📄 License
 
-Learn more:
+Proprietary - All rights reserved
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Built with ✨ by the Mirastros team**
