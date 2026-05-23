@@ -2,9 +2,13 @@ from sqlalchemy import Column, String, DateTime, Date, Time, Enum as SQLEnum, Bo
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import enum
+
+
+def _utc_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class SubscriptionTier(str, enum.Enum):
     """Subscription tier enum"""
@@ -38,15 +42,15 @@ class User(Base):
     
     # Subscription
     subscription_tier = Column(
-        SQLEnum(SubscriptionTier),
-        default=SubscriptionTier.FREEMIUM,
+        SQLEnum(SubscriptionTier, native_enum=False, values_callable=lambda x: [e.value for e in x]),
+        default=SubscriptionTier.FREEMIUM.value,
         nullable=False
     )
     subscription_expires = Column(DateTime, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     last_login = Column(DateTime, nullable=True)
     
     # Social login identifiers
@@ -55,15 +59,21 @@ class User(Base):
     telegram_id = Column(String(255), unique=True, nullable=True)
     vk_id = Column(String(255), unique=True, nullable=True)
     
+    # Settings and Localization
+    preferred_language = Column(String(10), default="ru", nullable=False)
+    timezone = Column(String(50), default="UTC", nullable=False)
+    
     # Relationships
     tarot_readings = relationship("TarotReading", back_populates="user", cascade="all, delete-orphan")
     iching_consultations = relationship("IChingConsultation", back_populates="user", cascade="all, delete-orphan")
     lenormand_readings = relationship("LenormandReading", back_populates="user", cascade="all, delete-orphan")
     numerology_calculations = relationship("NumerologyCalculation", back_populates="user", cascade="all, delete-orphan")
+    destiny_matrix = relationship("DestinyMatrix", back_populates="user", uselist=False, cascade="all, delete-orphan")
     dream_interpretations = relationship("DreamInterpretation", back_populates="user", cascade="all, delete-orphan")
     journal_entries = relationship("JournalEntry", back_populates="user", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
     analytics_events = relationship("AnalyticsEvent", back_populates="user", cascade="all, delete-orphan")
+    astro_context = relationship("AstroContext", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email} ({self.subscription_tier})>"

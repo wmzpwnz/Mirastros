@@ -101,19 +101,33 @@ class RAGService:
         query_embedding = await embedding_service.embed_text(query)
         
         # Build SQL query with vector similarity search
-        sql = text("""
-            SELECT 
-                dc.chunk_text,
-                d.title,
-                d.source,
-                d.category,
-                1 - (dc.embedding <=> :query_embedding) as similarity
-            FROM document_chunks dc
-            JOIN documents d ON dc.document_id = d.id
-            WHERE (:category IS NULL OR d.category = :category)
-            ORDER BY dc.embedding <=> :query_embedding
-            LIMIT :top_k
-        """)
+        if category:
+            sql = text("""
+                SELECT
+                    dc.chunk_text,
+                    d.title,
+                    d.source,
+                    d.category,
+                    1 - (dc.embedding <=> (:query_embedding)::vector) as similarity
+                FROM document_chunks dc
+                JOIN documents d ON dc.document_id = d.id
+                WHERE d.category = :category
+                ORDER BY dc.embedding <=> (:query_embedding)::vector
+                LIMIT :top_k
+            """)
+        else:
+            sql = text("""
+                SELECT
+                    dc.chunk_text,
+                    d.title,
+                    d.source,
+                    d.category,
+                    1 - (dc.embedding <=> (:query_embedding)::vector) as similarity
+                FROM document_chunks dc
+                JOIN documents d ON dc.document_id = d.id
+                ORDER BY dc.embedding <=> (:query_embedding)::vector
+                LIMIT :top_k
+            """)
         
         result = await db.execute(
             sql,

@@ -26,12 +26,16 @@ AsyncSessionLocal = async_sessionmaker(
 # Base class for models
 Base = declarative_base()
 
-# Dependency for FastAPI
+
 async def get_db():
+    """
+    Database session dependency.
+    Commit is the responsibility of the endpoint; this dependency only yields
+    the session and rolls back on exception.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise

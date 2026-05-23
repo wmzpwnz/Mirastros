@@ -2,7 +2,7 @@
 
 /**
  * Cosmic background component for VK Mini App
- * Simplified version optimized for VK web view
+ * Uses design system tokens and animations
  */
 import React, { useEffect, useRef } from 'react'
 
@@ -33,7 +33,7 @@ export function CosmicBackground() {
       speed: number
     }> = []
 
-    const starCount = 150 // Reduced for better performance in VK web view
+    const starCount = 150 // Optimized for VK web view
 
     for (let i = 0; i < starCount; i++) {
       stars.push({
@@ -50,6 +50,7 @@ export function CosmicBackground() {
     let rotation = 0
 
     const animate = () => {
+      // Use design system cosmic color
       ctx.fillStyle = '#050505'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -77,11 +78,11 @@ export function CosmicBackground() {
         ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`
         ctx.fill()
 
-        // Add glow for larger stars
+        // Add glow using design system gold color
         if (star.radius > 1) {
           ctx.beginPath()
           ctx.arc(x, y, star.radius * 2, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(212, 175, 55, ${star.opacity * 0.2})`
+          ctx.fillStyle = `rgba(255, 193, 7, ${star.opacity * 0.2})`
           ctx.fill()
         }
       })

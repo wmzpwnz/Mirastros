@@ -44,7 +44,8 @@ async def check_feature_access(
         
         # Get usage information for Freemium users
         usage_info = None
-        if current_user.subscription_tier == SubscriptionTier.FREEMIUM:
+        tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+        if tier == SubscriptionTier.FREEMIUM:
             has_usage, current_usage, limit = await FeatureAccessControl.check_usage_limit(
                 current_user, feature
             )
@@ -62,7 +63,7 @@ async def check_feature_access(
         return {
             "feature": feature,
             "has_access": has_access,
-            "current_tier": current_user.subscription_tier.value,
+            "current_tier": tier.value,
             "required_tier": required_tier.value if required_tier else None,
             "usage_info": usage_info,
             "upgrade_prompt": upgrade_prompt
@@ -85,9 +86,9 @@ async def get_usage_limits(
     Returns all features with their access status and usage limits
     """
     try:
-        tier = current_user.subscription_tier
+        tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
         features = {}
-        
+
         # Get all features for this tier
         tier_features = FeatureAccessControl.TIER_FEATURES.get(tier, {})
         
@@ -146,21 +147,22 @@ async def get_upgrade_info(
         else:
             feature = "horary"
         
+        current_tier_normalized = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
         upgrade_info = get_upgrade_prompt(feature, current_user.subscription_tier)
-        
+
         # Add comparison with current tier
-        current_features = FeatureAccessControl.TIER_FEATURES.get(current_user.subscription_tier, {})
+        current_features = FeatureAccessControl.TIER_FEATURES.get(current_tier_normalized, {})
         target_tier = SubscriptionTier.PREMIUM if tier == "premium" else SubscriptionTier.PLATINUM
         target_features = FeatureAccessControl.TIER_FEATURES.get(target_tier, {})
-        
+
         # Find new features
         new_features = []
         for feature_name, has_access in target_features.items():
             if has_access and not current_features.get(feature_name, False):
                 new_features.append(feature_name.replace("_", " ").title())
-        
+
         upgrade_info["new_features"] = new_features
-        upgrade_info["current_tier"] = current_user.subscription_tier.value
+        upgrade_info["current_tier"] = current_tier_normalized.value
         
         return upgrade_info
     

@@ -1,6 +1,6 @@
 """Subscription management service"""
-from typing import Optional, Tuple
-from datetime import datetime, timedelta
+from typing import Literal, Optional, Tuple
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -35,7 +35,7 @@ class SubscriptionService:
     @staticmethod
     def calculate_expiry_date(billing_period: str) -> datetime:
         """Calculate subscription expiry date"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if billing_period == "monthly":
             # Add 30 days
@@ -63,7 +63,7 @@ class SubscriptionService:
         amount = SubscriptionService.get_price(tier, billing_period)
         
         # Calculate dates
-        starts_at = datetime.utcnow()
+        starts_at = datetime.now(timezone.utc)
         expires_at = SubscriptionService.calculate_expiry_date(billing_period)
         
         # Create subscription record
@@ -90,20 +90,31 @@ class SubscriptionService:
     async def activate_subscription(
         db: AsyncSession,
         subscription: Subscription,
-        external_payment_id: Optional[str] = None
+        external_payment_id: str,
+        verification_source: Literal["payment_webhook", "admin"]
     ) -> Tuple[Subscription, User]:
-        """Activate a pending subscription"""
+        """Activate a pending subscription after payment/admin verification."""
+        if subscription.status != SubscriptionStatus.PENDING:
+            raise ValueError("Only pending subscriptions can be activated")
+
+        if not external_payment_id:
+            raise ValueError("Verified payment id is required to activate subscription")
+
+        if verification_source not in ("payment_webhook", "admin"):
+            raise ValueError("Subscription activation requires a verified payment or admin path")
+
         # Update subscription status
         subscription.status = SubscriptionStatus.ACTIVE
         
         # Store external payment ID
-        if external_payment_id:
-            if subscription.payment_method == PaymentMethod.STRIPE:
-                subscription.stripe_subscription_id = external_payment_id
-            elif subscription.payment_method == PaymentMethod.YOOKASSA:
-                subscription.yookassa_payment_id = external_payment_id
-            elif subscription.payment_method == PaymentMethod.REVENUE_CAT:
-                subscription.revenue_cat_transaction_id = external_payment_id
+        if subscription.payment_method == PaymentMethod.STRIPE:
+            subscription.stripe_subscription_id = external_payment_id
+        elif subscription.payment_method == PaymentMethod.YOOKASSA:
+            subscription.yookassa_payment_id = external_payment_id
+        elif subscription.payment_method == PaymentMethod.REVENUE_CAT:
+            subscription.revenue_cat_transaction_id = external_payment_id
+        else:
+            raise ValueError("Unsupported payment method for verified subscription activation")
         
         # Update user subscription tier
         result = await db.execute(select(User).where(User.id == subscription.user_id))
@@ -141,13 +152,13 @@ class SubscriptionService:
         immediate: bool = False
     ) -> Subscription:
         """Cancel a subscription"""
-        subscription.cancelled_at = datetime.utcnow()
+        subscription.cancelled_at = datetime.now(timezone.utc)
         subscription.auto_renew = "false"
         
         if immediate:
             # Cancel immediately
             subscription.status = SubscriptionStatus.CANCELLED
-            subscription.expires_at = datetime.utcnow()
+            subscription.expires_at = datetime.now(timezone.utc)
             
             # Downgrade user to freemium
             result = await db.execute(select(User).where(User.id == subscription.user_id))
@@ -199,7 +210,7 @@ class SubscriptionService:
         Check for expired subscriptions and update user tiers
         This should be run as a scheduled task (cron job)
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Find expired active subscriptions
         result = await db.execute(
@@ -249,7 +260,7 @@ class SubscriptionService:
         # Calculate days remaining
         days_remaining = None
         if user.subscription_expires:
-            delta = user.subscription_expires - datetime.utcnow()
+            delta = user.subscription_expires - datetime.now(timezone.utc)
             days_remaining = max(0, delta.days)
         
         # Determine available upgrades

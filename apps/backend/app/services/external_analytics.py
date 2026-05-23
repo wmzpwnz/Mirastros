@@ -2,7 +2,7 @@
 import httpx
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -41,7 +41,7 @@ class ExternalAnalyticsService:
         
         properties = properties or {}
         properties['platform'] = platform
-        properties['timestamp'] = datetime.utcnow().isoformat()
+        properties['timestamp'] = datetime.now(timezone.utc).isoformat()
         
         # Send to Mixpanel
         if self.mixpanel_token:
@@ -65,7 +65,7 @@ class ExternalAnalyticsService:
                     "properties": {
                         "token": self.mixpanel_token,
                         "distinct_id": user_id or "anonymous",
-                        "time": int(datetime.utcnow().timestamp()),
+                        "time": int(datetime.now(timezone.utc).timestamp()),
                         **properties
                     }
                 }
@@ -99,7 +99,7 @@ class ExternalAnalyticsService:
                         {
                             "user_id": user_id or "anonymous",
                             "event_type": event_name,
-                            "time": int(datetime.utcnow().timestamp() * 1000),  # Amplitude uses milliseconds
+                            "time": int(datetime.now(timezone.utc).timestamp() * 1000),  # Amplitude uses milliseconds
                             "event_properties": properties
                         }
                     ]

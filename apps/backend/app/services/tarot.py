@@ -2,13 +2,14 @@
 
 import random
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.data.tarot import get_all_cards, get_card_by_id
 from app.services.llm import UnifiedLLMService
 from app.services.rag import RAGService
+from app.services.astro_context import merge_astro_context
 from app.models.tarot_reading import TarotReading
 
 
@@ -55,7 +56,8 @@ class TarotService:
             spread_type=spread_type,
             drawn_cards=drawn_cards,
             question=question,
-            user_context=user_context
+            user_context=user_context,
+            user_id=user_id
         )
         
         # Store reading in database if user_id is provided
@@ -75,7 +77,7 @@ class TarotService:
             "question": question,
             "cards": drawn_cards,
             "interpretation": interpretation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _draw_cards(self, spread_type: str) -> List[Dict]:
@@ -136,7 +138,8 @@ class TarotService:
         spread_type: str,
         drawn_cards: List[Dict],
         question: Optional[str],
-        user_context: Optional[Dict]
+        user_context: Optional[Dict],
+        user_id: Optional[str] = None
     ) -> str:
         """Generate AI interpretation of the reading"""
         
@@ -151,6 +154,17 @@ class TarotService:
             category="tarot"
         )
         
+        # Merge with user's astro context if user_id is provided
+        if user_id:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Merging astro context for tarot reading, user_id: {user_id}")
+            print(f"[DEBUG] Before merge - rag_context length: {len(rag_context)}")
+            rag_context = await merge_astro_context(db, user_id, rag_context)
+            print(f"[DEBUG] After merge - rag_context length: {len(rag_context)}")
+            print(f"[DEBUG] Merged context preview: {rag_context[:500]}...")
+            logger.debug(f"Context after merge length: {len(rag_context)}")
+        
         # Build prompt for AI
         prompt = self._build_interpretation_prompt(
             spread_type=spread_type,
@@ -160,10 +174,20 @@ class TarotService:
             rag_context=rag_context
         )
         
+        # If we have user's astro context, add it directly to prompt for better visibility
+        user_astro_context = ""
+        if user_id and "Контекст пользователя" in rag_context:
+            # Extract user context part
+            if "=== Контекст пользователя ===" in rag_context:
+                user_astro_context = rag_context.split("=== Контекст пользователя ===")[1]
+                # Also add it to prompt explicitly
+                prompt = f"=== USER'S PERSONAL CONTEXT (USE THIS IN YOUR INTERPRETATION) ===\n{user_astro_context}\n\n" + prompt
+        
         # Generate interpretation
+        # Pass empty context since we've added it to prompt directly
         interpretation = await self.llm_service.generate(
             prompt=prompt,
-            context=rag_context,
+            context="",  # Context is now in prompt
             max_tokens=1000,
             temperature=0.7
         )
@@ -203,13 +227,18 @@ class TarotService:
                 prompt += f"User's Birth Date: {user_context['birth_date']}\n"
             prompt += "\n"
         
+        if rag_context and "Контекст пользователя" in rag_context:
+            prompt += "\n⚠️ IMPORTANT: Use the user's personal context provided above when interpreting this reading. "
+            prompt += "Reference their natal chart, active arcana, dream symbols, and previous questions when relevant.\n\n"
+        
         prompt += "Provide a comprehensive interpretation that:\n"
         prompt += "1. Explains the overall narrative and message of the reading\n"
         prompt += "2. Connects the cards to each other and their positions in the spread\n"
         prompt += "3. Addresses the question if one was asked\n"
         prompt += "4. Offers practical guidance and actionable advice\n"
         prompt += "5. Maintains a mystical yet grounded and compassionate tone\n"
-        prompt += "6. Considers both upright and reversed meanings\n\n"
+        prompt += "6. Considers both upright and reversed meanings\n"
+        prompt += "7. Incorporates the user's personal astrological context when relevant\n\n"
         prompt += "Interpretation:"
         
         return prompt
@@ -237,23 +266,29 @@ class TarotService:
         offset: int = 0
     ) -> List[Dict]:
         """Get user's reading history"""
-        result = await db.execute(
-            select(TarotReading)
-            .where(TarotReading.user_id == user_id)
-            .order_by(TarotReading.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-        readings = result.scalars().all()
-        
-        return [
-            {
-                "id": str(reading.id),
-                "spread_type": reading.spread_type,
-                "question": reading.question,
-                "cards": reading.cards,
-                "interpretation": reading.interpretation,
-                "created_at": reading.created_at.isoformat()
-            }
-            for reading in readings
-        ]
+        try:
+            result = await db.execute(
+                select(TarotReading)
+                .where(TarotReading.user_id == user_id)
+                .order_by(TarotReading.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            readings = result.scalars().all()
+            
+            return [
+                {
+                    "id": str(reading.id),
+                    "spread_type": reading.spread_type or "",
+                    "question": reading.question or "",
+                    "cards": reading.cards or [],
+                    "interpretation": reading.interpretation or "",
+                    "created_at": reading.created_at.isoformat() if reading.created_at else None,
+                    "timestamp": reading.created_at.isoformat() if reading.created_at else None
+                }
+                for reading in readings
+            ]
+        except Exception as e:
+            # Log error and return empty list
+            print(f"Error getting tarot reading history: {str(e)}")
+            return []

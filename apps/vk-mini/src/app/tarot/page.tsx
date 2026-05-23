@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { authenticatedFetch } from '../../lib/auth'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { shareReading } from '../../lib/vk'
+import { Button, Card, Textarea } from '@mirastros-universal/design-system'
 
 export default function TarotPage() {
   const { auth } = useAuth()
@@ -60,12 +61,12 @@ export default function TarotPage() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gold mb-2">🔮 Таро</h1>
+            <h1 className="text-4xl font-bold text-gold-500 mb-2">🔮 Таро</h1>
             <p className="text-gray-300">Мистические толкования карт</p>
           </div>
 
           {!reading ? (
-            <div className="bg-purple-deep/80 backdrop-blur-md border border-gold/20 rounded-2xl p-6 shadow-2xl">
+            <Card variant="elevated">
               {/* Spread Type Selection */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -76,8 +77,8 @@ export default function TarotPage() {
                     onClick={() => setSpreadType('one')}
                     className={`p-3 rounded-lg border transition-all ${
                       spreadType === 'one'
-                        ? 'bg-gold/20 border-gold text-gold'
-                        : 'bg-purple-deep/50 border-gold/20 text-gray-300 hover:border-gold/50'
+                        ? 'bg-gold-500/20 border-gold-500 text-gold-500'
+                        : 'bg-gray-900/50 border-gold-500/20 text-gray-300 hover:border-gold-500/50'
                     }`}
                   >
                     <div className="text-2xl mb-1">🃏</div>
@@ -87,8 +88,8 @@ export default function TarotPage() {
                     onClick={() => setSpreadType('three')}
                     className={`p-3 rounded-lg border transition-all ${
                       spreadType === 'three'
-                        ? 'bg-gold/20 border-gold text-gold'
-                        : 'bg-purple-deep/50 border-gold/20 text-gray-300 hover:border-gold/50'
+                        ? 'bg-gold-500/20 border-gold-500 text-gold-500'
+                        : 'bg-gray-900/50 border-gold-500/20 text-gray-300 hover:border-gold-500/50'
                     }`}
                   >
                     <div className="text-2xl mb-1">🃏🃏🃏</div>
@@ -98,8 +99,8 @@ export default function TarotPage() {
                     onClick={() => setSpreadType('celtic')}
                     className={`p-3 rounded-lg border transition-all ${
                       spreadType === 'celtic'
-                        ? 'bg-gold/20 border-gold text-gold'
-                        : 'bg-purple-deep/50 border-gold/20 text-gray-300 hover:border-gold/50'
+                        ? 'bg-gold-500/20 border-gold-500 text-gold-500'
+                        : 'bg-gray-900/50 border-gold-500/20 text-gray-300 hover:border-gold-500/50'
                     }`}
                   >
                     <div className="text-2xl mb-1">✨</div>
@@ -113,76 +114,81 @@ export default function TarotPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Ваш вопрос
                 </label>
-                <textarea
+                <Textarea
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="О чём вы хотите узнать?"
-                  className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gold/50 resize-none"
                   rows={4}
                 />
               </div>
 
               {/* Get Reading Button */}
-              <button
-                onClick={handleGetReading}
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-4 rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleGetReading}
               >
                 {isLoading ? 'Вытягиваем карты...' : 'Получить расклад'}
-              </button>
-            </div>
+              </Button>
+            </Card>
           ) : (
             <div className="space-y-6">
               {/* Cards Display */}
-              <div className="bg-purple-deep/80 backdrop-blur-md border border-gold/20 rounded-2xl p-6 shadow-2xl">
-                <h2 className="text-xl font-bold text-gold mb-4">Ваши карты</h2>
+              <Card variant="elevated">
+                <h2 className="text-xl font-bold text-gold-500 mb-4">Ваши карты</h2>
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   {reading.cards.map((card: any, index: number) => (
                     <div
                       key={index}
-                      className="bg-purple-deep/50 border border-gold/20 rounded-lg p-3 text-center"
+                      className="bg-gray-900/50 border border-gold-500/20 rounded-lg p-3 text-center"
                     >
                       <div className="text-3xl mb-2">🃏</div>
-                      <div className="text-sm text-gold font-medium">{card.name}</div>
+                      <div className="text-sm text-gold-500 font-medium">{card.name}</div>
                       {card.reversed && (
                         <div className="text-xs text-gray-400 mt-1">(перевёрнутая)</div>
                       )}
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
 
               {/* Interpretation */}
-              <div className="bg-purple-deep/80 backdrop-blur-md border border-gold/20 rounded-2xl p-6 shadow-2xl">
-                <h2 className="text-xl font-bold text-gold mb-4">Толкование</h2>
+              <Card variant="elevated">
+                <h2 className="text-xl font-bold text-gold-500 mb-4">Толкование</h2>
                 <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {reading.interpretation}
                 </p>
-              </div>
+              </Card>
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="flex-1"
                   onClick={handleShare}
-                  className="flex-1 bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors"
                 >
                   📤 Поделиться
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="flex-1"
                   onClick={() => {
                     setReading(null)
                     setQuestion('')
                   }}
-                  className="flex-1 bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
                 >
                   🔮 Новый расклад
-                </button>
+                </Button>
               </div>
 
               {/* Back Button */}
               <a
                 href="/"
-                className="block text-center text-gray-400 hover:text-gold transition-colors"
+                className="block text-center text-gray-400 hover:text-gold-500 transition-colors"
               >
                 ← Вернуться на главную
               </a>

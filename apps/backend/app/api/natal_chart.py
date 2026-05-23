@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_premium
@@ -107,28 +107,107 @@ async def calculate_natal_chart(
         )
 
 
+def _user_tier_allows_natal(user: User) -> bool:
+    tier = getattr(user.subscription_tier, "value", None) or str(user.subscription_tier or "").lower()
+    return tier in ("premium", "platinum")
+
+def _normalize_house(value) -> int:
+    try:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        if isinstance(value, str):
+            raw = value.strip()
+            if raw.isdigit():
+                return int(raw)
+            lowered = raw.lower()
+            ordinals = {
+                "first": 1,
+                "second": 2,
+                "third": 3,
+                "fourth": 4,
+                "fifth": 5,
+                "sixth": 6,
+                "seventh": 7,
+                "eighth": 8,
+                "ninth": 9,
+                "tenth": 10,
+                "eleventh": 11,
+                "twelfth": 12,
+            }
+            for k, v in ordinals.items():
+                if k in lowered:
+                    return v
+    except Exception:
+        pass
+    return 1
+
+
 @router.get("/me", response_model=Optional[NatalChartResponse])
 async def get_my_natal_chart(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get current user's natal chart
-    
-    Returns the stored natal chart for the authenticated user.
-    Returns null if no chart has been calculated yet.
+    Get current user's natal chart.
+
+    Returns the stored natal chart. If the user has full birth data and Premium/Platinum
+    but no chart yet, the chart is calculated and saved automatically, then returned.
+    Returns null only when the user has no chart and cannot have one (missing data or tier).
     """
     try:
         natal_chart = await natal_chart_service.get_natal_chart(
             db=db,
             user_id=str(current_user.id)
         )
-        
+
+        if not natal_chart and _user_tier_allows_natal(current_user):
+            loc = current_user.birth_location or {}
+            lat = loc.get("latitude")
+            lng = loc.get("longitude")
+            if (
+                current_user.birth_date
+                and current_user.birth_time
+                and lat is not None
+                and lng is not None
+            ):
+                try:
+                    chart_data = natal_chart_service.calculate_chart(
+                        name=current_user.full_name or "User",
+                        birth_date=current_user.birth_date,
+                        birth_time=current_user.birth_time,
+                        latitude=float(lat),
+                        longitude=float(lng),
+                        city=loc.get("city") or "",
+                        nation=loc.get("country") or "",
+                        house_system="placidus",
+                    )
+                    natal_chart = await natal_chart_service.save_natal_chart(
+                        db=db,
+                        user_id=str(current_user.id),
+                        chart_data=chart_data,
+                    )
+                    logger.info("Auto-calculated natal chart for user %s on GET /natal/me", current_user.id)
+                except Exception as calc_err:
+                    logger.warning("Could not auto-calculate natal chart for user %s: %s", current_user.id, calc_err)
+
         if not natal_chart:
             return None
-        
+
+        # Backward compatibility: normalize stored planet "house" fields to ints.
+        # Older data may contain values like "Second_House", which breaks response validation.
+        planets = natal_chart.planets or {}
+        normalized_planets = {}
+        for k, p in planets.items():
+            if not isinstance(p, dict):
+                normalized_planets[k] = p
+                continue
+            house_raw = p.get("house")
+            normalized_planets[k] = {**p, "house": _normalize_house(house_raw)}
+
         chart_data = {
-            "planets": natal_chart.planets,
+            "planets": normalized_planets,
             "houses": natal_chart.houses,
             "aspects": natal_chart.aspects,
             "ascendant": natal_chart.ascendant,
@@ -136,13 +215,13 @@ async def get_my_natal_chart(
             "lunar_nodes": natal_chart.lunar_nodes,
             "house_system": natal_chart.house_system
         }
-        
+
         return NatalChartResponse(
             chart_data=NatalChartData(**chart_data),
             interpretation=None,
             calculated_at=natal_chart.calculated_at
         )
-        
+
     except Exception as e:
         logger.error(f"Error retrieving natal chart: {str(e)}")
         raise HTTPException(
@@ -284,7 +363,7 @@ async def interpret_natal_chart(
         
         return {
             "interpretation": interpretation,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
         
     except HTTPException:

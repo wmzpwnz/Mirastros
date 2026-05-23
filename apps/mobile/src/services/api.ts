@@ -1,6 +1,13 @@
 import { StorageService, CachedReading, OfflineRequest } from './storage';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type {
+  User,
+  Horoscope,
+  NatalChart,
+  TarotReading,
+  AIResponse
+} from '@mirastros-universal/shared-core';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 const AUTH_TOKEN_KEY = '@mirastros_auth_token';
@@ -51,7 +58,7 @@ export class ApiClient {
     }
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     // Check network status
     const netInfo = await NetInfo.fetch();
     const isOnline = netInfo.isConnected && netInfo.isInternetReachable;
@@ -62,7 +69,7 @@ export class ApiClient {
         cacheConfig.type,
         cacheConfig.id
       );
-      
+
       if (cached) {
         console.log(`Returning cached ${cacheConfig.type} reading`);
         return {
@@ -83,15 +90,15 @@ export class ApiClient {
           body: options.body ? JSON.parse(options.body as string) : null,
           timestamp: Date.now(),
         };
-        
+
         await StorageService.addToOfflineQueue(offlineRequest);
-        
+
         return {
           success: false,
           error: 'No internet connection. Request queued for later.',
         };
       }
-      
+
       return {
         success: false,
         error: 'No internet connection and no cached data available.',
@@ -194,37 +201,37 @@ export class ApiClient {
 
 // Service-specific API methods
 export const TarotAPI = {
-  async getReading(cards: string[], question?: string): Promise<ApiResponse> {
+  async getReading(cards: string[], question?: string): Promise<ApiResponse<TarotReading>> {
     const cacheId = `${cards.join('_')}_${Date.now()}`;
-    return ApiClient.post(
+    return ApiClient.post<TarotReading>(
       '/tarot/reading',
       { cards, question, spread_type: 'three-card' },
       { type: 'tarot', id: cacheId }
     );
   },
 
-  async getHistory(): Promise<ApiResponse> {
-    return ApiClient.get('/tarot/history');
+  async getHistory(): Promise<ApiResponse<TarotReading[]>> {
+    return ApiClient.get<TarotReading[]>('/tarot/history');
   },
 };
 
 export const HoroscopeAPI = {
-  async getDaily(sign: string): Promise<ApiResponse> {
-    return ApiClient.get(
+  async getDaily(sign: string): Promise<ApiResponse<Horoscope>> {
+    return ApiClient.get<Horoscope>(
       `/horoscope/daily/${sign}`,
       { type: 'horoscope', id: `daily_${sign}_${new Date().toDateString()}`, enableCache: true }
     );
   },
 
-  async getWeekly(sign: string): Promise<ApiResponse> {
-    return ApiClient.get(
+  async getWeekly(sign: string): Promise<ApiResponse<Horoscope>> {
+    return ApiClient.get<Horoscope>(
       `/horoscope/weekly/${sign}`,
       { type: 'horoscope', id: `weekly_${sign}`, enableCache: true }
     );
   },
 
-  async getPersonalized(birthData: any): Promise<ApiResponse> {
-    return ApiClient.post('/horoscope/personalized', birthData);
+  async getPersonalized(birthData: any): Promise<ApiResponse<Horoscope>> {
+    return ApiClient.post<Horoscope>('/horoscope/personalized', birthData);
   },
 };
 
@@ -235,17 +242,17 @@ export const NatalChartAPI = {
     birth_location: string;
     latitude: number;
     longitude: number;
-  }): Promise<ApiResponse> {
+  }): Promise<ApiResponse<NatalChart>> {
     const cacheId = `${birthData.birth_date}_${birthData.birth_time}`;
-    return ApiClient.post(
+    return ApiClient.post<NatalChart>(
       '/natal/calculate',
       birthData,
       { type: 'natal', id: cacheId }
     );
   },
 
-  async getUserChart(userId: string): Promise<ApiResponse> {
-    return ApiClient.get(
+  async getUserChart(userId: string): Promise<ApiResponse<NatalChart>> {
+    return ApiClient.get<NatalChart>(
       `/natal/${userId}`,
       { type: 'natal', id: userId, enableCache: true }
     );
@@ -267,9 +274,9 @@ export const NumerologyAPI = {
 };
 
 export const DreamAPI = {
-  async interpret(dreamText: string): Promise<ApiResponse> {
+  async interpret(dreamText: string): Promise<ApiResponse<AIResponse>> {
     const cacheId = `dream_${Date.now()}`;
-    return ApiClient.post(
+    return ApiClient.post<AIResponse>(
       '/dreams/interpret',
       { dream_text: dreamText },
       { type: 'dream', id: cacheId }
@@ -305,8 +312,8 @@ export const IChingAPI = {
 
 // Auth API
 export const AuthAPI = {
-  async login(email: string, password: string): Promise<ApiResponse> {
-    const response = await ApiClient.post('/auth/login', { email, password });
+  async login(email: string, password: string): Promise<ApiResponse<{ access_token: string; user: User }>> {
+    const response = await ApiClient.post<{ access_token: string; user: User }>('/auth/login', { email, password });
     if (response.success && response.data?.access_token) {
       await ApiClient.setAuthToken(response.data.access_token);
     }
@@ -317,8 +324,8 @@ export const AuthAPI = {
     email: string;
     password: string;
     full_name: string;
-  }): Promise<ApiResponse> {
-    const response = await ApiClient.post('/auth/register', data);
+  }): Promise<ApiResponse<{ access_token: string; user: User }>> {
+    const response = await ApiClient.post<{ access_token: string; user: User }>('/auth/register', data);
     if (response.success && response.data?.access_token) {
       await ApiClient.setAuthToken(response.data.access_token);
     }
@@ -329,7 +336,7 @@ export const AuthAPI = {
     await ApiClient.setAuthToken(null);
   },
 
-  async getCurrentUser(): Promise<ApiResponse> {
-    return ApiClient.get('/auth/me');
+  async getCurrentUser(): Promise<ApiResponse<User>> {
+    return ApiClient.get<User>('/auth/me');
   },
 };

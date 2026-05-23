@@ -5,6 +5,7 @@ import bridge from '@vkontakte/vk-bridge'
 import { useAuth } from '../contexts/AuthContext'
 import { CosmicBackground } from '../components/CosmicBackground'
 import { ZScrollContainer, ZScrollSection, ZScrollCard } from '../components/ZScrollContainer'
+import { Button, Spinner } from '@mirastros-universal/design-system'
 
 export default function Home() {
   const { auth, isLoading, isAuthenticated } = useAuth()
@@ -20,7 +21,7 @@ export default function Home() {
         <CosmicBackground />
         <main className="min-h-screen p-6 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto mb-4"></div>
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="text-gray-300">Подключение к Mirastros...</p>
           </div>
         </main>
@@ -34,7 +35,7 @@ export default function Home() {
         <CosmicBackground />
         <main className="min-h-screen p-6 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gold mb-4">
+            <h1 className="text-2xl font-bold text-gold-500 mb-4">
               ✨ Mirastros
             </h1>
             <p className="text-gray-300 mb-4">
@@ -56,7 +57,7 @@ export default function Home() {
         {/* Hero Section */}
         <ZScrollSection index={0}>
           <ZScrollCard>
-            <h1 className="text-4xl font-bold text-center mb-2 text-gold">
+            <h1 className="text-4xl font-bold text-center mb-2 text-gold-500">
               ✨ Mirastros
             </h1>
             <p className="text-center text-gray-300 mb-6">
@@ -64,12 +65,12 @@ export default function Home() {
             </p>
 
             {auth && (
-              <div className="bg-purple-deep/50 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gold/10">
+              <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gold-500/10">
                 <p className="text-sm text-gray-300">
-                  Добро пожаловать, <span className="text-gold">{auth.user.full_name}</span>!
+                  Добро пожаловать, <span className="text-gold-500">{auth.user.full_name}</span>!
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Подписка: <span className="text-gold capitalize">{auth.user.subscription_tier}</span>
+                  Подписка: <span className="text-gold-500 capitalize">{auth.user.subscription_tier}</span>
                 </p>
               </div>
             )}
@@ -120,21 +121,25 @@ export default function Home() {
         <ZScrollSection index={4}>
           <ZScrollCard>
             <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gold mb-6">
+              <h2 className="text-2xl font-bold text-gold-500 mb-6">
                 Быстрые действия
               </h2>
-              <a
-                href="/subscription"
-                className="block bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => window.location.href = '/subscription'}
               >
                 💎 Улучшить подписку
-              </a>
-              <a
-                href="/settings"
-                className="block bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors"
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => window.location.href = '/settings'}
               >
                 ⚙️ Настройки
-              </a>
+              </Button>
             </div>
           </ZScrollCard>
         </ZScrollSection>
@@ -157,17 +162,18 @@ function ServiceCard({
   return (
     <div className="text-center">
       <div className="text-6xl mb-4">{title.split(' ')[0]}</div>
-      <h3 className="text-2xl font-bold mb-2 text-gold">
+      <h3 className="text-2xl font-bold mb-2 text-gold-500">
         {title.split(' ').slice(1).join(' ')}
       </h3>
       <p className="text-gray-300 mb-3">{description}</p>
       <p className="text-sm text-gray-400 mb-6">{details}</p>
-      <a
-        href={href}
-        className="inline-block bg-gradient-to-r from-gold to-purple-light text-black font-semibold px-8 py-3 rounded-full hover:scale-105 transition-transform"
+      <Button
+        variant="primary"
+        size="md"
+        onClick={() => window.location.href = href}
       >
         Исследовать
-      </a>
+      </Button>
     </div>
   )
 }

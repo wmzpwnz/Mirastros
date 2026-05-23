@@ -1,5 +1,5 @@
 """Analytics service for tracking events and generating metrics."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 from sqlalchemy import func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +48,7 @@ class AnalyticsService:
                 platform=platform,
                 session_id=session_id,
                 response_time_ms=response_time_ms,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             
             db.add(event)
@@ -102,9 +102,9 @@ class AnalyticsService:
         """
         # Default to last 30 days
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Build query
         query = db.query(
@@ -165,9 +165,9 @@ class AnalyticsService:
         """
         # Default to last 30 days
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Get total registrations
         registrations_query = db.query(func.count(AnalyticsEvent.id)).filter(
@@ -236,9 +236,9 @@ class AnalyticsService:
         """
         # Default to last 30 days
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Service event types
         service_events = [
@@ -320,7 +320,7 @@ class AnalyticsService:
         """
         # Default to 30 days ago
         if not cohort_date:
-            cohort_date = datetime.utcnow() - timedelta(days=30)
+            cohort_date = datetime.now(timezone.utc) - timedelta(days=30)
         
         cohort_end = cohort_date + timedelta(days=1)
         
@@ -392,9 +392,9 @@ class AnalyticsService:
         """
         # Default to last 24 hours
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(hours=24)
+            start_date = datetime.now(timezone.utc) - timedelta(hours=24)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Get all service events with response times
         service_events = [

@@ -1,0 +1,141 @@
+/* Theme CSS variables */
+
+:root {
+  /* Cosmic theme colors */
+  --color-cosmic: #050505;
+  --color-void: #0a0a0a;
+
+  /* Primary accents */
+  --color-gold-50: #fff9e6;
+  --color-gold-100: #ffecb3;
+  --color-gold-200: #ffe082;
+  --color-gold-300: #ffd54f;
+  --color-gold-400: #ffca28;
+  --color-gold-500: #ffc107;
+  --color-gold-600: #ffb300;
+  --color-gold-700: #ffa000;
+  --color-gold-800: #ff8f00;
+  --color-gold-900: #ff6f00;
+
+  /* Secondary accents */
+  --color-turquoise-50: #e0f7fa;
+  --color-turquoise-100: #b2ebf2;
+  --color-turquoise-200: #80deea;
+  --color-turquoise-300: #4dd0e1;
+  --color-turquoise-400: #26c6da;
+  --color-turquoise-500: #00bcd4;
+  --color-turquoise-600: #00acc1;
+  --color-turquoise-700: #0097a7;
+  --color-turquoise-800: #00838f;
+  --color-turquoise-900: #006064;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Grayscale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Typography */
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* Spacing (8px base unit) */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Animation durations */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+
+  /* Easing functions */
+  --easing-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-linear: linear;
+
+  /* Breakpoints */
+  --breakpoint-mobile: 320px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1280px;
+  --breakpoint-ultrawide: 1536px;
+}
+
+/* Dark theme (default) */
+[data-theme='dark'] {
+  --bg-primary: var(--color-cosmic);
+  --bg-secondary: var(--color-void);
+  --bg-tertiary: var(--color-gray-900);
+  --text-primary: var(--color-gray-100);
+  --text-secondary: var(--color-gray-400);
+  --text-tertiary: var(--color-gray-500);
+  --border-color: var(--color-gray-700);
+  --accent-primary: var(--color-gold-500);
+  --accent-secondary: var(--color-turquoise-500);
+}
+
+/* Light theme */
+[data-theme='light'] {
+  --bg-primary: var(--color-gray-50);
+  --bg-secondary: var(--color-gray-100);
+  --bg-tertiary: var(--color-gray-200);
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-600);
+  --text-tertiary: var(--color-gray-500);
+  --border-color: var(--color-gray-300);
+  --accent-primary: var(--color-gold-600);
+  --accent-secondary: var(--color-turquoise-600);
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+a {
+  color: var(--accent-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+button:hover {
+  background-color: var(--bg-tertiary);
+}

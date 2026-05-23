@@ -1,10 +1,12 @@
+'use client';
+
 /**
  * Chat Interface Component for Clarify with Mirastros
  * Optimized for streaming with EventSource, smooth animations, and error handling
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { ChatMessage, ChatStreamEvent } from '@mirastros/shared-core';
+import type { ChatMessage, ChatStreamEvent } from '@mirastros-universal/shared-core';
 
 export interface ChatInterfaceProps {
   conversationId: string;
@@ -393,7 +395,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </p>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;

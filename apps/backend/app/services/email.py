@@ -1,6 +1,6 @@
 """Email service for sending verification and password reset emails"""
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -62,7 +62,7 @@ class EmailService:
         """Create email verification token for user"""
         token = EmailService.generate_token()
         user.email_verification_token = token
-        user.email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+        user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
         await db.commit()
         return token
     
@@ -130,7 +130,7 @@ class EmailService:
             return None
         
         # Check if token expired
-        if user.email_verification_expires < datetime.utcnow():
+        if user.email_verification_expires < datetime.now(timezone.utc):
             return None
         
         # Mark email as verified
@@ -149,7 +149,7 @@ class EmailService:
         """Create password reset token for user"""
         token = EmailService.generate_token()
         user.password_reset_token = token
-        user.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         await db.commit()
         return token
     
@@ -220,7 +220,7 @@ class EmailService:
             return None
         
         # Check if token expired
-        if user.password_reset_expires < datetime.utcnow():
+        if user.password_reset_expires < datetime.now(timezone.utc):
             return None
         
         return user

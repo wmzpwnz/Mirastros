@@ -3,93 +3,170 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
+import { ClarifyButton } from '../../../components/ClarifyButton';
+import { ResultCard } from '../../../components/ui/ResultCard';
+import { ResultText } from '../../../components/ui/ResultText';
+import { ResultActions } from '../../../components/ui/ResultActions';
+import { ErrorDisplay } from '../../../components/ui/ErrorDisplay';
+import { LoadingIndicator } from '../../../components/ui/LoadingIndicator';
 
 export default function TransitsPage() {
   const [transits, setTransits] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchTransits = async () => {
-      try {
-        const result = await api.getPersonalTransits();
-        setTransits(result);
-      } catch (err: any) {
-        console.error('Error fetching transits:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTransits();
+    loadTransits();
   }, []);
+
+  const loadTransits = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await api.getPersonalTransits();
+      setTransits(result);
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при загрузке транзитов');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await loadTransits();
+  };
 
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="mb-12 text-center">
-          <Link href="/dashboard" className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition">
+          <Link
+            href="/dashboard"
+            className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition"
+          >
             ← Назад к панели
           </Link>
-          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">Транзиты</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">Текущие планетарные влияния на вашу натальную карту</p>
+          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">
+            Планетарные Транзиты
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Влияние текущих движений планет на вашу жизнь
+          </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mirastros-gold mx-auto mb-4"></div>
-            <p className="text-gray-400">Расчет транзитов...</p>
+          <LoadingIndicator serviceName="Транзиты" />
+        ) : error ? (
+          <div className="space-y-4">
+            <ErrorDisplay error={error} onRetry={handleRefresh} />
           </div>
-        ) : transits && (
+        ) : transits ? (
           <>
-            <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
-              <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
-                <h2 className="font-cinzel text-2xl font-bold text-white">Текущие транзиты</h2>
-                <p className="text-gray-400">{transits.currentDate}</p>
-              </div>
+            {/* Transits Result */}
+            <div className="mb-8">
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Ваши текущие транзиты
+              </h2>
 
-              <div className="space-y-4 mb-6">
-                {transits.planets.map((planet: any, i: number) => (
-                  <div key={i} className={`p-4 rounded-lg border ${planet.impact === 'positive' ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="text-white font-semibold">{planet.name}</span>
-                        <span className="text-gray-400 ml-2">в {planet.sign} {planet.degree}°</span>
+              {/* Current Date */}
+              <ResultCard
+                title="Дата расчета"
+                content={
+                  <p className="text-gray-300">
+                    {new Date().toLocaleDateString('ru-RU', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                }
+                className="mb-6"
+              />
+
+              {/* Transits List */}
+              {transits.transits && transits.transits.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-cinzel text-lg font-bold text-white mb-4">
+                    Активные транзиты
+                  </h3>
+                  <div className="space-y-4">
+                    {transits.transits.map((transit: any, i: number) => (
+                      <div
+                        key={i}
+                        className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4"
+                      >
+                        <h4 className="font-semibold text-white mb-2">
+                          {transit.planet} {transit.aspect} {transit.natalPlanet}
+                        </h4>
+                        <p className="text-gray-300 text-sm mb-2">{transit.interpretation}</p>
+                        {transit.dates && (
+                          <p className="text-gray-400 text-xs">
+                            Период: {transit.dates}
+                          </p>
+                        )}
                       </div>
-                      <span className={`text-sm ${planet.impact === 'positive' ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {planet.impact === 'positive' ? '✓ Благоприятно' : '⚠ Внимание'}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm">{planet.aspect}</p>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
-              <div className="mb-6">
-                <h3 className="font-cinzel text-xl font-bold text-white mb-3">Интерпретация</h3>
-                <p className="text-gray-300 leading-relaxed">{transits.interpretation}</p>
-              </div>
+              {/* Overall Interpretation */}
+              {transits.interpretation && (
+                <ResultText
+                  title="Общее толкование"
+                  content={transits.interpretation}
+                  className="mb-6"
+                />
+              )}
 
-              <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-6">
-                <h3 className="font-cinzel text-lg font-bold text-white mb-3">Рекомендации</h3>
-                <ul className="space-y-2">
-                  {transits.recommendations.map((rec: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-300">
-                      <span className="text-mirastros-gold">•</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
+              {/* Recommendations */}
+              {transits.recommendations && transits.recommendations.length > 0 && (
+                <ResultCard
+                  title="💡 Рекомендации"
+                  content={
+                    <ul className="space-y-2">
+                      {transits.recommendations.map((rec: string, i: number) => (
+                        <li key={i} className="text-gray-300 text-sm flex gap-2">
+                          <span className="text-mirastros-gold">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                  className="bg-mirastros-gold/10 border-mirastros-gold/30 mb-6"
+                />
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleRefresh}
+                  className="py-3 px-6 rounded-lg transition bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold"
+                >
+                  Обновить
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="py-3 px-6 rounded-lg transition bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold"
+                >
+                  Вернуться на панель
+                </Link>
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-              <h3 className="font-cinzel text-lg font-bold text-white mb-3">О транзитах</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Транзиты — это текущие положения планет и их аспекты к вашей натальной карте. 
-                Они показывают актуальные космические влияния и помогают выбрать благоприятное время для действий.
-              </p>
-            </div>
+            {/* Clarify with Mirastros */}
+            <ClarifyButton
+              onClarify={() => {
+                console.log('Opening chat with transits context:', transits);
+              }}
+              contextType="transits"
+              contextData={transits}
+              available={true}
+            />
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

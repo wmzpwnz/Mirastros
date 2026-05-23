@@ -1,20 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import { ServiceSection } from './ServiceSection';
+import { DemoModal } from '../ui/DemoModal';
+import { TarotCardPicker } from '../interactive/TarotCardPicker';
 
 interface TarotSectionProps {
     id?: string;
 }
 
-export const TarotSection: React.FC<TarotSectionProps> = ({ id }) => {
+export const TarotSection = ({ id }: TarotSectionProps) => {
+    const [showDemo, setShowDemo] = useState(false);
+
     return (
-        <section className="mira-section mira-tarot" id={id}>
-            <div className="section-content">
-                <div className="section-layout">
-                    <span className="section-category">Таро</span>
-                    <h2 className="section-title">AI-гадания</h2>
-                    <p className="section-description">Персонализированные расклады с искусственным интеллектом</p>
-                    <div className="section-icon-placeholder">🔮</div>
-                </div>
-            </div>
-        </section>
+        <>
+            <ServiceSection
+                id={id}
+                badge="МИСТИКА"
+                title="Таро"
+                description="Древнее искусство предсказания через символы карт. Откройте тайны прошлого, настоящего и будущего."
+                media={{ webm: "/taro.webm", mp4: "/taro.mp4" }}
+                imageAlt="Таро анимация"
+            />
+
+            <DemoModal
+                isOpen={showDemo}
+                onClose={() => setShowDemo(false)}
+                title="Карта дня Таро"
+            >
+                <TarotCardPicker showRegisterPrompt={true} />
+            </DemoModal>
+        </>
     );
 };

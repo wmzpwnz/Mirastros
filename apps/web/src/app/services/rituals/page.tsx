@@ -1,107 +1,243 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
-
-const ritualTypes = ['денежный', 'любовный', 'защитный', 'исцеляющий', 'лунный'];
+import { ClarifyButton } from '../../../components/ClarifyButton';
+import { ResultCard } from '../../../components/ui/ResultCard';
+import { ResultText } from '../../../components/ui/ResultText';
+import { ErrorDisplay } from '../../../components/ui/ErrorDisplay';
+import { LoadingIndicator } from '../../../components/ui/LoadingIndicator';
 
 export default function RitualsPage() {
-  const [selectedType, setSelectedType] = useState('');
-  const [ritual, setRitual] = useState<any>(null);
+  const [rituals, setRituals] = useState<any[]>([]);
+  const [selectedRitual, setSelectedRitual] = useState<any>(null);
+  const [personalizedRitual, setPersonalizedRitual] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleGetRitual = async () => {
+  useEffect(() => {
+    loadRituals();
+  }, []);
+
+  const loadRituals = async () => {
+    setError('');
+    setLoading(true);
+
     try {
-      const result = await api.generateRitual(selectedType);
-      setRitual(result);
+      const result = await api.getRituals();
+      setRituals(result.rituals || []);
     } catch (err: any) {
-      console.error('Error generating ritual:', err);
+      setError(err.message || 'Ошибка при загрузке ритуалов');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleGetPersonalizedRitual = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await api.getPersonalizedRitual();
+      setPersonalizedRitual(result);
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при получении персонализированного ритуала');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredRituals = rituals.filter((ritual) =>
+    ritual.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="mb-12 text-center">
-          <Link href="/dashboard" className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition">
+          <Link
+            href="/dashboard"
+            className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition"
+          >
             ← Назад к панели
           </Link>
-          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">Ритуалы</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">Персонализированные практики для достижения целей</p>
+          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">
+            Ритуалы
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Духовные практики для трансформации и исцеления
+          </p>
         </div>
 
-        {!ritual ? (
+        {loading && !selectedRitual && !personalizedRitual ? (
+          <LoadingIndicator serviceName="Ритуалы" />
+        ) : error && !selectedRitual && !personalizedRitual ? (
+          <ErrorDisplay error={error} onRetry={loadRituals} />
+        ) : selectedRitual ? (
           <>
-            <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
-              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">Выберите тип ритуала</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {ritualTypes.map((type) => (
-                  <button key={type} onClick={() => setSelectedType(type)}
-                    className={`p-4 rounded-lg border-2 transition capitalize ${selectedType === type ? 'bg-mirastros-gold/10 border-mirastros-gold' : 'bg-white/5 border-white/10 hover:border-white/30'}`}>
-                    <span className="text-white font-semibold">{type}</span>
-                  </button>
-                ))}
-              </div>
-              <button onClick={handleGetRitual} disabled={!selectedType}
-                className="w-full py-4 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition disabled:opacity-50 text-lg">
-                Получить ритуал
+            {/* Ritual Details */}
+            <div className="mb-8">
+              <button
+                onClick={() => setSelectedRitual(null)}
+                className="text-mirastros-gold hover:text-mirastros-gold/80 mb-6 transition"
+              >
+                ← Вернуться к списку
               </button>
-            </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-              <h3 className="font-cinzel text-lg font-bold text-white mb-3">О ритуалах</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Ритуалы — это священные практики, которые помогают сфокусировать намерение и направить энергию 
-                на достижение цели. Каждый ритуал персонализирован с учетом вашей натальной карты и текущих транзитов.
-              </p>
+              <h2 className="font-cinzel text-3xl font-bold text-white mb-6">
+                {selectedRitual.name}
+              </h2>
+
+              {selectedRitual.description && (
+                <ResultCard
+                  title="Описание"
+                  content={<p className="text-gray-300 text-sm">{selectedRitual.description}</p>}
+                  className="mb-6"
+                />
+              )}
+
+              {selectedRitual.materials && selectedRitual.materials.length > 0 && (
+                <ResultCard
+                  title="Необходимые материалы"
+                  content={
+                    <ul className="space-y-2">
+                      {selectedRitual.materials.map((material: string, i: number) => (
+                        <li key={i} className="text-gray-300 text-sm flex gap-2">
+                          <span className="text-mirastros-gold">•</span>
+                          <span>{material}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                  className="mb-6"
+                />
+              )}
+
+              {selectedRitual.steps && selectedRitual.steps.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-cinzel text-lg font-bold text-white mb-4">
+                    Пошаговые инструкции
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedRitual.steps.map((step: string, i: number) => (
+                      <div key={i} className="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <p className="text-gray-300 text-sm">
+                          <span className="text-mirastros-gold font-semibold">Шаг {i + 1}:</span>{' '}
+                          {step}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSelectedRitual(null)}
+                  className="py-3 px-6 rounded-lg transition bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold"
+                >
+                  Вернуться к списку
+                </button>
+              </div>
+            </div>
+          </>
+        ) : personalizedRitual ? (
+          <>
+            {/* Personalized Ritual */}
+            <div className="mb-8">
+              <button
+                onClick={() => setPersonalizedRitual(null)}
+                className="text-mirastros-gold hover:text-mirastros-gold/80 mb-6 transition"
+              >
+                ← Вернуться к списку
+              </button>
+
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Ваш персонализированный ритуал
+              </h2>
+
+              {personalizedRitual.name && (
+                <ResultCard
+                  title="Название"
+                  content={<p className="text-white font-semibold">{personalizedRitual.name}</p>}
+                  className="mb-6"
+                />
+              )}
+
+              {personalizedRitual.description && (
+                <ResultCard
+                  title="Описание"
+                  content={<p className="text-gray-300 text-sm">{personalizedRitual.description}</p>}
+                  className="mb-6"
+                />
+              )}
+
+              {personalizedRitual.steps && personalizedRitual.steps.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-cinzel text-lg font-bold text-white mb-4">
+                    Инструкции
+                  </h3>
+                  <div className="space-y-3">
+                    {personalizedRitual.steps.map((step: string, i: number) => (
+                      <div key={i} className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4">
+                        <p className="text-gray-300 text-sm">
+                          <span className="text-mirastros-gold font-semibold">Шаг {i + 1}:</span>{' '}
+                          {step}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setPersonalizedRitual(null)}
+                  className="py-3 px-6 rounded-lg transition bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold"
+                >
+                  Вернуться к списку
+                </button>
+              </div>
             </div>
           </>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-8">
-            <h2 className="font-cinzel text-2xl font-bold text-white mb-2">{ritual.name}</h2>
-            <p className="text-gray-400 mb-6 capitalize">Тип: {ritual.type}</p>
+          <>
+            {/* Rituals List */}
+            <div className="mb-8">
+              <div className="bg-white/5 border border-white/10 rounded-lg p-6 mb-6">
+                <input
+                  type="text"
+                  placeholder="Поиск ритуалов..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-mirastros-gold"
+                />
+              </div>
 
-            <div className="mb-6">
-              <h3 className="font-cinzel text-xl font-bold text-white mb-3">Необходимые предметы</h3>
-              <div className="flex flex-wrap gap-2">
-                {ritual.items.map((item: string, i: number) => (
-                  <span key={i} className="px-4 py-2 bg-mirastros-gold/20 text-mirastros-gold rounded-lg text-sm font-semibold">
-                    {item}
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {filteredRituals.map((ritual: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedRitual(ritual)}
+                    className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-mirastros-gold/50 transition text-left"
+                  >
+                    <h3 className="font-semibold text-white mb-1">{ritual.name}</h3>
+                    <p className="text-gray-400 text-sm">{ritual.shortDescription}</p>
+                  </button>
                 ))}
               </div>
-            </div>
 
-            <div className="mb-6">
-              <h3 className="font-cinzel text-xl font-bold text-white mb-4">Шаги выполнения</h3>
-              <ol className="space-y-3">
-                {ritual.steps.map((step: string, i: number) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-mirastros-gold text-black rounded-full font-bold text-sm">
-                      {i + 1}
-                    </span>
-                    <span className="text-gray-300 pt-1">{step}</span>
-                  </li>
-                ))}
-              </ol>
+              <button
+                onClick={handleGetPersonalizedRitual}
+                className="w-full py-3 px-6 rounded-lg transition bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold"
+              >
+                Получить персонализированный ритуал
+              </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4">
-                <h4 className="font-semibold text-mirastros-gold mb-2">⏰ Время проведения</h4>
-                <p className="text-gray-300 text-sm">{ritual.timing}</p>
-              </div>
-              <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4">
-                <h4 className="font-semibold text-mirastros-gold mb-2">💡 Совет</h4>
-                <p className="text-gray-300 text-sm">{ritual.advice}</p>
-              </div>
-            </div>
-
-            <button onClick={() => { setRitual(null); setSelectedType(''); }}
-              className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-lg transition">
-              Выбрать другой ритуал
-            </button>
-          </div>
+          </>
         )}
       </div>
     </div>

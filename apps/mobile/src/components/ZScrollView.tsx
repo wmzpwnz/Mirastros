@@ -10,7 +10,7 @@ import Animated, {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface ZScrollItemProps {
+export interface ZScrollItemProps {
   children: ReactNode;
   index: number;
   scrollY: Animated.SharedValue<number>;
@@ -80,7 +80,7 @@ export function ZScrollItem({ children, index, scrollY, itemHeight = SCREEN_HEIG
   );
 }
 
-interface ZScrollViewProps {
+export interface ZScrollViewProps {
   children: ReactNode[];
   itemHeight?: number;
 }

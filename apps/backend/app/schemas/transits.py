@@ -33,7 +33,7 @@ class SignificantTransit(BaseModel):
 
 class CurrentTransitsResponse(BaseModel):
     """Response for current transits"""
-    date: datetime
+    target_date: datetime = Field(..., alias="date")
     planetary_positions: Dict[str, TransitPlanetPosition]
     lunar_phase: str
     lunar_phase_percentage: float
@@ -50,7 +50,7 @@ class PersonalTransitsRequest(BaseModel):
 
 class PersonalTransitsResponse(BaseModel):
     """Response for personal transits analysis"""
-    date: datetime
+    target_date: datetime = Field(..., alias="date")
     current_transits: Dict[str, TransitPlanetPosition]
     aspects_to_natal: List[TransitAspect]
     significant_transits: List[SignificantTransit]

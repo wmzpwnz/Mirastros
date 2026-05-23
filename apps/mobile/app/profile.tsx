@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button, Input, Card, Tabs } from '../../src/components';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function ProfileScreen() {
 
         {/* Profile Info */}
         <View className="mb-8">
-          <View className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+          <Card className="mb-6">
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-cinzel text-gold">Personal Information</Text>
               <TouchableOpacity onPress={() => setEditing(!editing)}>
@@ -50,93 +51,86 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            <View className="space-y-4">
-              <View>
-                <Text className="text-silver/60 text-sm mb-2">Full Name</Text>
-                <TextInput
-                  className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-silver ${!editing && 'opacity-50'}`}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  editable={editing}
-                />
-              </View>
+            <View className="gap-4">
+              <Input
+                placeholder="Full Name"
+                value={fullName}
+                onChange={setFullName}
+                disabled={!editing}
+                accessibilityLabel="Full name"
+              />
 
-              <View>
-                <Text className="text-silver/60 text-sm mb-2">Email</Text>
-                <TextInput
-                  className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-silver ${!editing && 'opacity-50'}`}
-                  value={email}
-                  onChangeText={setEmail}
-                  editable={editing}
-                  keyboardType="email-address"
-                />
-              </View>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={setEmail}
+                disabled={!editing}
+                accessibilityLabel="Email address"
+              />
 
-              <View>
-                <Text className="text-silver/60 text-sm mb-2">Birth Date</Text>
-                <TextInput
-                  className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-silver ${!editing && 'opacity-50'}`}
-                  value={birthDate}
-                  onChangeText={setBirthDate}
-                  editable={editing}
-                />
-              </View>
+              <Input
+                placeholder="Birth Date"
+                value={birthDate}
+                onChange={setBirthDate}
+                disabled={!editing}
+                accessibilityLabel="Birth date"
+              />
 
-              <View>
-                <Text className="text-silver/60 text-sm mb-2">Birth Time</Text>
-                <TextInput
-                  className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-silver ${!editing && 'opacity-50'}`}
-                  value={birthTime}
-                  onChangeText={setBirthTime}
-                  editable={editing}
-                />
-              </View>
+              <Input
+                placeholder="Birth Time"
+                value={birthTime}
+                onChange={setBirthTime}
+                disabled={!editing}
+                accessibilityLabel="Birth time"
+              />
 
-              <View>
-                <Text className="text-silver/60 text-sm mb-2">Birth Location</Text>
-                <TextInput
-                  className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-silver ${!editing && 'opacity-50'}`}
-                  value={birthLocation}
-                  onChangeText={setBirthLocation}
-                  editable={editing}
-                />
-              </View>
+              <Input
+                placeholder="Birth Location"
+                value={birthLocation}
+                onChange={setBirthLocation}
+                disabled={!editing}
+                accessibilityLabel="Birth location"
+              />
             </View>
 
             {editing && (
-              <TouchableOpacity
-                className="bg-gold rounded-xl py-3 mt-6"
+              <Button
                 onPress={handleSave}
+                className="w-full mt-6"
+                accessibilityLabel="Save changes button"
               >
-                <Text className="text-cosmic text-center font-bold">Save Changes</Text>
-              </TouchableOpacity>
+                Save Changes
+              </Button>
             )}
-          </View>
+          </Card>
 
           {/* Subscription */}
-          <View className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+          <Card className="mb-6">
             <Text className="text-xl font-cinzel text-gold mb-4">Subscription</Text>
             <View className="flex-row justify-between items-center mb-4">
               <View>
                 <Text className="text-silver font-semibold mb-1">Freemium</Text>
                 <Text className="text-silver/60 text-sm">Limited access</Text>
               </View>
-              <TouchableOpacity
-                className="bg-gold px-4 py-2 rounded-lg"
+              <Button
+                size="sm"
                 onPress={() => router.push('/subscription')}
+                accessibilityLabel="Upgrade subscription button"
               >
-                <Text className="text-cosmic font-semibold">Upgrade</Text>
-              </TouchableOpacity>
+                Upgrade
+              </Button>
             </View>
-          </View>
+          </Card>
 
           {/* Settings */}
-          <View className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+          <Card className="mb-6">
             <Text className="text-xl font-cinzel text-gold mb-4">Settings</Text>
             
             <TouchableOpacity 
               className="flex-row justify-between items-center py-3 border-b border-white/10"
               onPress={() => router.push('/biometric-settings')}
+              accessibilityRole="button"
             >
               <View className="flex-row items-center">
                 <Text className="text-2xl mr-3">🔐</Text>
@@ -152,25 +146,28 @@ export default function ProfileScreen() {
                 onValueChange={setNotifications}
                 trackColor={{ false: '#444', true: '#D4AF37' }}
                 thumbColor="#fff"
+                accessibilityLabel="Push notifications toggle"
               />
             </View>
 
-            <TouchableOpacity className="py-3 border-b border-white/10">
+            <TouchableOpacity className="py-3 border-b border-white/10" accessibilityRole="button">
               <Text className="text-silver">Change Password</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="py-3">
+            <TouchableOpacity className="py-3" accessibilityRole="button">
               <Text className="text-silver">Privacy Policy</Text>
             </TouchableOpacity>
-          </View>
+          </Card>
 
           {/* Logout */}
-          <TouchableOpacity
-            className="bg-red-500/10 border border-red-500/30 rounded-xl py-4"
+          <Button
+            variant="danger"
             onPress={handleLogout}
+            className="w-full"
+            accessibilityLabel="Logout button"
           >
-            <Text className="text-red-500 text-center font-semibold">Logout</Text>
-          </TouchableOpacity>
+            Logout
+          </Button>
         </View>
       </View>
     </ScrollView>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button, Input, Label, DatePicker } from '@mirastros-universal/design-system';
 import { api } from '../../services/api';
 import type { User } from '../../types';
 
@@ -44,10 +45,10 @@ export default function ProfilePage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (name: keyof typeof formData, value: string) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
     setMessage('');
   };
@@ -57,11 +58,34 @@ export default function ProfilePage() {
     setMessage('');
 
     try {
-      // TODO: Implement update profile API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Parse birth location if it's a string
+      let birthLocation = null;
+      if (formData.birthLocation) {
+        // If it's already an object, use it; otherwise try to parse
+        if (typeof formData.birthLocation === 'string') {
+          // Try to get from user's existing birth location
+          birthLocation = user?.birthLocation || null;
+        } else {
+          birthLocation = formData.birthLocation;
+        }
+      }
+
+      const updatedUser = await api.updateProfile({
+        fullName: formData.fullName,
+        email: formData.email,
+        birthDate: formData.birthDate || undefined,
+        birthTime: formData.birthTime || undefined,
+        birthLocation: birthLocation || undefined,
+      });
+
+      setUser(updatedUser);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
       setMessage('Профиль успешно обновлен');
-    } catch (error) {
-      setMessage('Ошибка при сохранении профиля');
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      setMessage(error.message || 'Ошибка при сохранении профиля');
     } finally {
       setSaving(false);
     }
@@ -90,6 +114,10 @@ export default function ProfilePage() {
   if (!user) {
     return null;
   }
+
+  const birthDateValue = formData.birthDate
+    ? new Date(`${formData.birthDate}T00:00:00`)
+    : undefined;
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -130,7 +158,7 @@ export default function ProfilePage() {
             </div>
             <Link
               href="/subscription"
-              className="px-6 py-3 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition"
+              className="inline-flex px-6 py-3 rounded-lg bg-mirastros-gold text-black font-semibold hover:bg-mirastros-gold/90 transition"
             >
               Управление подпиской
             </Link>
@@ -157,28 +185,22 @@ export default function ProfilePage() {
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Полное имя
-              </label>
-              <input
+              <Label>Полное имя</Label>
+              <Input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition"
+                onChange={(value) => handleChange('fullName', value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
-              </label>
-              <input
+              <Label>Email</Label>
+              <Input
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition"
+                onChange={(value) => handleChange('email', value)}
               />
             </div>
 
@@ -192,61 +214,53 @@ export default function ProfilePage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Дата рождения
-                  </label>
-                  <input
-                    type="date"
+                  <Label>Дата рождения</Label>
+                  <DatePicker
                     name="birthDate"
-                    value={formData.birthDate}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition"
+                    value={birthDateValue}
+                    onChange={(date) => handleChange('birthDate', date.toISOString().slice(0, 10))}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Время рождения
-                  </label>
-                  <input
+                  <Label>Время рождения</Label>
+                  <Input
                     type="time"
                     name="birthTime"
                     value={formData.birthTime}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition"
+                    onChange={(value) => handleChange('birthTime', value)}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Место рождения
-                  </label>
-                  <input
+                  <Label>Место рождения</Label>
+                  <Input
                     type="text"
                     name="birthLocation"
                     value={formData.birthLocation}
-                    onChange={handleChange}
+                    onChange={(value) => handleChange('birthLocation', value)}
                     placeholder="Москва, Россия"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition"
                   />
                 </div>
               </div>
             </div>
 
             <div className="flex gap-4 pt-6">
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 py-3 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={saving}
+                className="flex-1"
               >
                 {saving ? 'Сохранение...' : 'Сохранить изменения'}
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => loadUser()}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-lg transition"
+                variant="secondary"
+                className="px-6"
               >
                 Отменить
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -263,12 +277,13 @@ export default function ProfilePage() {
                 Вы сможете войти снова в любое время
               </p>
             </div>
-            <button
+            <Button
               onClick={handleLogout}
-              className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 font-semibold rounded-lg transition"
+              variant="danger"
+              className="px-6"
             >
               Выйти
-            </button>
+            </Button>
           </div>
         </div>
       </div>

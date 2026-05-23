@@ -1,6 +1,6 @@
 """Access control middleware for tier-based feature restrictions and usage limits"""
 from typing import Callable, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,7 +52,8 @@ class FeatureAccessControl:
             "karmic_tasks": True,
             "mandala": True,
             "journal": True,
-            "shop": True
+            "shop": True,
+            "destiny-matrix": True
         },
         SubscriptionTier.PREMIUM: {
             "daily_horoscope": True,
@@ -78,7 +79,8 @@ class FeatureAccessControl:
             "karmic_tasks": True,
             "mandala": True,
             "journal": True,
-            "shop": True
+            "shop": True,
+            "destiny-matrix": True
         },
         SubscriptionTier.PLATINUM: {
             # Platinum has access to everything
@@ -105,7 +107,8 @@ class FeatureAccessControl:
             "karmic_tasks": True,
             "mandala": True,
             "journal": True,
-            "shop": True
+            "shop": True,
+            "destiny-matrix": True
         }
     }
     
@@ -125,13 +128,27 @@ class FeatureAccessControl:
         "chakra": 1,
         "karmic_tasks": 1,
         "mandala": 1,
-        "journal": 5  # 5 entries per day
+        "journal": 5,  # 5 entries per day
+        "destiny-matrix": 1
     }
     
     @staticmethod
+    def _normalize_tier(tier) -> SubscriptionTier:
+        """Normalize subscription_tier from DB (may be str) to SubscriptionTier enum."""
+        if isinstance(tier, SubscriptionTier):
+            return tier
+        if isinstance(tier, str):
+            try:
+                return SubscriptionTier(tier.lower())
+            except ValueError:
+                return SubscriptionTier.FREEMIUM
+        return SubscriptionTier.FREEMIUM
+
+    @staticmethod
     def check_feature_access(user: User, feature: str) -> bool:
         """Check if user has access to a feature"""
-        tier_features = FeatureAccessControl.TIER_FEATURES.get(user.subscription_tier, {})
+        tier = FeatureAccessControl._normalize_tier(user.subscription_tier)
+        tier_features = FeatureAccessControl.TIER_FEATURES.get(tier, {})
         return tier_features.get(feature, False)
     
     @staticmethod
@@ -150,29 +167,31 @@ class FeatureAccessControl:
         Returns: (has_access, current_usage, limit)
         """
         # Premium and Platinum have unlimited access
-        if user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
+        tier = FeatureAccessControl._normalize_tier(user.subscription_tier)
+        if tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
             return True, 0, -1  # -1 means unlimited
-        
+
         # Check if feature has usage limit
         limit = FeatureAccessControl.FREEMIUM_LIMITS.get(feature)
         if limit is None:
             return True, 0, -1  # No limit defined
-        
+
         # Get current usage from Redis
-        today = datetime.utcnow().date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
         cache_key = f"usage:{user.id}:{feature}:{today}"
-        
+
         current_usage = await redis_client.get(cache_key)
         current_usage = int(current_usage) if current_usage else 0
-        
+
         has_access = current_usage < limit
         return has_access, current_usage, limit
-    
+
     @staticmethod
     async def increment_usage(user: User, feature: str) -> None:
         """Increment usage counter for a feature"""
         # Only track for Freemium users
-        if user.subscription_tier != SubscriptionTier.FREEMIUM:
+        tier = FeatureAccessControl._normalize_tier(user.subscription_tier)
+        if tier != SubscriptionTier.FREEMIUM:
             return
         
         # Check if feature has usage limit
@@ -180,7 +199,7 @@ class FeatureAccessControl:
             return
         
         # Increment usage in Redis
-        today = datetime.utcnow().date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
         cache_key = f"usage:{user.id}:{feature}:{today}"
         
         current = await redis_client.get(cache_key)
@@ -232,7 +251,8 @@ def require_feature_access(feature: str, check_usage: bool = True):
                 )
             
             # Check usage limits for Freemium users
-            if check_usage and current_user.subscription_tier == SubscriptionTier.FREEMIUM:
+            tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+            if check_usage and tier == SubscriptionTier.FREEMIUM:
                 has_access, current_usage, limit = await FeatureAccessControl.check_usage_limit(
                     current_user, feature
                 )
@@ -258,10 +278,11 @@ def require_feature_access(feature: str, check_usage: bool = True):
 
 async def check_subscription_active(user: User) -> None:
     """Check if user's subscription is active (not expired)"""
-    if user.subscription_tier == SubscriptionTier.FREEMIUM:
+    tier = FeatureAccessControl._normalize_tier(user.subscription_tier)
+    if tier == SubscriptionTier.FREEMIUM:
         return  # Freemium never expires
-    
-    if user.subscription_expires and user.subscription_expires < datetime.utcnow():
+
+    if user.subscription_expires and user.subscription_expires < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your subscription has expired. Please renew to continue.",
@@ -270,8 +291,9 @@ async def check_subscription_active(user: User) -> None:
 
 
 # Convenience function to get upgrade prompt message
-def get_upgrade_prompt(feature: str, current_tier: SubscriptionTier) -> dict:
-    """Get upgrade prompt message for a feature"""
+def get_upgrade_prompt(feature: str, current_tier) -> dict:
+    """Get upgrade prompt message for a feature. current_tier may be SubscriptionTier or str from DB."""
+    current_tier = FeatureAccessControl._normalize_tier(current_tier)
     required_tier = FeatureAccessControl.get_required_tier(feature)
     
     if required_tier == SubscriptionTier.PREMIUM:

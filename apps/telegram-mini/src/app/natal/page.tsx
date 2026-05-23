@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { authenticatedFetch } from '../../lib/auth'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { ZScrollCard } from '../../components/ZScrollContainer'
+import { Button, Input, Badge, Spinner } from '@mirastros-universal/design-system'
 
 interface NatalChart {
   planets: Record<string, any>
@@ -89,11 +90,10 @@ export default function NatalChartPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Birth Date
                 </label>
-                <input
+                <Input
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold"
                 />
               </div>
 
@@ -102,11 +102,10 @@ export default function NatalChartPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Birth Time
                 </label>
-                <input
+                <Input
                   type="time"
                   value={birthTime}
                   onChange={(e) => setBirthTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white focus:outline-none focus:border-gold"
                 />
               </div>
 
@@ -115,12 +114,11 @@ export default function NatalChartPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Birth Place (Optional)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={birthPlace}
                   onChange={(e) => setBirthPlace(e.target.value)}
                   placeholder="City, Country"
-                  className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold"
                 />
               </div>
 
@@ -130,26 +128,24 @@ export default function NatalChartPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Latitude
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.0001"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
                     placeholder="40.7128"
-                    className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Longitude
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.0001"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
                     placeholder="-74.0060"
-                    className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold"
                   />
                 </div>
               </div>
@@ -167,26 +163,28 @@ export default function NatalChartPage() {
               )}
 
               {/* Calculate Button */}
-              <button
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleCalculateChart}
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                    <Spinner size="sm" className="mr-2" />
                     Calculating Chart...
                   </span>
                 ) : (
                   'Calculate Chart'
                 )}
-              </button>
+              </Button>
 
               {/* Subscription Info */}
               {auth && auth.user.subscription_tier === 'freemium' && (
-                <div className="mt-4 p-3 bg-purple-deep/30 border border-gold/20 rounded-lg text-xs text-gray-400 text-center">
+                <Badge variant="secondary" className="mt-4 w-full text-center">
                   Freemium: Basic chart only • Upgrade for detailed analysis
-                </div>
+                </Badge>
               )}
             </ZScrollCard>
           ) : (
@@ -252,18 +250,22 @@ export default function NatalChartPage() {
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
                   onClick={handleNewChart}
-                  className="flex-1 bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
+                  className="flex-1"
                 >
                   New Chart
-                </button>
-                <a
-                  href="/"
-                  className="flex-1 bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors text-center"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => window.location.href = '/'}
+                  className="flex-1"
                 >
                   Home
-                </a>
+                </Button>
               </div>
             </div>
           )}

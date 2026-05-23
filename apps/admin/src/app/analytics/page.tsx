@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { Card, Grid, Stack, Button, ProgressBar } from '@mirastros-universal/design-system';
+import { adminApi } from '../../services/api';
 
 interface RegistrationStats {
     total: number;
@@ -33,16 +33,6 @@ interface ServiceUsageStats {
     }>;
 }
 
-interface RetentionStats {
-    cohort_date: string;
-    cohort_size: number;
-    retention: Array<{
-        week: number;
-        active_users: number;
-        retention_rate: number;
-    }>;
-}
-
 interface AIPerformanceStats {
     total_requests: number;
     avg_response_time_ms: number | null;
@@ -56,7 +46,6 @@ export default function AnalyticsPage() {
     const [registrations, setRegistrations] = useState<RegistrationStats | null>(null);
     const [conversions, setConversions] = useState<ConversionStats | null>(null);
     const [serviceUsage, setServiceUsage] = useState<ServiceUsageStats | null>(null);
-    const [retention, setRetention] = useState<RetentionStats | null>(null);
     const [aiPerformance, setAIPerformance] = useState<AIPerformanceStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -70,50 +59,20 @@ export default function AnalyticsPage() {
             setLoading(true);
             setError(null);
             
-            // Get auth token from localStorage
-            const token = localStorage.getItem('admin_token');
-            const headers = {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
+            const [regData, convData, serviceData, aiData] = await Promise.all([
+                adminApi.getAnalytics('registrations').catch(() => null),
+                adminApi.getAnalytics('conversions').catch(() => null),
+                adminApi.getAnalytics('service-usage').catch(() => null),
+                adminApi.getAnalytics('ai-performance').catch(() => null),
+            ]);
             
-            // Fetch registration stats (last 30 days)
-            const regResponse = await fetch(`${API_URL}/analytics/registrations`, { headers });
-            if (regResponse.ok) {
-                const regData = await regResponse.json();
-                setRegistrations(regData);
-            }
-            
-            // Fetch conversion stats
-            const convResponse = await fetch(`${API_URL}/analytics/conversions`, { headers });
-            if (convResponse.ok) {
-                const convData = await convResponse.json();
-                setConversions(convData);
-            }
-            
-            // Fetch service usage
-            const serviceResponse = await fetch(`${API_URL}/analytics/service-usage`, { headers });
-            if (serviceResponse.ok) {
-                const serviceData = await serviceResponse.json();
-                setServiceUsage(serviceData);
-            }
-            
-            // Fetch retention stats
-            const retResponse = await fetch(`${API_URL}/analytics/retention`, { headers });
-            if (retResponse.ok) {
-                const retData = await retResponse.json();
-                setRetention(retData);
-            }
-            
-            // Fetch AI performance
-            const aiResponse = await fetch(`${API_URL}/analytics/ai-performance`, { headers });
-            if (aiResponse.ok) {
-                const aiData = await aiResponse.json();
-                setAIPerformance(aiData);
-            }
+            if (regData) setRegistrations(regData);
+            if (convData) setConversions(convData);
+            if (serviceData) setServiceUsage(serviceData);
+            if (aiData) setAIPerformance(aiData);
         } catch (error) {
             console.error('Failed to fetch analytics:', error);
-            setError('Failed to load analytics data');
+            setError('Не удалось загрузить аналитику');
         } finally {
             setLoading(false);
         }
@@ -125,7 +84,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-center h-96">
                     <div className="text-center">
                         <div className="text-4xl mb-4">⏳</div>
-                        <p className="text-silver/60">Loading analytics...</p>
+                        <p className="text-silver/60">Загрузка аналитики...</p>
                     </div>
                 </div>
             </AdminLayout>
@@ -139,12 +98,9 @@ export default function AnalyticsPage() {
                     <div className="text-center">
                         <div className="text-4xl mb-4">⚠️</div>
                         <p className="text-red-400 mb-4">{error}</p>
-                        <button
-                            onClick={fetchAnalytics}
-                            className="px-6 py-3 bg-gold/20 text-gold border border-gold/30 rounded-lg hover:bg-gold/30 transition-all"
-                        >
-                            Try Again
-                        </button>
+                        <Button variant="primary" onClick={fetchAnalytics}>
+                            Повторить
+                        </Button>
                     </div>
                 </div>
             </AdminLayout>
@@ -153,49 +109,46 @@ export default function AnalyticsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-8">
+            <Stack gap="8">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-4xl font-cinzel text-gold mb-2">Analytics Dashboard</h1>
-                        <p className="text-silver/60">Real-time system performance and usage statistics</p>
+                        <h1 className="text-4xl font-cinzel text-gold mb-2">Аналитика</h1>
+                        <p className="text-silver/60">Статистика и производительность</p>
                     </div>
-                    <button
-                        onClick={fetchAnalytics}
-                        className="px-6 py-3 bg-gold/20 text-gold border border-gold/30 rounded-lg hover:bg-gold/30 transition-all"
-                    >
-                        🔄 Refresh
-                    </button>
+                    <Button variant="primary" onClick={fetchAnalytics}>
+                        🔄 Обновить
+                    </Button>
                 </div>
 
                 {/* Registration Stats */}
                 {registrations && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="glass rounded-xl p-6">
-                            <h2 className="text-2xl font-cinzel text-gold mb-4">User Registrations</h2>
+                    <Grid columns={{ mobile: 1, tablet: 2 }} gap="6">
+                        <Card variant="elevated">
+                            <h2 className="text-2xl font-cinzel text-gold mb-4">Регистрации</h2>
                             <p className="text-4xl font-bold text-gold mb-2">{registrations.total}</p>
-                            <p className="text-sm text-silver/60">Last 30 days</p>
-                        </div>
+                            <p className="text-sm text-silver/60">За 30 дней</p>
+                        </Card>
                         
                         {conversions && (
-                            <div className="glass rounded-xl p-6">
-                                <h2 className="text-2xl font-cinzel text-gold mb-4">Conversion Rate</h2>
+                            <Card variant="elevated">
+                                <h2 className="text-2xl font-cinzel text-gold mb-4">Конверсия</h2>
                                 <p className="text-4xl font-bold text-turquoise mb-2">
                                     {conversions.overall_conversion_rate}%
                                 </p>
                                 <p className="text-sm text-silver/60">
-                                    {conversions.total_conversions} / {conversions.total_registrations} users converted
+                                    {conversions.total_conversions} / {conversions.total_registrations} конверсий
                                 </p>
-                            </div>
+                            </Card>
                         )}
-                    </div>
+                    </Grid>
                 )}
 
                 {/* Conversion by Tier */}
                 {conversions && Object.keys(conversions.by_tier).length > 0 && (
-                    <div className="glass rounded-xl p-6">
-                        <h2 className="text-2xl font-cinzel text-gold mb-6">Conversions by Tier</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card variant="elevated">
+                        <h2 className="text-2xl font-cinzel text-gold mb-6">Конверсия по тарифам</h2>
+                        <Grid columns={{ mobile: 1, tablet: 2 }} gap="6">
                             {Object.entries(conversions.by_tier).map(([tier, stats]) => (
                                 <div key={tier} className="border border-gold/20 rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-2">
@@ -206,21 +159,21 @@ export default function AnalyticsPage() {
                                             {stats.conversion_rate.toFixed(1)}%
                                         </span>
                                     </div>
-                                    <p className="text-sm text-silver/60">{stats.count} conversions</p>
+                                    <p className="text-sm text-silver/60">{stats.count} конверсий</p>
                                 </div>
                             ))}
-                        </div>
-                    </div>
+                        </Grid>
+                    </Card>
                 )}
 
                 {/* Service Usage */}
                 {serviceUsage && serviceUsage.services.length > 0 && (
-                    <div className="glass rounded-xl p-6">
-                        <h2 className="text-2xl font-cinzel text-gold mb-6">Service Usage</h2>
+                    <Card variant="elevated">
+                        <h2 className="text-2xl font-cinzel text-gold mb-6">Использование сервисов</h2>
                         <p className="text-sm text-silver/60 mb-4">
-                            Total requests: {serviceUsage.total_usage}
+                            Всего запросов: {serviceUsage.total_usage}
                         </p>
-                        <div className="space-y-4">
+                        <Stack gap="4">
                             {serviceUsage.services.slice(0, 10).map((service) => {
                                 const percentage = (service.count / serviceUsage.total_usage) * 100;
                                 return (
@@ -230,7 +183,7 @@ export default function AnalyticsPage() {
                                                 {service.service.replace('_', ' ')}
                                             </span>
                                             <div className="text-right">
-                                                <span className="text-silver/60">{service.count} requests</span>
+                                                <span className="text-silver/60">{service.count} запросов</span>
                                                 {service.avg_response_time_ms && (
                                                     <span className="text-xs text-turquoise ml-2">
                                                         ~{service.avg_response_time_ms}ms
@@ -238,71 +191,45 @@ export default function AnalyticsPage() {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
-                                            <div
-                                                className="bg-gradient-to-r from-gold to-turquoise h-full rounded-full transition-all"
-                                                style={{ width: `${percentage}%` }}
-                                            />
-                                        </div>
+                                        <ProgressBar value={percentage} />
                                     </div>
                                 );
                             })}
-                        </div>
-                    </div>
+                        </Stack>
+                    </Card>
                 )}
 
                 {/* AI Performance */}
                 {aiPerformance && aiPerformance.total_requests > 0 && (
-                    <div className="glass rounded-xl p-6">
-                        <h2 className="text-2xl font-cinzel text-gold mb-6">AI Performance Metrics</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <Card variant="elevated">
+                        <h2 className="text-2xl font-cinzel text-gold mb-6">Метрики AI</h2>
+                        <Grid columns={{ mobile: 2, tablet: 4 }} gap="6">
                             <div>
-                                <p className="text-sm text-silver/60 mb-2">Total Requests</p>
+                                <p className="text-sm text-silver/60 mb-2">Всего запросов</p>
                                 <p className="text-2xl font-bold text-gold">{aiPerformance.total_requests}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-silver/60 mb-2">Avg Response Time</p>
+                                <p className="text-sm text-silver/60 mb-2">Ср. время ответа</p>
                                 <p className="text-2xl font-bold text-turquoise">
                                     {aiPerformance.avg_response_time_ms || 0}ms
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-silver/60 mb-2">P95 Response Time</p>
+                                <p className="text-sm text-silver/60 mb-2">P95 время ответа</p>
                                 <p className="text-2xl font-bold text-purple">
                                     {aiPerformance.p95_response_time_ms || 0}ms
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-silver/60 mb-2">Total Tokens</p>
+                                <p className="text-sm text-silver/60 mb-2">Токенов всего</p>
                                 <p className="text-2xl font-bold text-silver">
                                     {aiPerformance.total_tokens_used.toLocaleString()}
                                 </p>
                             </div>
-                        </div>
-                    </div>
+                        </Grid>
+                    </Card>
                 )}
-
-                {/* Retention */}
-                {retention && retention.cohort_size > 0 && (
-                    <div className="glass rounded-xl p-6">
-                        <h2 className="text-2xl font-cinzel text-gold mb-6">User Retention</h2>
-                        <p className="text-sm text-silver/60 mb-4">
-                            Cohort: {new Date(retention.cohort_date).toLocaleDateString()} ({retention.cohort_size} users)
-                        </p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {retention.retention.map((week) => (
-                                <div key={week.week} className="border border-gold/20 rounded-lg p-4">
-                                    <p className="text-sm text-silver/60 mb-2">Week {week.week}</p>
-                                    <p className="text-3xl font-bold text-gold mb-1">
-                                        {week.retention_rate}%
-                                    </p>
-                                    <p className="text-xs text-silver/60">{week.active_users} active</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+            </Stack>
         </AdminLayout>
     );
 }

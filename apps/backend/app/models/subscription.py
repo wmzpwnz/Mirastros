@@ -1,8 +1,12 @@
 from sqlalchemy import Column, Integer, String, DateTime, Numeric, Enum as SQLEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 class SubscriptionStatus(str, enum.Enum):
     """Subscription status enum"""
@@ -50,8 +54,8 @@ class Subscription(Base):
     cancelled_at = Column(DateTime, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
     # Auto-renewal
     auto_renew = Column(String(10), default="true", nullable=False)  # "true" or "false" as string

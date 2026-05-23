@@ -3,11 +3,15 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import enum
 
 from app.core.database import Base
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class EntryType(str, enum.Enum):
@@ -31,9 +35,9 @@ class JournalEntry(Base):
     content = Column(Text, nullable=False)
     entry_type = Column(Enum(EntryType), nullable=False, default=EntryType.REFLECTION)
     tags = Column(JSON, nullable=True)  # Array of tags
-    metadata = Column(JSON, nullable=True)  # Additional metadata (e.g., related reading ID)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    entry_metadata = Column(JSON, nullable=True)  # Additional metadata (e.g., related reading ID)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
     # Relationship to User
     user = relationship("User", back_populates="journal_entries")

@@ -39,20 +39,32 @@ async def get_current_lunar_phase(
         if target_date is None:
             target_date = date.today()
         
-        # Check Redis cache
-        cache_key = f"lunar:phase:{target_date.isoformat()}"
+        # Calculate lunar phase to get Russian fallback
+        logger.info(f"Calculating lunar phase for {target_date}")
+        lunar_data = lunar_service.calculate_lunar_phase(
+            target_date,
+            include_next_events=True
+        )
+        phase = lunar_data["phase"]
+        
+        # ALWAYS use Russian fallback (never English)
+        description = lunar_data.get("description_fallback_ru", "")
+        if not description:
+            # Fallback: get directly from service if not in response
+            description = lunar_service.phase_descriptions.get(phase, "")
+        
+        # Check Redis cache (v3 - uses Russian descriptions + exact next moon dates)
+        cache_key = f"lunar:phase:v3:{target_date.isoformat()}"
         cached = await redis_client.get(cache_key)
         
         if cached:
-            logger.info(f"Returning cached lunar phase for {target_date}")
+            # Always replace description with Russian, even if cached
+            cached["description"] = description
+            logger.info(f"Returning cached lunar phase (with Russian description) for {target_date}")
             return LunarPhaseResponse(**cached)
-        
-        # Calculate lunar phase
-        logger.info(f"Calculating lunar phase for {target_date}")
-        lunar_data = lunar_service.calculate_lunar_phase(target_date)
-        
+
         response_data = {
-            "phase": lunar_data["phase"],
+            "phase": phase,
             "phase_name": lunar_data["phase_name"],
             "illumination": lunar_data["illumination"],
             "date": lunar_data["date"],
@@ -60,12 +72,12 @@ async def get_current_lunar_phase(
             "moon_degree": lunar_data["moon_degree"],
             "next_full_moon": lunar_data["next_full_moon"],
             "next_new_moon": lunar_data["next_new_moon"],
-            "description": lunar_data["description"]
+            "description": description,
         }
-        
-        # Cache for 6 hours
+
+        # Cache full response for 6 hours
         await redis_client.set(cache_key, response_data, ttl=21600)
-        
+
         return LunarPhaseResponse(**response_data)
         
     except Exception as e:

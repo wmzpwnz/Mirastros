@@ -1,31 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+'use client';
+
+import React, { useState } from 'react';
+import { ServiceSection } from './ServiceSection';
+import { DemoModal } from '../ui/DemoModal';
+import { HoroscopeQuickView } from '../interactive/HoroscopeQuickView';
 
 interface HoroscopeSectionProps {
     id?: string;
 }
 
-export const HoroscopeSection: React.FC<HoroscopeSectionProps> = ({ id }) => {
-    const [horoscope, setHoroscope] = useState<string>('Загрузка предсказания...');
-
-    useEffect(() => {
-        const fetchHoroscope = async () => {
-            const data = await api.getHoroscope('Aries');
-            setHoroscope(data.response);
-        };
-        fetchHoroscope();
-    }, []);
+export const HoroscopeSection = ({ id }: HoroscopeSectionProps) => {
+    const [showDemo, setShowDemo] = useState(false);
 
     return (
-        <section className="mira-section mira-horoscope" id={id}>
-            <div className="section-content">
-                <div className="section-layout">
-                    <span className="section-category">Гороскоп</span>
-                    <h2 className="section-title">Ежедневные прогнозы</h2>
-                    <p className="section-description">{horoscope}</p>
-                    <div className="section-icon-placeholder">♈</div>
-                </div>
-            </div>
-        </section>
+        <>
+            <ServiceSection
+                id={id}
+                badge="АСТРОЛОГИЯ"
+                title="Гороскоп"
+                description="Персональные прогнозы на основе вашего знака зодиака. Узнайте, что готовят для вас звезды."
+                media={{ webm: "/horo.webm", mp4: "/horo.mp4" }}
+                imageAlt="Гороскоп анимация"
+            />
+
+            <DemoModal
+                isOpen={showDemo}
+                onClose={() => setShowDemo(false)}
+                title="Гороскоп на сегодня"
+            >
+                <HoroscopeQuickView showRegisterPrompt={true} />
+            </DemoModal>
+        </>
     );
 };

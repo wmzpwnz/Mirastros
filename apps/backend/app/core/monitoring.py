@@ -26,33 +26,30 @@ logger = logging.getLogger(__name__)
 
 def init_sentry():
     """Initialize Sentry for error tracking"""
-    if not settings.SENTRY_DSN:
-        logger.warning("Sentry DSN not configured. Error tracking disabled.")
+    dsn = (settings.SENTRY_DSN or "").strip()
+    if not dsn or "your_" in dsn or "project_id" in dsn:
+        logger.warning("Sentry DSN not configured or placeholder. Error tracking disabled.")
         return
-    
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        environment=settings.ENVIRONMENT,
-        traces_sample_rate=0.1 if settings.ENVIRONMENT == 'production' else 1.0,
-        profiles_sample_rate=0.1 if settings.ENVIRONMENT == 'production' else 1.0,
-        integrations=[
-            FastApiIntegration(transaction_style="endpoint"),
-            SqlalchemyIntegration(),
-            RedisIntegration(),
-        ],
-        # Set release version
-        release=f"mirastros-backend@{settings.APP_VERSION}",
-        # Send PII (Personally Identifiable Information) - set to False in production
-        send_default_pii=False,
-        # Attach stack traces
-        attach_stacktrace=True,
-        # Max breadcrumbs
-        max_breadcrumbs=50,
-        # Before send callback to filter sensitive data
-        before_send=before_send_callback,
-    )
-    
-    logger.info(f"Sentry initialized for environment: {settings.ENVIRONMENT}")
+    try:
+        sentry_sdk.init(
+            dsn=dsn,
+            environment=settings.ENVIRONMENT,
+            traces_sample_rate=0.1 if settings.ENVIRONMENT == 'production' else 1.0,
+            profiles_sample_rate=0.1 if settings.ENVIRONMENT == 'production' else 1.0,
+            integrations=[
+                FastApiIntegration(transaction_style="endpoint"),
+                SqlalchemyIntegration(),
+                RedisIntegration(),
+            ],
+            release=f"mirastros-backend@{settings.APP_VERSION}",
+            send_default_pii=False,
+            attach_stacktrace=True,
+            max_breadcrumbs=50,
+            before_send=before_send_callback,
+        )
+        logger.info("Sentry initialized for environment: %s", settings.ENVIRONMENT)
+    except Exception as e:
+        logger.warning("Sentry init failed (invalid DSN?). Error tracking disabled: %s", e)
 
 
 def before_send_callback(event, hint):

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api';
 import type { User } from '../../types';
+import { PaymentModal } from '../../components/PaymentModal';
 
 interface SubscriptionPlan {
   id: string;
@@ -78,6 +79,19 @@ export default function SubscriptionPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [paymentModal, setPaymentModal] = useState<{
+    isOpen: boolean;
+    planId: string;
+    planName: string;
+    price: number;
+    currency: string;
+  }>({
+    isOpen: false,
+    planId: '',
+    planName: '',
+    price: 0,
+    currency: 'RUB',
+  });
 
   useEffect(() => {
     loadUser();
@@ -95,22 +109,34 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSubscribe = (planId: string) => {
     if (planId === 'freemium') {
       return;
     }
 
-    setProcessing(true);
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan) return;
 
+    setPaymentModal({
+      isOpen: true,
+      planId: plan.id,
+      planName: plan.name,
+      price: plan.price,
+      currency: 'RUB', // Default to RUB, can be changed based on user location
+    });
+  };
+
+  const handlePaymentSuccess = async () => {
+    // Reload user data to get updated subscription
     try {
-      // TODO: Implement subscription creation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert(`Подписка на ${planId} будет доступна в ближайшее время`);
+      const updatedUser = await api.getCurrentUser();
+      setUser(updatedUser);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+      router.push('/dashboard');
     } catch (error) {
-      console.error('Subscription error:', error);
-      alert('Ошибка при оформлении подписки');
-    } finally {
-      setProcessing(false);
+      console.error('Failed to reload user:', error);
     }
   };
 
@@ -286,6 +312,17 @@ export default function SubscriptionPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={paymentModal.isOpen}
+        onClose={() => setPaymentModal({ ...paymentModal, isOpen: false })}
+        planId={paymentModal.planId}
+        planName={paymentModal.planName}
+        price={paymentModal.price}
+        currency={paymentModal.currency}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }

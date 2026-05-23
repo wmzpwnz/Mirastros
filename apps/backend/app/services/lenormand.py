@@ -2,7 +2,7 @@
 
 import random
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data.lenormand import get_all_lenormand_cards, get_card_by_id
@@ -73,7 +73,7 @@ class LenormandService:
             "question": question,
             "cards": drawn_cards,
             "interpretation": interpretation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _draw_cards(self, spread_type: str) -> List[Dict]:

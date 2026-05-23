@@ -39,6 +39,11 @@
     "node_modules",
     "jest.config.ts",
     "jest.config.cts",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "src/test-setup.ts",
+    "src/test-utils.ts",
+    "src/components/preview/**",
     "**/*.spec.ts",
     "**/*.test.ts"
   ]

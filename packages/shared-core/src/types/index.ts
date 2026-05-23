@@ -13,6 +13,8 @@ export interface User {
   zodiacSign?: string;
   subscriptionTier: 'freemium' | 'premium' | 'platinum';
   subscriptionExpires?: string;
+  preferredLanguage: string;
+  timezone: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,10 +85,31 @@ export interface Horoscope {
   period: 'daily' | 'weekly' | 'monthly';
   date: string;
   prediction: string;
+  plainText?: string;
+  richText?: string;
+  language?: string;
+  periodRangeLabel?: string;
   luckyNumbers?: number[];
   luckyColors?: string[];
   compatibility?: string[];
   advice?: string;
+  bestTimeWindows?: string[];
+  ratings?: {
+    finance: number;
+    love: number;
+    career: number;
+    health: number;
+  };
+  explanations?: {
+    financeReason?: string;
+    loveReason?: string;
+    careerReason?: string;
+    healthReason?: string;
+  };
+  is_personalized?: boolean;
+  transit_data?: Record<string, unknown>;
+  clarify_available?: boolean;
+  horoscope_id?: string;
 }
 
 // AI Query

@@ -1,7 +1,7 @@
 """Lunar calendar service with phase calculations and activity recommendations"""
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, date, timedelta
-from kerykeion import AstrologicalSubject
+import swisseph as swe
 from sqlalchemy.ext.asyncio import AsyncSession
 import math
 import logging
@@ -25,8 +25,8 @@ class LunarService:
             "waning_crescent": "Waning Crescent"
         }
         
-        # Phase descriptions
-        self.phase_descriptions = {
+        # Phase descriptions (English) — source for DeepSeek translation
+        self.phase_descriptions_en = {
             "new_moon": "A time for new beginnings, setting intentions, and planting seeds for the future. Energy is introspective and focused on inner work.",
             "waxing_crescent": "Energy is building. Time to take action on your intentions, make plans, and start new projects. Momentum is increasing.",
             "first_quarter": "A time of challenges and decisions. Push through obstacles and take decisive action. Energy is dynamic and action-oriented.",
@@ -35,6 +35,17 @@ class LunarService:
             "waning_gibbous": "Gratitude and sharing phase. Share your harvest, teach others, and express gratitude. Energy is generous and reflective.",
             "last_quarter": "Time to release, let go, and clear space. Break old patterns and habits. Energy is transformative and cleansing.",
             "waning_crescent": "Rest and surrender phase. Release control, rest, and prepare for the new cycle. Energy is quiet and contemplative."
+        }
+        # Fallback Russian (used if DeepSeek translation fails or is disabled)
+        self.phase_descriptions = {
+            "new_moon": "Время новых начинаний, постановки намерений и закладки семян для будущего. Энергия интровертна и сосредоточена на внутренней работе.",
+            "waxing_crescent": "Энергия нарастает. Время действовать согласно вашим намерениям, строить планы и начинать новые проекты. Импульс увеличивается.",
+            "first_quarter": "Время вызовов и решений. Преодолевайте препятствия и принимайте решительные действия. Энергия динамична и ориентирована на действие.",
+            "waxing_gibbous": "Фаза уточнения и корректировки. Доработайте свои планы, внесите необходимые изменения и подготовьтесь к кульминации. Энергия продуктивна.",
+            "full_moon": "Пик энергии и озарения. Время для празднования, завершения и проявления. Эмоции обострены. Отпустите то, что больше не служит.",
+            "waning_gibbous": "Фаза благодарности и обмена. Поделитесь своим урожаем, учите других и выражайте благодарность. Энергия щедра и рефлексивна.",
+            "last_quarter": "Время отпускать, освобождаться и очищать пространство. Разрушайте старые паттерны и привычки. Энергия трансформативна и очищающая.",
+            "waning_crescent": "Фаза отдыха и сдачи. Отпустите контроль, отдохните и подготовьтесь к новому циклу. Энергия тиха и созерцательна."
         }
         
         # Activity recommendations by lunar phase
@@ -133,7 +144,11 @@ class LunarService:
             }
         }
     
-    def calculate_lunar_phase(self, target_date: date = None) -> Dict[str, Any]:
+    def calculate_lunar_phase(
+        self,
+        target_date: date = None,
+        include_next_events: bool = True
+    ) -> Dict[str, Any]:
         """
         Calculate current lunar phase and moon position
         
@@ -147,22 +162,18 @@ class LunarService:
             if target_date is None:
                 target_date = date.today()
             
-            # Create astrological subject for moon position
-            subject = AstrologicalSubject(
-                name="Moon",
-                year=target_date.year,
-                month=target_date.month,
-                day=target_date.day,
-                hour=12,
-                minute=0,
-                lat=0.0,
-                lng=0.0,
-                tz_str="UTC"
+            noon_utc = datetime(
+                target_date.year,
+                target_date.month,
+                target_date.day,
+                12,
+                0,
             )
-            
-            # Get Sun and Moon positions
-            sun_longitude = subject.sun.position
-            moon_longitude = subject.moon.position
+            jd = swe.julday(noon_utc.year, noon_utc.month, noon_utc.day, 12.0)
+
+            # Geocentric ecliptic longitudes
+            sun_longitude = swe.calc_ut(jd, swe.SUN)[0][0]
+            moon_longitude = swe.calc_ut(jd, swe.MOON)[0][0]
             
             # Calculate phase angle (0-360 degrees)
             phase_angle = (moon_longitude - sun_longitude) % 360
@@ -174,23 +185,52 @@ class LunarService:
             phase = self._get_phase_from_angle(phase_angle)
             
             # Get Moon's zodiac sign
-            moon_sign = subject.moon.sign
-            moon_degree = subject.moon.position % 30  # Degree within sign
+            zodiac_signs = [
+                "Aries",
+                "Taurus",
+                "Gemini",
+                "Cancer",
+                "Leo",
+                "Virgo",
+                "Libra",
+                "Scorpio",
+                "Sagittarius",
+                "Capricorn",
+                "Aquarius",
+                "Pisces",
+            ]
+            moon_sign = zodiac_signs[int(moon_longitude // 30) % 12]
+            moon_degree = moon_longitude % 30  # Degree within sign
             
-            # Calculate next full and new moons (approximate)
-            next_full_moon = self._calculate_next_full_moon(target_date)
-            next_new_moon = self._calculate_next_new_moon(target_date)
+            # Calculate next full and new moons
+            if include_next_events:
+                try:
+                    next_full_moon, next_new_moon = self._calculate_next_major_phase_dates(
+                        target_date
+                    )
+                except Exception as calc_err:
+                    logger.warning(
+                        "Falling back to approximate next moon dates for %s: %s",
+                        target_date,
+                        calc_err
+                    )
+                    next_full_moon = (target_date + timedelta(days=14)).isoformat()
+                    next_new_moon = (target_date + timedelta(days=29)).isoformat()
+            else:
+                next_full_moon = (target_date + timedelta(days=14)).isoformat()
+                next_new_moon = (target_date + timedelta(days=29)).isoformat()
             
             return {
                 "phase": phase,
                 "phase_name": self.phase_names[phase],
                 "illumination": round(illumination, 1),
-                "date": target_date,
+                "date": target_date.isoformat(),
                 "zodiac_sign": moon_sign,
                 "moon_degree": round(moon_degree, 2),
                 "next_full_moon": next_full_moon,
                 "next_new_moon": next_new_moon,
-                "description": self.phase_descriptions[phase]
+                "description": self.phase_descriptions_en[phase],
+                "description_fallback_ru": self.phase_descriptions[phase],
             }
             
         except Exception as e:
@@ -205,7 +245,8 @@ class LunarService:
                 "moon_degree": 0.0,
                 "next_full_moon": target_date + timedelta(days=14),
                 "next_new_moon": target_date + timedelta(days=29),
-                "description": self.phase_descriptions["new_moon"]
+                "description": self.phase_descriptions_en["new_moon"],
+                "description_fallback_ru": self.phase_descriptions["new_moon"],
             }
     
     def _get_phase_from_angle(self, angle: float) -> str:
@@ -226,33 +267,136 @@ class LunarService:
             return "last_quarter"
         else:  # 292.5 <= angle < 337.5
             return "waning_crescent"
-    
-    def _calculate_next_full_moon(self, from_date: date) -> date:
-        """Calculate approximate date of next full moon"""
-        # Lunar cycle is approximately 29.53 days
-        lunar_cycle = 29.53
-        
-        # Check next 30 days for full moon
-        for days_ahead in range(1, 31):
-            check_date = from_date + timedelta(days=days_ahead)
-            phase_data = self.calculate_lunar_phase(check_date)
-            if phase_data["phase"] == "full_moon":
-                return check_date
-        
-        # Fallback: approximate 14 days ahead
-        return from_date + timedelta(days=14)
-    
-    def _calculate_next_new_moon(self, from_date: date) -> date:
-        """Calculate approximate date of next new moon"""
-        # Check next 30 days for new moon
-        for days_ahead in range(1, 31):
-            check_date = from_date + timedelta(days=days_ahead)
-            phase_data = self.calculate_lunar_phase(check_date)
-            if phase_data["phase"] == "new_moon":
-                return check_date
-        
-        # Fallback: approximate 29 days ahead
-        return from_date + timedelta(days=29)
+
+    @staticmethod
+    def _signed_phase_distance(angle: float, target_angle: float) -> float:
+        """
+        Signed angular distance to target phase in range [-180, 180).
+        Negative => before target phase, positive => after target phase.
+        """
+        return ((angle - target_angle + 540.0) % 360.0) - 180.0
+
+    def _phase_angle_at(self, moment_utc: datetime) -> float:
+        """Calculate Sun-Moon phase angle for a specific UTC datetime."""
+        fractional_hour = (
+            moment_utc.hour
+            + moment_utc.minute / 60.0
+            + moment_utc.second / 3600.0
+        )
+        jd = swe.julday(
+            moment_utc.year,
+            moment_utc.month,
+            moment_utc.day,
+            fractional_hour,
+        )
+        sun_longitude = swe.calc_ut(jd, swe.SUN)[0][0]
+        moon_longitude = swe.calc_ut(jd, swe.MOON)[0][0]
+        return (moon_longitude - sun_longitude) % 360
+
+    def _bisect_phase_time(
+        self,
+        left: datetime,
+        right: datetime,
+        target_angle: float,
+        iterations: int = 18,
+    ) -> datetime:
+        """Refine phase event time inside a bracket via binary search."""
+        left_distance = self._signed_phase_distance(
+            self._phase_angle_at(left), target_angle
+        )
+        right_distance = self._signed_phase_distance(
+            self._phase_angle_at(right), target_angle
+        )
+
+        # Guard against unexpected non-bracketing intervals.
+        if left_distance > 0 and right_distance > 0:
+            return left
+        if left_distance < 0 and right_distance < 0:
+            return right
+
+        for _ in range(iterations):
+            mid = left + (right - left) / 2
+            mid_distance = self._signed_phase_distance(
+                self._phase_angle_at(mid), target_angle
+            )
+            if mid_distance >= 0:
+                right = mid
+            else:
+                left = mid
+
+        return right.replace(second=0, microsecond=0)
+
+    def _calculate_next_major_phase_dates(self, from_date: date) -> Tuple[str, str]:
+        """
+        Find exact dates (UTC) of the next full moon and next new moon
+        after `from_date`.
+        """
+        start_dt = datetime.combine(from_date, datetime.min.time())
+        search_end_dt = start_dt + timedelta(days=40)
+        step = timedelta(hours=2)
+
+        target_angles = {
+            "next_full_moon": 180.0,
+            "next_new_moon": 0.0,
+        }
+        found_times: Dict[str, Optional[datetime]] = {
+            "next_full_moon": None,
+            "next_new_moon": None,
+        }
+
+        prev_dt = start_dt
+        prev_angle = self._phase_angle_at(prev_dt)
+        prev_distance = {
+            key: self._signed_phase_distance(prev_angle, target_angle)
+            for key, target_angle in target_angles.items()
+        }
+
+        while prev_dt < search_end_dt and not all(found_times.values()):
+            curr_dt = prev_dt + step
+            curr_angle = self._phase_angle_at(curr_dt)
+
+            for key, target_angle in target_angles.items():
+                if found_times[key] is not None:
+                    continue
+
+                prev_d = prev_distance[key]
+                curr_d = self._signed_phase_distance(curr_angle, target_angle)
+
+                crossed_target = prev_d < 0 <= curr_d
+                hit_target = abs(curr_d) < 1e-9
+
+                if crossed_target or hit_target:
+                    left = prev_dt
+                    right = curr_dt
+                    found_times[key] = self._bisect_phase_time(
+                        left=left,
+                        right=right,
+                        target_angle=target_angle,
+                    )
+
+                prev_distance[key] = curr_d
+
+            prev_dt = curr_dt
+
+        if found_times["next_full_moon"] is None:
+            found_times["next_full_moon"] = start_dt + timedelta(days=14)
+        if found_times["next_new_moon"] is None:
+            found_times["next_new_moon"] = start_dt + timedelta(days=29)
+
+        return (
+            found_times["next_full_moon"].date().isoformat(),
+            found_times["next_new_moon"].date().isoformat(),
+        )
+
+    def _calculate_next_full_moon(self, from_date: date) -> str:
+        """Calculate exact date (UTC) of next full moon."""
+        next_full_moon, _ = self._calculate_next_major_phase_dates(from_date)
+        return next_full_moon
+
+    def _calculate_next_new_moon(self, from_date: date) -> str:
+        """Calculate exact date (UTC) of next new moon."""
+        _, next_new_moon = self._calculate_next_major_phase_dates(from_date)
+        return next_new_moon
     
     def generate_activity_recommendations(
         self,
@@ -274,7 +418,10 @@ class LunarService:
                 target_date = date.today()
             
             # Get lunar phase data
-            lunar_data = self.calculate_lunar_phase(target_date)
+            lunar_data = self.calculate_lunar_phase(
+                target_date,
+                include_next_events=False
+            )
             phase = lunar_data["phase"]
             moon_sign = lunar_data["zodiac_sign"]
             
@@ -486,7 +633,7 @@ class LunarService:
     
     def _generate_general_advice(self, phase: str, moon_sign: str, lunar_data: Dict) -> str:
         """Generate general advice for the day"""
-        phase_desc = self.phase_descriptions[phase]
+        phase_desc = self.phase_descriptions_en[phase]
         illumination = lunar_data["illumination"]
         
         advice = f"Today the Moon is in {moon_sign} during the {self.phase_names[phase]} phase ({illumination:.0f}% illuminated). "
@@ -553,7 +700,10 @@ class LunarService:
             
             for day_offset in range(days):
                 current_date = start_date + timedelta(days=day_offset)
-                lunar_data = self.calculate_lunar_phase(current_date)
+                lunar_data = self.calculate_lunar_phase(
+                    current_date,
+                    include_next_events=False
+                )
                 
                 # Get activity recommendations
                 recs = self.generate_activity_recommendations(current_date)

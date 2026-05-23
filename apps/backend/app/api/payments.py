@@ -2,11 +2,13 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 from typing import Optional
 import json
 
 from app.core.deps import get_db, get_current_user
 from app.models.user import User
+from app.models.order import Order
 from app.services.payment import PaymentService
 from app.services.shop import ShopService
 from app.schemas.payment import (
@@ -85,17 +87,22 @@ async def create_payment(
             }
         )
         
-        # Update order with payment info
-        if payment_request.payment_method == "yookassa":
-            payment_id = payment_data.get("id")
-            confirmation_url = payment_data.get("confirmation", {}).get("confirmation_url")
-            
-            # Update order
-            order_result = await db.execute(
-                f"UPDATE orders SET payment_method = '{payment_request.payment_method}', "
-                f"payment_id = '{payment_id}' WHERE id = '{payment_request.order_id}'"
+        # Update order with payment info using parameterized query
+        payment_id = payment_data.get("id")
+        
+        # Use SQLAlchemy update() to prevent SQL injection
+        await db.execute(
+            update(Order)
+            .where(Order.id == payment_request.order_id)
+            .values(
+                payment_method=payment_request.payment_method,
+                payment_id=payment_id
             )
-            await db.commit()
+        )
+        await db.commit()
+        
+        if payment_request.payment_method == "yookassa":
+            confirmation_url = payment_data.get("confirmation", {}).get("confirmation_url")
             
             return PaymentResponse(
                 payment_id=payment_id,
@@ -106,15 +113,7 @@ async def create_payment(
             )
         
         elif payment_request.payment_method == "stripe":
-            payment_id = payment_data.get("id")
             client_secret = payment_data.get("client_secret")
-            
-            # Update order
-            order_result = await db.execute(
-                f"UPDATE orders SET payment_method = '{payment_request.payment_method}', "
-                f"payment_id = '{payment_id}' WHERE id = '{payment_request.order_id}'"
-            )
-            await db.commit()
             
             return PaymentResponse(
                 payment_id=payment_id,

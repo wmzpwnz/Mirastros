@@ -2,8 +2,15 @@
   "name": "@mirastros-universal/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "start": "bash start-local.sh",
+    "run": "bash start-local.sh",
+    "dev": "bash start-local.sh"
+  },
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@expo/cli": "~0.18.29",
@@ -22,11 +29,13 @@
     "@swc/helpers": "~0.5.11",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.13",
     "babel-preset-expo": "~11.0.0",
+    "critters": "^0.0.25",
     "eslint": "^9.8.0",
     "eslint-config-next": "14.2.15",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-react": "7.32.2",
@@ -39,7 +48,8 @@
     "tailwindcss": "^3.4.3",
     "tslib": "^2.3.0",
     "typescript": "~5.5.2",
-    "typescript-eslint": "^8.0.0"
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@expo/metro-config": "~0.18.11",
@@ -47,7 +57,9 @@
     "@react-three/drei": "^9.105.6",
     "@react-three/fiber": "^8.16.6",
     "@studio-freight/lenis": "^1.0.42",
+    "@twa-dev/sdk": "^7.0.0",
     "@types/three": "^0.164.0",
+    "@vkontakte/vk-bridge": "^2.11.2",
     "expo": "~51.0.28",
     "expo-splash-screen": "~0.27.5",
     "expo-status-bar": "~1.12.1",
@@ -64,6 +76,7 @@
     "react-native-svg": "15.2.0",
     "react-native-svg-transformer": "1.3.0",
     "react-native-web": "~0.19.10",
+    "splitting": "^1.0.6",
     "three": "^0.164.1"
   }
 }

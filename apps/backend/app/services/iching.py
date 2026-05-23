@@ -2,12 +2,13 @@
 
 import random
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data.iching import get_all_hexagrams, get_hexagram_by_number, get_hexagram_by_binary
 from app.services.llm import UnifiedLLMService
 from app.services.rag import RAGService
+from app.services.astro_context import merge_astro_context
 from app.models.iching_consultation import IChingConsultation
 
 
@@ -54,7 +55,8 @@ class IChingService:
             primary_hexagram=primary_hexagram,
             changing_lines=changing_lines,
             resulting_hexagram=resulting_hexagram,
-            user_context=user_context
+            user_context=user_context,
+            user_id=user_id
         )
         
         # Save consultation to database if user_id provided
@@ -81,7 +83,7 @@ class IChingService:
             "changing_lines": changing_lines,
             "resulting_hexagram": resulting_hexagram,
             "interpretation": interpretation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _cast_hexagram(self, method: str) -> tuple:
@@ -194,7 +196,8 @@ class IChingService:
         primary_hexagram: Dict,
         changing_lines: List[int],
         resulting_hexagram: Optional[Dict],
-        user_context: Optional[Dict]
+        user_context: Optional[Dict],
+        user_id: Optional[str] = None
     ) -> str:
         """Generate AI interpretation of the I Ching consultation"""
         
@@ -206,6 +209,10 @@ class IChingService:
             query=rag_query,
             category="iching"
         )
+        
+        # Merge with user's astro context if user_id is provided
+        if user_id:
+            rag_context = await merge_astro_context(db, user_id, rag_context)
         
         # Build prompt for AI
         prompt = self._build_interpretation_prompt(

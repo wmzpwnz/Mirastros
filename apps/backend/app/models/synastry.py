@@ -1,10 +1,14 @@
 """Synastry (compatibility) database model"""
 from sqlalchemy import Column, String, JSON, DateTime, Float
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.database import Base
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class Synastry(Base):
@@ -33,7 +37,7 @@ class Synastry(Base):
     challenges = Column(JSON, nullable=True)  # List of relationship challenges
     advice = Column(String, nullable=True)
     
-    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    calculated_at = Column(DateTime, default=_utc_now, nullable=False)
     
     def __repr__(self):
         return f"<Synastry {self.person1_name} & {self.person2_name}>"

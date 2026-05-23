@@ -1,4 +1,5 @@
 import React from 'react';
+import { ServiceSection } from './ServiceSection';
 
 interface NatalSectionProps {
     id?: string;
@@ -6,15 +7,13 @@ interface NatalSectionProps {
 
 export const NatalSection: React.FC<NatalSectionProps> = ({ id }) => {
     return (
-        <section className="mira-section mira-natal" id={id}>
-            <div className="section-content">
-                <div className="section-layout">
-                    <span className="section-category">Натальная карта</span>
-                    <h2 className="section-title">Астрологический анализ</h2>
-                    <p className="section-description">Детальный анализ вашей натальной карты</p>
-                    <div className="section-icon-placeholder">⭐</div>
-                </div>
-            </div>
-        </section>
+        <ServiceSection
+            id={id}
+            badge="Астрологический анализ"
+            title="Натальная карта"
+            description="Детальный анализ вашей натальной карты. Узнайте о влиянии планет в момент вашего рождения."
+            media={{ webm: "/natal.webm", mp4: "/natal.mp4" }}
+            imageAlt="Натальная карта анимация"
+        />
     );
 };

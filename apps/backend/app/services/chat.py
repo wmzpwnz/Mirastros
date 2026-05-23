@@ -2,7 +2,7 @@
 
 import json
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
@@ -127,7 +127,7 @@ class ChatService:
             db.add(ai_message)
             
             # Update conversation timestamp
-            conversation.updated_at = datetime.utcnow()
+            conversation.updated_at = datetime.now(timezone.utc)
             
             await db.commit()
             await db.refresh(ai_message)
@@ -197,7 +197,7 @@ class ChatService:
             db.add(ai_message)
             
             # Update conversation timestamp
-            conversation.updated_at = datetime.utcnow()
+            conversation.updated_at = datetime.now(timezone.utc)
             
             await db.commit()
             await db.refresh(ai_message)

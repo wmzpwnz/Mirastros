@@ -14,8 +14,21 @@ from app.schemas.social_auth import (
     AccountLinkRequest
 )
 from app.services.social_auth import social_auth_service
+from app.services.social_auth import SocialAuthError, SocialAuthProviderDisabled
 
 router = APIRouter(prefix="/auth/social", tags=["Social Authentication"])
+
+
+def _social_auth_http_error(exc: SocialAuthError) -> HTTPException:
+    if isinstance(exc, SocialAuthProviderDisabled):
+        return HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail=str(exc)
+        )
+    return HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=str(exc)
+    )
 
 
 @router.post("/google", response_model=AuthResponse)
@@ -31,6 +44,11 @@ async def google_login(
     2. Existing user with same email -> Link Google account and login
     3. New user -> Create account and login
     """
+    try:
+        google_data = await social_auth_service.verify_google(google_data)
+    except SocialAuthError as e:
+        raise _social_auth_http_error(e)
+
     # Try to merge or link account
     user, is_new = await social_auth_service.merge_or_link_account(
         db, "google", google_data.google_id, google_data.email
@@ -64,6 +82,11 @@ async def apple_login(
     2. Existing user with same email (if provided) -> Link Apple account and login
     3. New user -> Create account and login
     """
+    try:
+        apple_data = await social_auth_service.verify_apple(apple_data)
+    except SocialAuthError as e:
+        raise _social_auth_http_error(e)
+
     # Try to merge or link account
     user, is_new = await social_auth_service.merge_or_link_account(
         db, "apple", apple_data.apple_id, apple_data.email
@@ -98,6 +121,11 @@ async def telegram_login(
     
     Note: Telegram doesn't provide email, so account merging is not possible
     """
+    try:
+        telegram_data = await social_auth_service.verify_telegram(telegram_data)
+    except SocialAuthError as e:
+        raise _social_auth_http_error(e)
+
     # Try to find existing user
     user = await social_auth_service.find_user_by_social_id(
         db, "telegram", telegram_data.telegram_id
@@ -131,6 +159,11 @@ async def vk_login(
     2. Existing user with same email (if provided) -> Link VK account and login
     3. New user -> Create account and login
     """
+    try:
+        vk_data = await social_auth_service.verify_vk(vk_data)
+    except SocialAuthError as e:
+        raise _social_auth_http_error(e)
+
     # Try to merge or link account
     user, is_new = await social_auth_service.merge_or_link_account(
         db, "vk", vk_data.vk_id, vk_data.email
@@ -163,18 +196,18 @@ async def link_social_account(
     This allows users to add multiple login methods to their account
     """
     try:
+        verified_profile = await social_auth_service.verify_link_request(link_request)
         updated_user = await social_auth_service.link_social_account(
             db,
             current_user,
-            link_request.provider,
-            link_request.provider_id
+            verified_profile.provider,
+            verified_profile.provider_id
         )
         return UserResponse.model_validate(updated_user)
+    except SocialAuthError as e:
+        raise _social_auth_http_error(e)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/unlink/{provider}", response_model=UserResponse)

@@ -1,0 +1,109 @@
+/* Accessibility utilities */
+
+/* Focus visible styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #ffc107;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #ffc107;
+  color: #050505;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  body {
+    border: 1px solid #f3f4f6;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+}
+
+/* Forced colors mode support */
+@media (forced-colors: active) {
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* Focus within for form groups */
+.form-group:focus-within label {
+  color: #ffc107;
+}
+
+/* Error state accessibility */
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Success state accessibility */
+.success-message {
+  color: #10b981;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Warning state accessibility */
+.warning-message {
+  color: #f59e0b;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Info state accessibility */
+.info-message {
+  color: #3b82f6;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

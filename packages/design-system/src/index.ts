@@ -2,7 +2,6 @@
  * Design System Exports
  */
 
-export * from './colors';
-export * from './typography';
-export * from './animations';
+export * from './tokens';
 export * from './components';
+export * from './types';

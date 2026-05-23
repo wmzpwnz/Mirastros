@@ -1,0 +1,301 @@
+/* Constellation Form (premium minimal + wow)
+   Used by auth pages only. */
+
+:root {
+  --cf-gold: rgba(212, 175, 55, 1);
+  --cf-gold-dim: rgba(190, 143, 68, 0.8);
+  --cf-border: rgba(255, 255, 255, 0.10);
+  --cf-field: rgba(255, 255, 255, 0.06);
+  --cf-field-border: rgba(255, 255, 255, 0.16);
+  --cf-muted: rgba(255, 255, 255, 0.64);
+}
+
+.cf-shell {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(212, 175, 55, 0.10), transparent 55%),
+    radial-gradient(circle at 12% 82%, rgba(190, 143, 68, 0.10), transparent 60%),
+    #000;
+}
+
+.cf-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cf-ambient::before,
+.cf-ambient::after {
+  content: '';
+  position: absolute;
+  width: 52vmax;
+  height: 52vmax;
+  border-radius: 999px;
+  filter: blur(150px);
+  opacity: 0.20;
+}
+
+.cf-ambient::before {
+  top: -20vmax;
+  left: -20vmax;
+  background: rgba(212, 175, 55, 0.65);
+}
+
+.cf-ambient::after {
+  bottom: -20vmax;
+  right: -20vmax;
+  background: rgba(190, 143, 68, 0.55);
+}
+
+.cf-card {
+  position: relative;
+  width: min(92vw, 480px);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.46), rgba(0,0,0,0.30));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 26px 120px rgba(0, 0, 0, 0.68),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.cf-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background:
+    conic-gradient(
+      from 225deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(212, 175, 55, 0.30),
+      rgba(255, 255, 255, 0.04),
+      rgba(190, 143, 68, 0.34),
+      rgba(255, 255, 255, 0.05)
+    );
+  opacity: 0.65;
+  filter: blur(0.6px);
+  pointer-events: none;
+}
+
+.cf-card__inner {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+}
+
+.cf-title {
+  font-family: var(--font-cinzel), 'Cinzel', serif;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.01em;
+}
+
+.cf-subtitle {
+  color: var(--cf-muted);
+}
+
+.cf-input {
+  background: var(--cf-field) !important;
+  border: 1px solid var(--cf-field-border) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28) inset;
+}
+
+.cf-input:focus {
+  outline: none !important;
+  border-color: rgba(212, 175, 55, 0.55) !important;
+  box-shadow:
+    0 0 0 3px rgba(212, 175, 55, 0.16),
+    0 0 34px rgba(212, 175, 55, 0.10);
+}
+
+.cf-field {
+  position: relative;
+}
+
+/* Subtle constellation underline on focus */
+.cf-field::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -10px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.95), transparent);
+  background-size: 200% 100%;
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+}
+
+.cf-field:focus-within::after {
+  opacity: 1;
+  transform: translateY(0);
+  animation: cf-spark 1.1s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.30));
+}
+
+/* Constellation overlay */
+.cf-constellation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cf-constellation svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cf-line {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.cf-line--active {
+  stroke: rgba(212, 175, 55, 0.65);
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.25));
+}
+
+.cf-star {
+  fill: rgba(255, 255, 255, 0.22);
+  transition: fill 180ms ease, transform 180ms ease, opacity 180ms ease;
+}
+
+.cf-star--active {
+  fill: rgba(212, 175, 55, 0.95);
+  filter: drop-shadow(0 0 14px rgba(212, 175, 55, 0.35));
+}
+
+.cf-star--dim {
+  fill: rgba(255, 255, 255, 0.10);
+  opacity: 0.55;
+}
+
+/* Active field -> highlight matching star */
+.cf-card[data-active="email"] .cf-star-email,
+.cf-card[data-active="fullName"] .cf-star-fullName,
+.cf-card[data-active="password"] .cf-star-password,
+.cf-card[data-active="confirmPassword"] .cf-star-confirmPassword,
+.cf-card[data-active="birthDate"] .cf-star-birthDate,
+.cf-card[data-active="birthTime"] .cf-star-birthTime,
+.cf-card[data-active="birthCity"] .cf-star-birthCity {
+  fill: rgba(212, 175, 55, 0.95);
+  filter: drop-shadow(0 0 14px rgba(212, 175, 55, 0.35));
+  transform: scale(1.12);
+}
+
+.cf-card[data-step="1"] .cf-constellation--step2,
+.cf-card[data-step="2"] .cf-constellation--step1 {
+  opacity: 0;
+}
+
+.cf-constellation--step1,
+.cf-constellation--step2 {
+  transition: opacity 260ms ease;
+}
+
+/* Two-node progress constellation */
+.cf-progress {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0.9rem 0 1.2rem;
+}
+
+.cf-progress__node {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.10);
+}
+
+.cf-progress__line {
+  width: 64px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  position: relative;
+  overflow: hidden;
+}
+
+.cf-progress__line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.95));
+  transition: width 520ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.cf-card[data-step="1"] .cf-progress__node--1 {
+  background: rgba(212, 175, 55, 0.95);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+}
+
+.cf-card[data-step="2"] .cf-progress__node--1,
+.cf-card[data-step="2"] .cf-progress__node--2 {
+  background: rgba(212, 175, 55, 0.95);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+}
+
+.cf-card[data-step="2"] .cf-progress__line::after {
+  width: 100%;
+}
+
+/* Error meteor */
+.cf-card[data-error="true"]::after {
+  content: '';
+  position: absolute;
+  left: -30%;
+  top: 20%;
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 60, 90, 0.95), transparent);
+  filter: drop-shadow(0 0 16px rgba(255, 60, 90, 0.35));
+  transform: rotate(16deg);
+  animation: cf-meteor 620ms ease-out 1;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes cf-spark {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes cf-meteor {
+  from { transform: translateX(-40%) rotate(16deg); opacity: 0.0; }
+  25% { opacity: 1; }
+  to { transform: translateX(140%) rotate(16deg); opacity: 0.0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-field:focus-within::after {
+    animation: none !important;
+  }
+  .cf-card[data-error="true"]::after {
+    animation: none !important;
+  }
+  .cf-progress__line::after {
+    transition: none !important;
+  }
+}
+

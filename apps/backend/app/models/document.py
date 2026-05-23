@@ -1,8 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float
 from sqlalchemy.dialects.postgresql import ARRAY
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 from pgvector.sqlalchemy import Vector
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 class Document(Base):
     """RAG Document storage"""
@@ -13,8 +17,8 @@ class Document(Base):
     content = Column(Text, nullable=False)
     source = Column(String(255))
     category = Column(String(100))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now)
 
 class DocumentChunk(Base):
     """Chunked documents with embeddings"""
@@ -25,7 +29,7 @@ class DocumentChunk(Base):
     chunk_text = Column(Text, nullable=False)
     chunk_index = Column(Integer, nullable=False)
     embedding = Column(Vector(384))  # all-MiniLM-L6-v2 produces 384-dim vectors
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
 class UserQuery(Base):
     """User query history"""
@@ -36,4 +40,4 @@ class UserQuery(Base):
     query = Column(Text, nullable=False)
     response = Column(Text)
     service_type = Column(String(50))  # horoscope, tarot, natal
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)

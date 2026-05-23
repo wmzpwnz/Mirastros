@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_active_user
 from app.models.user import User, SubscriptionTier
-from app.models.subscription import PaymentMethod
 from app.models.analytics_event import EventType
 from app.services.analytics import AnalyticsService
 from app.schemas.subscription import (
@@ -57,11 +56,6 @@ async def create_subscription(
             subscription_data.payment_method,
             subscription_data.billing_period
         )
-        
-        # In a real implementation, you would:
-        # 1. Create payment intent with Stripe/YooKassa/etc.
-        # 2. Return client_secret or payment_url
-        # For now, return placeholder
         
         return PaymentIntentResponse(
             subscription_id=str(subscription.id),
@@ -174,7 +168,6 @@ async def upgrade_subscription(
             }
         )
         
-        # In a real implementation, create payment intent for upgrade
         return PaymentIntentResponse(
             subscription_id=str(new_subscription.id),
             payment_url=f"/payment/complete/{new_subscription.id}"  # Placeholder
@@ -185,64 +178,6 @@ async def upgrade_subscription(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-
-
-@router.post("/activate/{subscription_id}", response_model=SubscriptionResponse)
-async def activate_subscription(
-    subscription_id: str,
-    external_payment_id: str = None,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Activate a pending subscription after successful payment
-    
-    This endpoint should be called by payment webhooks or after payment confirmation.
-    In production, this should be protected and only callable by payment providers.
-    """
-    from sqlalchemy import select
-    from app.models.subscription import Subscription
-    import uuid
-    
-    # Get subscription
-    result = await db.execute(
-        select(Subscription).where(Subscription.id == uuid.UUID(subscription_id))
-    )
-    subscription = result.scalar_one_or_none()
-    
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscription not found"
-        )
-    
-    # Verify subscription belongs to current user
-    if subscription.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to activate this subscription"
-        )
-    
-    # Activate subscription
-    activated_subscription, updated_user = await subscription_service.activate_subscription(
-        db,
-        subscription,
-        external_payment_id
-    )
-    
-    # Track subscription creation event
-    await AnalyticsService.track_event(
-        db=db,
-        event_type=EventType.SUBSCRIPTION_CREATED,
-        user_id=current_user.id,
-        metadata={
-            "tier": activated_subscription.tier.value,
-            "billing_period": activated_subscription.billing_period,
-            "amount": float(activated_subscription.amount)
-        }
-    )
-    
-    return SubscriptionResponse.model_validate(activated_subscription)
 
 
 @router.get("/pricing")

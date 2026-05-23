@@ -2,7 +2,7 @@
 
 import re
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from collections import Counter
@@ -10,6 +10,7 @@ from collections import Counter
 from app.data.dream_dictionary import get_all_symbols, search_symbols
 from app.services.llm import UnifiedLLMService
 from app.services.rag import RAGService
+from app.services.astro_context import merge_astro_context
 from app.models.dream_interpretation import DreamInterpretation
 
 
@@ -48,7 +49,8 @@ class DreamService:
             db=db,
             dream_description=dream_description,
             identified_symbols=identified_symbols,
-            user_context=user_context
+            user_context=user_context,
+            user_id=user_id
         )
         
         # Store in database if user_id is provided
@@ -70,7 +72,7 @@ class DreamService:
             "interpretation": interpretation_data["interpretation"],
             "themes": interpretation_data["themes"],
             "emotions": interpretation_data["emotions"],
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _identify_symbols(self, dream_description: str) -> List[Dict]:
@@ -96,7 +98,8 @@ class DreamService:
         db: AsyncSession,
         dream_description: str,
         identified_symbols: List[Dict],
-        user_context: Optional[Dict]
+        user_context: Optional[Dict],
+        user_id: Optional[str] = None
     ) -> Dict:
         """Generate AI interpretation of the dream"""
         
@@ -107,6 +110,10 @@ class DreamService:
             query=rag_query,
             category="dreams"
         )
+        
+        # Merge with user's astro context if user_id is provided
+        if user_id:
+            rag_context = await merge_astro_context(db, user_id, rag_context)
         
         # Build prompt for AI
         prompt = self._build_interpretation_prompt(
@@ -249,27 +256,34 @@ class DreamService:
         offset: int = 0
     ) -> List[Dict]:
         """Get user's dream journal history"""
-        result = await db.execute(
-            select(DreamInterpretation)
-            .where(DreamInterpretation.user_id == user_id)
-            .order_by(DreamInterpretation.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-        dreams = result.scalars().all()
-        
-        return [
-            {
-                "id": str(dream.id),
-                "dream_description": dream.dream_description,
-                "symbols": dream.symbols,
-                "interpretation": dream.interpretation,
-                "themes": dream.themes,
-                "emotions": dream.emotions,
-                "created_at": dream.created_at.isoformat()
-            }
-            for dream in dreams
-        ]
+        try:
+            result = await db.execute(
+                select(DreamInterpretation)
+                .where(DreamInterpretation.user_id == user_id)
+                .order_by(DreamInterpretation.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            dreams = result.scalars().all()
+            
+            return [
+                {
+                    "id": str(dream.id),
+                    "dream_description": dream.dream_description or "",
+                    "description": dream.dream_description or "",  # Alias for compatibility
+                    "symbols": dream.symbols or [],
+                    "interpretation": dream.interpretation or "",
+                    "themes": dream.themes or [],
+                    "emotions": dream.emotions or [],
+                    "created_at": dream.created_at.isoformat() if dream.created_at else None,
+                    "timestamp": dream.created_at.isoformat() if dream.created_at else None
+                }
+                for dream in dreams
+            ]
+        except Exception as e:
+            # Log error and return empty list
+            print(f"Error getting dream history: {str(e)}")
+            return []
     
     async def analyze_dream_patterns(
         self,
@@ -317,7 +331,8 @@ class DreamService:
             symbol_counts=symbol_counts,
             theme_counts=theme_counts,
             emotion_counts=emotion_counts,
-            total_dreams=len(dreams)
+            total_dreams=len(dreams),
+            user_id=user_id
         )
         
         return {
@@ -333,7 +348,8 @@ class DreamService:
         symbol_counts: List,
         theme_counts: List,
         emotion_counts: List,
-        total_dreams: int
+        total_dreams: int,
+        user_id: Optional[str] = None
     ) -> str:
         """Generate AI insights about dream patterns"""
         
@@ -367,9 +383,14 @@ class DreamService:
         prompt += "4. Suggest what the unconscious mind is trying to communicate\n\n"
         prompt += "Insights:"
         
+        # Merge with user's astro context if user_id is provided
+        context = ""
+        if user_id:
+            context = await merge_astro_context(db, user_id, context)
+        
         insights = await self.llm_service.generate(
             prompt=prompt,
-            context="",
+            context=context,
             max_tokens=800,
             temperature=0.7
         )

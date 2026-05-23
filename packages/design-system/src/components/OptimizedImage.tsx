@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Optimized Image component with lazy loading and blur placeholder
  */

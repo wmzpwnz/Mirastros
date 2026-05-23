@@ -3,113 +3,221 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
+import { ClarifyButton } from '../../../components/ClarifyButton';
+import { DataForm } from '../../../components/ui/DataForm';
+import { ResultCard } from '../../../components/ui/ResultCard';
+import { ResultText } from '../../../components/ui/ResultText';
+import { ResultActions } from '../../../components/ui/ResultActions';
+import { ErrorDisplay } from '../../../components/ui/ErrorDisplay';
 
 export default function KarmicPage() {
-  const [birthDate, setBirthDate] = useState('');
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [birthData, setBirthData] = useState({
+    name: '',
+    birthDate: '',
+    birthTime: '',
+    birthLocation: '',
+  });
+  const [karmicAnalysis, setKarmicAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleAnalyze = async () => {
+  const handleRevealKarmicLessons = async () => {
+    setError('');
+
+    // Validate all required fields
+    if (
+      !birthData.name ||
+      !birthData.birthDate ||
+      !birthData.birthTime ||
+      !birthData.birthLocation
+    ) {
+      setError('Пожалуйста, заполните все поля');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const result = await api.analyzeKarmicTasks();
-      setAnalysis(result);
+      const result = await api.getKarmicLessons(birthData);
+      setKarmicAnalysis({
+        ...result,
+        birthData,
+      });
     } catch (err: any) {
-      console.error('Error analyzing karmic tasks:', err);
+      setError(err.message || 'Ошибка при получении кармических уроков');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleNewAnalysis = () => {
+    setKarmicAnalysis(null);
+    setBirthData({
+      name: '',
+      birthDate: '',
+      birthTime: '',
+      birthLocation: '',
+    });
+    setError('');
+  };
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="mb-12 text-center">
-          <Link href="/dashboard" className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition">
+          <Link
+            href="/dashboard"
+            className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition"
+          >
             ← Назад к панели
           </Link>
-          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">Кармические задачи</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">Анализ лунных узлов и предназначения души</p>
+          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">
+            Кармические уроки
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Понимание вашего духовного пути и личностного роста
+          </p>
         </div>
 
-        {!analysis ? (
+        {!karmicAnalysis ? (
           <>
+            {/* Karmic Analysis Input */}
             <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
-              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">Данные для анализа</h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Дата рождения *</label>
-                  <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-                </div>
-                <button onClick={handleAnalyze} disabled={loading || !birthDate}
-                  className="w-full py-4 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition disabled:opacity-50 text-lg">
-                  {loading ? 'Анализ кармы...' : 'Узнать кармические задачи'}
-                </button>
-              </div>
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Данные для анализа
+              </h2>
+
+              <DataForm
+                data={birthData}
+                onChange={setBirthData}
+                onSubmit={handleRevealKarmicLessons}
+                loading={loading}
+                error={error}
+                submitButtonText="Раскрыть кармические уроки"
+              />
             </div>
 
+            {/* Info */}
             <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-              <h3 className="font-cinzel text-lg font-bold text-white mb-3">О кармических задачах</h3>
+              <h3 className="font-cinzel text-lg font-bold text-white mb-3">
+                О кармических уроках
+              </h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Лунные узлы в натальной карте показывают кармический путь души. Южный узел — это опыт прошлых жизней, 
-                Северный узел — направление развития в этой жизни. Понимание кармических задач помогает реализовать предназначение.
+                Кармические уроки — это духовные задачи и вызовы, которые вы пришли решить в этой жизни.
+                Они показывают области личностного роста и развития, которые необходимы для вашей эволюции.
+                Введите ваши данные рождения для анализа.
               </p>
             </div>
           </>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-8">
-            <h2 className="font-cinzel text-2xl font-bold text-white mb-6">Ваш кармический путь</h2>
+          <>
+            {/* Karmic Analysis Result */}
+            <div className="mb-8">
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Ваши кармические уроки
+              </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">☊</span>
-                  <h3 className="font-cinzel text-xl font-bold text-white">Северный узел</h3>
+              {/* User Info */}
+              <ResultCard
+                title="Ваши данные"
+                content={
+                  <div className="text-sm text-gray-300">
+                    <p>
+                      <span className="text-gray-400">Имя:</span> {karmicAnalysis.birthData.name}
+                    </p>
+                    <p>
+                      <span className="text-gray-400">Дата рождения:</span>{' '}
+                      {karmicAnalysis.birthData.birthDate}
+                    </p>
+                  </div>
+                }
+                className="mb-6"
+              />
+
+              {/* Primary Lessons */}
+              {karmicAnalysis.primaryLessons && karmicAnalysis.primaryLessons.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-cinzel text-lg font-bold text-white mb-4">
+                    Основные кармические уроки
+                  </h3>
+                  <div className="space-y-3">
+                    {karmicAnalysis.primaryLessons.map((lesson: any, i: number) => (
+                      <div
+                        key={i}
+                        className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4"
+                      >
+                        <h4 className="font-semibold text-white mb-2">{lesson.title}</h4>
+                        <p className="text-gray-300 text-sm">{lesson.description}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-mirastros-gold font-semibold mb-2">{analysis.northNode.sign} в {analysis.northNode.house} доме</p>
-                <p className="text-gray-300 text-sm">{analysis.northNode.meaning}</p>
-              </div>
+              )}
 
-              <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">☋</span>
-                  <h3 className="font-cinzel text-xl font-bold text-white">Южный узел</h3>
-                </div>
-                <p className="text-white font-semibold mb-2">{analysis.southNode.sign} в {analysis.southNode.house} доме</p>
-                <p className="text-gray-300 text-sm">{analysis.southNode.meaning}</p>
-              </div>
+              {/* Growth Areas */}
+              {karmicAnalysis.growthAreas && karmicAnalysis.growthAreas.length > 0 && (
+                <ResultCard
+                  title="Области роста"
+                  content={
+                    <ul className="space-y-2">
+                      {karmicAnalysis.growthAreas.map((area: string, i: number) => (
+                        <li key={i} className="text-gray-300 text-sm flex gap-2">
+                          <span className="text-mirastros-gold">•</span>
+                          <span>{area}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                  className="mb-6"
+                />
+              )}
+
+              {/* Spiritual Guidance */}
+              {karmicAnalysis.spiritualGuidance && (
+                <ResultText
+                  title="Духовное руководство"
+                  content={karmicAnalysis.spiritualGuidance}
+                  className="mb-6"
+                />
+              )}
+
+              {/* Recommendations */}
+              {karmicAnalysis.recommendations && karmicAnalysis.recommendations.length > 0 && (
+                <ResultCard
+                  title="💡 Рекомендации для развития"
+                  content={
+                    <ul className="space-y-2">
+                      {karmicAnalysis.recommendations.map((rec: string, i: number) => (
+                        <li key={i} className="text-gray-300 text-sm flex gap-2">
+                          <span className="text-mirastros-gold">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                  className="bg-mirastros-gold/10 border-mirastros-gold/30 mb-6"
+                />
+              )}
+
+              {/* Actions */}
+              <ResultActions
+                onNewConsultation={handleNewAnalysis}
+                newConsultationLabel="Новый анализ"
+                historyLink="/history"
+              />
             </div>
 
-            <div className="mb-6">
-              <h3 className="font-cinzel text-xl font-bold text-white mb-4">Кармические уроки</h3>
-              <ul className="space-y-2">
-                {analysis.karmicLessons.map((lesson: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-300">
-                    <span className="text-mirastros-gold">•</span><span>{lesson}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-6 mb-6">
-              <h3 className="font-cinzel text-lg font-bold text-white mb-3">Предназначение души</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">{analysis.soulPurpose}</p>
-              <h4 className="font-semibold text-white mb-3">Рекомендации для развития</h4>
-              <ul className="space-y-2">
-                {analysis.recommendations.map((rec: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-300 text-sm">
-                    <span className="text-mirastros-gold">•</span><span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button onClick={() => { setAnalysis(null); setBirthDate(''); }}
-              className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-lg transition">
-              Новый анализ
-            </button>
-          </div>
+            {/* Clarify with Mirastros */}
+            <ClarifyButton
+              onClarify={() => {
+                console.log('Opening chat with karmic context:', karmicAnalysis);
+              }}
+              contextType="karmic"
+              contextData={karmicAnalysis}
+              available={true}
+            />
+          </>
         )}
       </div>
     </div>

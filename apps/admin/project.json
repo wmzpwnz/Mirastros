@@ -5,5 +5,38 @@
   "projectType": "application",
   "tags": [],
   "// targets": "to see all targets run: nx show project admin --web",
-  "targets": {}
+  "targets": {
+    "serve": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "admin:build",
+        "port": 3001
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "admin:build:development"
+        },
+        "production": {
+          "buildTarget": "admin:build:production"
+        }
+      }
+    },
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/admin"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "dist/apps/admin"
+        },
+        "production": {
+          "outputPath": "dist/apps/admin"
+        }
+      }
+    }
+  }
 }

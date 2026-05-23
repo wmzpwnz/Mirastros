@@ -1,4 +1,9 @@
+import v8 from 'node:v8';
 import nx from '@nx/eslint-plugin';
+
+if (typeof globalThis.structuredClone !== 'function') {
+  globalThis.structuredClone = (value) => v8.deserialize(v8.serialize(value));
+}
 
 export default [
   ...nx.configs['flat/base'],

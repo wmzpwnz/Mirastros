@@ -18,7 +18,7 @@ hiredis==3.0.0
 
 # AI & ML (for embeddings only, LLM via Ollama)
 sentence-transformers==3.2.1
-torch==2.5.1
+torch>=2.2.2
 transformers==4.46.2
 numpy==1.26.4
 
@@ -26,9 +26,10 @@ numpy==1.26.4
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
+google-auth==2.35.0
 
 # Astrology
-kerykeion==4.15.2
+kerykeion==5.1.12
 
 # Payment Gateways
 stripe==11.1.1
@@ -36,3 +37,10 @@ stripe==11.1.1
 # Monitoring & Logging
 sentry-sdk[fastapi]==2.15.0
 psutil==6.1.0
+prometheus-client==0.21.0
+
+# PDF Processing
+PyPDF2==3.0.1
+
+# Email validation
+email-validator==2.1.0

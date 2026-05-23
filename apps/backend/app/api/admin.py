@@ -3,13 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from app.core.database import get_db
+from app.core.deps import require_admin
 from app.models.user import User, SubscriptionTier
 from app.models.subscription import Subscription
 from app.models.tarot_reading import TarotReading
 from app.models.horoscope import Horoscope
 from app.models.document import Document
+from app.models.product import Product
+from app.models.order import Order
 from app.middleware.rate_limit import get_rate_limit_info
 from app.services.cache import cache_service
 
@@ -71,7 +74,8 @@ async def list_users(
     limit: int = Query(50, ge=1, le=100),
     search: Optional[str] = None,
     subscription_tier: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """List all users with pagination and filtering"""
     query = select(User)
@@ -112,7 +116,8 @@ async def list_users(
 @router.get("/users/{user_id}", response_model=UserDetailResponse)
 async def get_user(
     user_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Get detailed user information"""
     result = await db.execute(select(User).where(User.id == user_id))
@@ -144,7 +149,8 @@ async def get_user(
 async def update_user(
     user_id: str,
     update_data: UpdateUserRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Update user information"""
     result = await db.execute(select(User).where(User.id == user_id))
@@ -161,7 +167,7 @@ async def update_user(
     if update_data.subscription_expires:
         user.subscription_expires = update_data.subscription_expires
     
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     
     await db.commit()
     await db.refresh(user)
@@ -181,7 +187,8 @@ async def update_user(
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Delete a user and all associated data"""
     result = await db.execute(select(User).where(User.id == user_id))
@@ -198,7 +205,8 @@ async def delete_user(
 # Statistics Endpoints
 @router.get("/stats/users", response_model=UserStatsResponse)
 async def get_user_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Get user statistics"""
     from datetime import timedelta
@@ -224,7 +232,7 @@ async def get_user_stats(
     platinum_users = platinum_result.scalar()
     
     # Active users today
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     active_today_result = await db.execute(
         select(func.count(User.id)).where(
             func.date(User.last_login) == today
@@ -233,14 +241,14 @@ async def get_user_stats(
     active_users_today = active_today_result.scalar() or 0
     
     # New users this week
-    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
     new_week_result = await db.execute(
         select(func.count(User.id)).where(User.created_at >= week_ago)
     )
     new_users_this_week = new_week_result.scalar()
     
     # New users this month
-    month_ago = datetime.utcnow() - timedelta(days=30)
+    month_ago = datetime.now(timezone.utc) - timedelta(days=30)
     new_month_result = await db.execute(
         select(func.count(User.id)).where(User.created_at >= month_ago)
     )
@@ -258,10 +266,11 @@ async def get_user_stats(
 
 @router.get("/stats/subscriptions", response_model=SubscriptionStatsResponse)
 async def get_subscription_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Get subscription statistics"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Total subscriptions
     total_result = await db.execute(select(func.count(Subscription.id)))
@@ -327,7 +336,8 @@ async def get_subscription_stats(
 
 @router.get("/stats/service-usage", response_model=List[ServiceUsageResponse])
 async def get_service_usage(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Get service usage statistics"""
     # Count tarot readings
@@ -386,7 +396,8 @@ async def list_products(
     is_active: Optional[bool] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """List all products with filtering"""
     query = select(Product)
@@ -423,7 +434,8 @@ async def list_orders(
     status: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """List all orders with filtering"""
     query = select(Order).join(User)
@@ -471,7 +483,8 @@ async def list_journal_entries(
     flagged_only: bool = Query(False, description="Show only flagged entries"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """List journal entries for moderation"""
     from app.models.journal_entry import JournalEntry
@@ -507,7 +520,8 @@ async def list_journal_entries(
 async def moderate_journal_entry(
     entry_id: str,
     action_data: ModerationActionRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Take moderation action on a journal entry"""
     from app.models.journal_entry import JournalEntry
@@ -533,7 +547,8 @@ async def moderate_journal_entry(
 
 @router.get("/moderation/stats")
 async def get_moderation_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Get moderation statistics"""
     from app.models.journal_entry import JournalEntry
@@ -560,7 +575,8 @@ class RateLimitInfoResponse(BaseModel):
 
 @router.get("/rate-limit/{identifier}", response_model=RateLimitInfoResponse)
 async def get_user_rate_limit(
-    identifier: str
+    identifier: str,
+    _: User = Depends(require_admin)
 ):
     """Get rate limit information for a user or IP"""
     info = await get_rate_limit_info(identifier)
@@ -568,27 +584,35 @@ async def get_user_rate_limit(
 
 # Cache Management
 @router.get("/cache/stats")
-async def get_cache_stats():
+async def get_cache_stats(
+    _: User = Depends(require_admin)
+):
     """Get cache statistics"""
     return await cache_service.get_cache_stats()
 
 @router.post("/cache/invalidate/horoscopes")
 async def invalidate_horoscope_cache(
     zodiac_sign: Optional[str] = None,
-    period: Optional[str] = None
+    period: Optional[str] = None,
+    _: User = Depends(require_admin)
 ):
     """Invalidate horoscope cache"""
     await cache_service.invalidate_horoscope(zodiac_sign, period)
     return {"message": "Horoscope cache invalidated"}
 
 @router.post("/cache/invalidate/products")
-async def invalidate_product_cache():
+async def invalidate_product_cache(
+    _: User = Depends(require_admin)
+):
     """Invalidate product catalog cache"""
     await cache_service.invalidate_products()
     return {"message": "Product cache invalidated"}
 
 @router.post("/cache/invalidate/user/{user_id}")
-async def invalidate_user_cache(user_id: str):
+async def invalidate_user_cache(
+    user_id: str,
+    _: User = Depends(require_admin)
+):
     """Invalidate all cache for a specific user"""
     await cache_service.invalidate_user_profile(user_id)
     await cache_service.invalidate_natal_chart(user_id)
@@ -596,7 +620,9 @@ async def invalidate_user_cache(user_id: str):
     return {"message": f"Cache invalidated for user {user_id}"}
 
 @router.delete("/cache/clear")
-async def clear_all_cache():
+async def clear_all_cache(
+    _: User = Depends(require_admin)
+):
     """Clear all cache (use with caution!)"""
     await cache_service.clear_all_cache()
     return {"message": "All cache cleared"}

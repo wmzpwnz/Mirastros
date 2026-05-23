@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { ZScrollCard } from '../../components/ZScrollContainer'
+import { Button, Badge } from '@mirastros-universal/design-system'
 import {
   subscribeToPremium,
   subscribeToPlatinum,
@@ -163,9 +164,9 @@ export default function SubscriptionPage() {
             <ZScrollCard className="mb-6">
               <div className="text-center">
                 <p className="text-sm text-gray-400 mb-1">Current Plan</p>
-                <p className="text-2xl font-bold text-gold capitalize">
-                  {auth.user.subscription_tier}
-                </p>
+                <Badge variant="primary" className="justify-center">
+                  {auth.user.subscription_tier.toUpperCase()}
+                </Badge>
               </div>
             </ZScrollCard>
           )}
@@ -206,24 +207,28 @@ export default function SubscriptionPage() {
                   ))}
                 </ul>
 
-                <button
+                <Button
+                  variant={
+                    auth?.user.subscription_tier === tier.id
+                      ? 'secondary'
+                      : tier.id === 'freemium'
+                      ? 'ghost'
+                      : 'primary'
+                  }
+                  size="lg"
                   onClick={() => handleSubscribe(tier.id)}
                   disabled={
                     isProcessing ||
                     auth?.user.subscription_tier === tier.id
                   }
-                  className={`w-full py-3 rounded-full font-semibold transition-all ${
-                    auth?.user.subscription_tier === tier.id
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : `bg-gradient-to-r ${tier.color} text-white hover:scale-105`
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="w-full"
                 >
                   {auth?.user.subscription_tier === tier.id
                     ? 'Current Plan'
                     : tier.id === 'freemium'
                     ? 'Free Forever'
                     : 'Subscribe'}
-                </button>
+                </Button>
               </ZScrollCard>
             ))}
           </div>

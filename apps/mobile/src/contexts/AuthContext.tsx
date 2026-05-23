@@ -14,6 +14,8 @@ interface User {
   email: string;
   fullName: string;
   subscriptionTier: 'freemium' | 'premium' | 'platinum';
+  preferredLanguage: string;
+  timezone: string;
 }
 
 interface AuthContextType {
@@ -102,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         fullName: 'User',
         subscriptionTier: 'freemium',
+        preferredLanguage: 'ru',
+        timezone: 'UTC',
       });
 
       // If biometric is available and not yet configured, prompt user
@@ -162,6 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         fullName,
         subscriptionTier: 'freemium',
+        preferredLanguage: 'ru',
+        timezone: 'UTC',
       });
     } catch (error) {
       console.error('Registration error:', error);

@@ -2,7 +2,7 @@
 
 import random
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data.runes import get_all_runes, get_rune_by_id
@@ -58,7 +58,7 @@ class RunesService:
             "question": question,
             "runes": drawn_runes,
             "interpretation": interpretation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _draw_runes(self, spread_type: str) -> List[Dict]:

@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
+import { Button } from './Button';
 
 export interface ClarifyButtonProps {
   onClarify: () => void;
@@ -31,9 +32,9 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
         <View className="bg-gray-800 border border-gray-700 rounded-xl py-3 px-4 flex-row items-center justify-center">
           <Text className="text-gray-400 mr-2">🔒</Text>
           <Text className="text-gray-400 font-semibold">Уточнить с Mirastros</Text>
-          <View className="bg-gold ml-2 px-2 py-1 rounded">
-            <Text className="text-cosmic text-xs font-bold">Premium</Text>
-          </View>
+          <Text className="text-yellow-600 text-xs font-semibold ml-2 bg-yellow-900/30 px-2 py-1 rounded">
+            Premium
+          </Text>
         </View>
       </View>
     );
@@ -47,18 +48,15 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
       <Text className="text-silver/60 text-sm mb-4">
         Задайте уточняющие вопросы AI-ассистенту Mirastros
       </Text>
-      <TouchableOpacity
+      <Button
         onPress={() => {
           console.log('Opening chat with context:', { contextType, contextData });
           onClarify();
         }}
-        className="bg-gold rounded-xl py-4 flex-row items-center justify-center"
+        className="w-full"
       >
-        <Text className="text-2xl mr-2">💬</Text>
-        <Text className="text-cosmic font-bold text-base">
-          Уточнить с Mirastros
-        </Text>
-      </TouchableOpacity>
+        💬 Уточнить с Mirastros
+      </Button>
     </View>
   );
 };

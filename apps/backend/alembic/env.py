@@ -12,7 +12,29 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from app.core.database import Base
 from app.core.config import get_settings
-from app.models import document  # Import all models
+
+# Import all models for Alembic autogenerate
+from app.models import (
+    Document, DocumentChunk, UserQuery,
+    User, SubscriptionTier,
+    NatalChart,
+    Subscription, SubscriptionStatus, PaymentMethod,
+    TarotReading,
+    IChingConsultation,
+    Horoscope, HoroscopePeriod,
+    NumerologyCalculation,
+    DreamInterpretation,
+    ChatConversation, ChatMessage,
+    JournalEntry, EntryType,
+    Product,
+    Order,
+    AnalyticsEvent, EventType,
+    PushToken,
+    NotificationPreference,
+    LenormandReading,
+    Synastry,
+    AstroContext
+)
 
 # this is the Alembic Config object
 config = context.config

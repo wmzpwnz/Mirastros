@@ -113,6 +113,9 @@ Key variables:
 - `NEXT_PUBLIC_API_URL`: Backend API URL
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe public key
 - `NEXT_PUBLIC_YOOKASSA_SHOP_ID`: YooKassa shop ID
+- `NEXT_PUBLIC_ENABLE_ZSCROLL`: Enable tunnel orchestration on web
+- `NEXT_PUBLIC_ENABLE_ZSCROLL_MOBILE`: Enable tunnel on mobile web (phased rollout)
+- `NEXT_PUBLIC_ZSCROLL_DESKTOP_MIN_WIDTH`: Desktop/mobile cutoff for tunnel mode (default `1024`)
 
 ## Features Implementation Status
 
@@ -159,7 +162,14 @@ The Z-Scroll effect creates a tunnel-like animation as users scroll:
 - Zig-zag positioning (alternating left/right)
 - Smooth scroll with GSAP ScrollTrigger
 
-See `src/components/ScrollLayout.tsx` for implementation.
+Current architecture:
+- Unified lifecycle: `src/hooks/useZScrollTunnel.ts`
+- Shared math: `src/utils/tunnelScrollMath.ts`
+- Landing orchestration: `src/app/tunnel/landingAnimations.ts`
+- Dashboard orchestration: `src/app/tunnel/dashboardAnimations.ts`
+- Dynamic background media track: `src/constants/tunnelMedia.ts` (`webm + mp4`, no GIF in active tunnel path)
+
+See `src/hooks/useZScrollTunnel.ts` and `src/app/tunnel/*Animations.ts` for implementation.
 
 ## 3D Background
 

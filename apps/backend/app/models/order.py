@@ -3,10 +3,14 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Numeric, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.database import Base
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class Order(Base):
@@ -26,8 +30,8 @@ class Order(Base):
     shipping_address = Column(JSON, nullable=False)  # {name, address, city, country, postal_code, phone}
     tracking_number = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
     # Relationship to User
     user = relationship("User", back_populates="orders")

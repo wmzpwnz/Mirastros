@@ -2,15 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-interface Document {
-    id: number;
-    title: string;
-    category: string;
-    source?: string;
-}
+import { Input, Button, Select, Textarea, Card, Stack, Badge } from '@mirastros-universal/design-system';
+import { adminApi } from '../../services/api';
+import type { Document } from '../../types';
 
 export default function DocumentsPage() {
     const [uploadType, setUploadType] = useState<'text' | 'pdf'>('text');
@@ -31,14 +25,10 @@ export default function DocumentsPage() {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const url = filterCategory === 'all' 
-                ? `${API_URL}/documents/`
-                : `${API_URL}/documents/?category=${filterCategory}`;
-            const response = await fetch(url);
-            if (response.ok) {
-                const data = await response.json();
-                setDocuments(data);
-            }
+            const data = await adminApi.getDocuments(
+                filterCategory !== 'all' ? filterCategory : undefined
+            );
+            setDocuments(data);
         } catch (error) {
             console.error('Failed to fetch documents:', error);
         } finally {
@@ -49,22 +39,18 @@ export default function DocumentsPage() {
     const handleTextUpload = async () => {
         setUploading(true);
         try {
-            const response = await fetch(`${API_URL}/documents/upload`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, category, source: 'admin-upload' }),
+            await adminApi.uploadDocument({
+                title,
+                content,
+                category,
+                source: 'admin-upload',
             });
-            if (response.ok) {
-                alert('Document uploaded successfully!');
-                setTitle('');
-                setContent('');
-                fetchDocuments(); // Refresh list
-            } else {
-                const error = await response.json();
-                alert('Upload failed: ' + (error.detail || 'Unknown error'));
-            }
-        } catch (error) {
-            alert('Upload failed: ' + error);
+            alert('Документ загружен.');
+            setTitle('');
+            setContent('');
+            fetchDocuments();
+        } catch (error: any) {
+            alert('Ошибка загрузки: ' + (error.message || 'Unknown error'));
         } finally {
             setUploading(false);
         }
@@ -74,45 +60,26 @@ export default function DocumentsPage() {
         if (!file) return;
         setUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('category', category);
-
-            const response = await fetch(`${API_URL}/documents/upload-pdf`, {
-                method: 'POST',
-                body: formData,
-            });
-            if (response.ok) {
-                alert('PDF uploaded successfully!');
-                setFile(null);
-                fetchDocuments(); // Refresh list
-            } else {
-                const error = await response.json();
-                alert('Upload failed: ' + (error.detail || 'Unknown error'));
-            }
-        } catch (error) {
-            alert('Upload failed: ' + error);
+            await adminApi.uploadPdf(file, category);
+            alert('PDF загружен.');
+            setFile(null);
+            fetchDocuments();
+        } catch (error: any) {
+            alert('Ошибка загрузки: ' + (error.message || 'Unknown error'));
         } finally {
             setUploading(false);
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this document?')) return;
+        if (!confirm('Удалить этот документ?')) return;
         
         try {
-            const response = await fetch(`${API_URL}/documents/${id}`, {
-                method: 'DELETE',
-            });
-            if (response.ok) {
-                alert('Document deleted successfully!');
-                fetchDocuments(); // Refresh list
-            } else {
-                const error = await response.json();
-                alert('Delete failed: ' + (error.detail || 'Unknown error'));
-            }
-        } catch (error) {
-            alert('Delete failed: ' + error);
+            await adminApi.deleteDocument(id);
+            alert('Документ удалён.');
+            fetchDocuments();
+        } catch (error: any) {
+            alert('Delete failed: ' + (error.message || 'Unknown error'));
         }
     };
 
@@ -122,147 +89,137 @@ export default function DocumentsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-8">
+            <Stack gap="8">
                 {/* Header */}
                 <div>
-                    <h1 className="text-4xl font-cinzel text-gold mb-2">Documents</h1>
-                    <p className="text-silver/60">Manage RAG knowledge base</p>
+                    <h1 className="text-4xl font-cinzel text-gold mb-2">Документы</h1>
+                    <p className="text-silver/60">База знаний RAG</p>
                 </div>
 
                 {/* Upload Section */}
-                <div className="glass rounded-xl p-6">
-                    <h2 className="text-2xl font-cinzel text-gold mb-6">Upload Document</h2>
+                <Card variant="elevated">
+                    <h2 className="text-2xl font-cinzel text-gold mb-6">Загрузить документ</h2>
 
-                    {/* Upload Type Toggle */}
                     <div className="flex gap-4 mb-6">
-                        <button
+                        <Button
+                            variant={uploadType === 'text' ? 'primary' : 'secondary'}
                             onClick={() => setUploadType('text')}
-                            className={`px-6 py-3 rounded-lg transition-all ${uploadType === 'text'
-                                    ? 'bg-gold/20 text-gold border border-gold/30'
-                                    : 'bg-white/5 text-silver/60 hover:bg-white/10'
-                                }`}
                         >
-                            📝 Text
-                        </button>
-                        <button
+                            📝 Текст
+                        </Button>
+                        <Button
+                            variant={uploadType === 'pdf' ? 'primary' : 'secondary'}
                             onClick={() => setUploadType('pdf')}
-                            className={`px-6 py-3 rounded-lg transition-all ${uploadType === 'pdf'
-                                    ? 'bg-gold/20 text-gold border border-gold/30'
-                                    : 'bg-white/5 text-silver/60 hover:bg-white/10'
-                                }`}
                         >
                             📄 PDF
-                        </button>
+                        </Button>
                     </div>
 
-                    {/* Category Select */}
                     <div className="mb-6">
-                        <label className="block text-sm text-silver/60 mb-2">Category</label>
-                        <select
+                        <label className="block text-sm text-silver/60 mb-2">Категория</label>
+                        <Select
+                            options={[
+                                { value: 'horoscope', label: 'Гороскоп' },
+                                { value: 'tarot', label: 'Таро' },
+                                { value: 'natal', label: 'Натальная карта' },
+                            ]}
                             value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none"
-                        >
-                            <option value="horoscope">Horoscope</option>
-                            <option value="tarot">Tarot</option>
-                            <option value="natal">Natal Chart</option>
-                        </select>
+                            onChange={(value) => setCategory(String(value))}
+                            placeholder="Категория"
+                        />
                     </div>
 
-                    {/* Text Upload Form */}
                     {uploadType === 'text' && (
-                        <div className="space-y-4">
+                        <Stack gap="4">
                             <div>
-                                <label className="block text-sm text-silver/60 mb-2">Title</label>
-                                <input
+                                <label className="block text-sm text-silver/60 mb-2">Название</label>
+                                <Input
                                     type="text"
                                     value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="Document title"
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none"
+                                    onChange={(value) => setTitle(value ?? '')}
+                                    placeholder="Название документа"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-silver/60 mb-2">Content</label>
-                                <textarea
+                                <label className="block text-sm text-silver/60 mb-2">Содержимое</label>
+                                <Textarea
                                     value={content}
-                                    onChange={(e) => setContent(e.target.value)}
-                                    placeholder="Document content..."
+                                    onChange={(value) => setContent(value ?? '')}
+                                    placeholder="Текст документа..."
                                     rows={10}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none resize-none"
                                 />
                             </div>
-                            <button
+                            <Button
+                                variant="primary"
                                 onClick={handleTextUpload}
                                 disabled={uploading || !title || !content}
-                                className="w-full px-6 py-3 bg-gold/20 text-gold border border-gold/30 rounded-lg hover:bg-gold/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full"
                             >
-                                {uploading ? 'Uploading...' : 'Upload Text Document'}
-                            </button>
-                        </div>
+                                {uploading ? 'Загрузка...' : 'Загрузить текст'}
+                            </Button>
+                        </Stack>
                     )}
 
-                    {/* PDF Upload Form */}
                     {uploadType === 'pdf' && (
-                        <div className="space-y-4">
+                        <Stack gap="4">
                             <div>
-                                <label className="block text-sm text-silver/60 mb-2">PDF File</label>
+                                <label className="block text-sm text-silver/60 mb-2">Файл PDF</label>
                                 <input
                                     type="file"
                                     accept=".pdf"
-                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none"
+                                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                                    className="w-full px-4 py-2 rounded border border-gray-600 bg-gray-800 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                                 />
                             </div>
-                            <button
+                            <Button
+                                variant="primary"
                                 onClick={handlePdfUpload}
                                 disabled={uploading || !file}
-                                className="w-full px-6 py-3 bg-gold/20 text-gold border border-gold/30 rounded-lg hover:bg-gold/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full"
                             >
-                                {uploading ? 'Uploading...' : 'Upload PDF Document'}
-                            </button>
-                        </div>
+                                {uploading ? 'Загрузка...' : 'Загрузить PDF'}
+                            </Button>
+                        </Stack>
                     )}
-                </div>
+                </Card>
 
-                {/* Documents List */}
-                <div className="glass rounded-xl p-6">
+                <Card variant="elevated">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-cinzel text-gold">Existing Documents</h2>
+                        <h2 className="text-2xl font-cinzel text-gold">Документы в базе</h2>
                         <div className="flex gap-4">
-                            {/* Search */}
-                            <input
+                            <Input
                                 type="text"
-                                placeholder="Search documents..."
+                                placeholder="Поиск..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none"
+                                onChange={(value) => setSearchQuery(value ?? '')}
+                                className="w-48"
                             />
-                            {/* Filter */}
-                            <select
+                            <Select
+                                options={[
+                                    { value: 'all', label: 'Все категории' },
+                                    { value: 'horoscope', label: 'Гороскоп' },
+                                    { value: 'tarot', label: 'Таро' },
+                                    { value: 'natal', label: 'Натальная карта' },
+                                    { value: 'numerology', label: 'Нумерология' },
+                                    { value: 'dream', label: 'Сны' },
+                                    { value: 'runes', label: 'Руны' },
+                                    { value: 'iching', label: 'И Цзин' },
+                                    { value: 'lenormand', label: 'Ленорман' },
+                                ]}
                                 value={filterCategory}
-                                onChange={(e) => setFilterCategory(e.target.value)}
-                                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-silver focus:border-gold/50 focus:outline-none"
-                            >
-                                <option value="all">All Categories</option>
-                                <option value="horoscope">Horoscope</option>
-                                <option value="tarot">Tarot</option>
-                                <option value="natal">Natal Chart</option>
-                                <option value="numerology">Numerology</option>
-                                <option value="dream">Dream</option>
-                                <option value="runes">Runes</option>
-                                <option value="iching">I Ching</option>
-                                <option value="lenormand">Lenormand</option>
-                            </select>
+                                onChange={(value) => setFilterCategory(String(value))}
+                                placeholder="Категория"
+                                className="w-48"
+                            />
                         </div>
                     </div>
                     
                     {loading ? (
-                        <div className="text-center py-8 text-silver/60">Loading documents...</div>
+                        <div className="text-center py-8 text-silver/60">Загрузка...</div>
                     ) : filteredDocuments.length === 0 ? (
-                        <div className="text-center py-8 text-silver/60">No documents found</div>
+                        <div className="text-center py-8 text-silver/60">Документы не найдены</div>
                     ) : (
-                        <div className="space-y-3">
+                        <Stack gap="3">
                             {filteredDocuments.map((doc) => (
                                 <div
                                     key={doc.id}
@@ -271,22 +228,23 @@ export default function DocumentsPage() {
                                     <div>
                                         <h3 className="text-silver font-medium">{doc.title}</h3>
                                         <p className="text-xs text-silver/60 mt-1">
-                                            Category: <span className="text-turquoise">{doc.category || 'N/A'}</span>
-                                            {doc.source && ` • Source: ${doc.source}`}
+                                            Категория: <Badge variant="secondary">{doc.category || '—'}</Badge>
+                                            {doc.source && ` • ${doc.source}`}
                                         </p>
                                     </div>
-                                    <button 
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
                                         onClick={() => handleDelete(doc.id)}
-                                        className="px-4 py-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
                                     >
-                                        Delete
-                                    </button>
+                                        Удалить
+                                    </Button>
                                 </div>
                             ))}
-                        </div>
+                        </Stack>
                     )}
-                </div>
-            </div>
+                </Card>
+            </Stack>
         </AdminLayout>
     );
 }

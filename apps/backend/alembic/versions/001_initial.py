@@ -5,7 +5,6 @@ Create Date: 2025-11-21
 """
 from alembic import op
 import sqlalchemy as sa
-from pgvector.sqlalchemy import Vector
 
 # revision identifiers
 revision = '001'
@@ -14,9 +13,22 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Enable pgvector extension
-    op.execute('CREATE EXTENSION IF NOT EXISTS vector')
-    
+    # Enable pgvector extension (optional - skip if not installed for postgresql@14)
+    # Use DO block so failure doesn't abort the transaction
+    op.execute("""
+        DO $$
+        BEGIN
+            CREATE EXTENSION IF NOT EXISTS vector;
+        EXCEPTION WHEN OTHERS THEN
+            NULL;
+        END $$;
+    """)
+    # Check if vector type exists
+    conn = op.get_bind()
+    has_vector = conn.execute(sa.text(
+        "SELECT 1 FROM pg_extension WHERE extname = 'vector'"
+    )).scalar() is not None
+
     # Create documents table
     op.create_table(
         'documents',
@@ -31,27 +43,40 @@ def upgrade():
     )
     op.create_index(op.f('ix_documents_id'), 'documents', ['id'], unique=False)
     
-    # Create document_chunks table
-    op.create_table(
-        'document_chunks',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('document_id', sa.Integer(), nullable=False),
-        sa.Column('chunk_text', sa.Text(), nullable=False),
-        sa.Column('chunk_index', sa.Integer(), nullable=False),
-        sa.Column('embedding', Vector(384), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_document_chunks_id'), 'document_chunks', ['id'], unique=False)
-    op.create_index(op.f('ix_document_chunks_document_id'), 'document_chunks', ['document_id'], unique=False)
-    
-    # Create IVFFLAT index for vector similarity search
-    op.execute("""
-        CREATE INDEX document_chunks_embedding_idx 
-        ON document_chunks 
-        USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100)
-    """)
+    # Create document_chunks table (with or without vector embedding)
+    if has_vector:
+        from pgvector.sqlalchemy import Vector
+        op.create_table(
+            'document_chunks',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('document_id', sa.Integer(), nullable=False),
+            sa.Column('chunk_text', sa.Text(), nullable=False),
+            sa.Column('chunk_index', sa.Integer(), nullable=False),
+            sa.Column('embedding', Vector(384), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=True),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_document_chunks_id'), 'document_chunks', ['id'], unique=False)
+        op.create_index(op.f('ix_document_chunks_document_id'), 'document_chunks', ['document_id'], unique=False)
+        op.execute("""
+            CREATE INDEX document_chunks_embedding_idx 
+            ON document_chunks 
+            USING ivfflat (embedding vector_cosine_ops)
+            WITH (lists = 100)
+        """)
+    else:
+        op.create_table(
+            'document_chunks',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('document_id', sa.Integer(), nullable=False),
+            sa.Column('chunk_text', sa.Text(), nullable=False),
+            sa.Column('chunk_index', sa.Integer(), nullable=False),
+            sa.Column('embedding', sa.LargeBinary(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=True),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_document_chunks_id'), 'document_chunks', ['id'], unique=False)
+        op.create_index(op.f('ix_document_chunks_document_id'), 'document_chunks', ['document_id'], unique=False)
     
     # Create user_queries table
     op.create_table(
@@ -80,4 +105,7 @@ def downgrade():
     op.drop_index(op.f('ix_documents_id'), table_name='documents')
     op.drop_table('documents')
     
-    op.execute('DROP EXTENSION IF EXISTS vector')
+    try:
+        op.execute('DROP EXTENSION IF EXISTS vector')
+    except Exception:
+        pass

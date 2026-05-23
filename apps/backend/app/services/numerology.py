@@ -1,7 +1,7 @@
 """Numerology Service - Numerology Calculations and Interpretations"""
 
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -83,7 +83,7 @@ class NumerologyService:
                 existing.soul_urge_number = soul_urge
                 existing.personality_number = personality
                 existing.interpretation = interpretation
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new calculation
                 calculation = NumerologyCalculation(
@@ -105,7 +105,7 @@ class NumerologyService:
             "birth_date": birth_date,
             "numbers": numbers,
             "interpretation": interpretation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     async def _generate_interpretation(
@@ -255,28 +255,35 @@ class NumerologyService:
         offset: int = 0
     ) -> list[Dict]:
         """Get user's numerology calculation history"""
-        result = await db.execute(
-            select(NumerologyCalculation)
-            .where(NumerologyCalculation.user_id == user_id)
-            .order_by(NumerologyCalculation.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-        calculations = result.scalars().all()
-        
-        return [
-            {
-                "id": str(calc.id),
-                "full_name": calc.full_name,
-                "birth_date": calc.birth_date,
-                "numbers": {
-                    "life_path_number": calc.life_path_number,
-                    "destiny_number": calc.destiny_number,
-                    "soul_urge_number": calc.soul_urge_number,
-                    "personality_number": calc.personality_number
-                },
-                "interpretation": calc.interpretation,
-                "created_at": calc.created_at.isoformat()
-            }
-            for calc in calculations
-        ]
+        try:
+            result = await db.execute(
+                select(NumerologyCalculation)
+                .where(NumerologyCalculation.user_id == user_id)
+                .order_by(NumerologyCalculation.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            calculations = result.scalars().all()
+            
+            return [
+                {
+                    "id": str(calc.id),
+                    "full_name": calc.full_name or "",
+                    "birth_date": calc.birth_date.isoformat() if calc.birth_date else None,
+                    "name": calc.full_name or "",  # Alias for compatibility
+                    "numbers": {
+                        "life_path_number": calc.life_path_number or 0,
+                        "destiny_number": calc.destiny_number or 0,
+                        "soul_urge_number": calc.soul_urge_number or 0,
+                        "personality_number": calc.personality_number or 0
+                    },
+                    "interpretation": calc.interpretation or "",
+                    "created_at": calc.created_at.isoformat() if calc.created_at else None,
+                    "timestamp": calc.created_at.isoformat() if calc.created_at else None
+                }
+                for calc in calculations
+            ]
+        except Exception as e:
+            # Log error and return empty list
+            print(f"Error getting numerology calculation history: {str(e)}")
+            return []

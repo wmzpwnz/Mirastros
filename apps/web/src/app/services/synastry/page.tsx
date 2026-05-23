@@ -3,142 +3,302 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
+import { ClarifyButton } from '../../../components/ClarifyButton';
+import { DataForm } from '../../../components/ui/DataForm';
+import { ResultCard } from '../../../components/ui/ResultCard';
+import { ResultText } from '../../../components/ui/ResultText';
+import { ResultActions } from '../../../components/ui/ResultActions';
+import { ErrorDisplay } from '../../../components/ui/ErrorDisplay';
 
 export default function SynastryPage() {
-  const [formData, setFormData] = useState({
-    person1Name: '',
-    person1Date: '',
-    person1Time: '',
-    person2Name: '',
-    person2Date: '',
-    person2Time: '',
+  const [partner1Data, setPartner1Data] = useState({
+    name: '',
+    birthDate: '',
+    birthTime: '',
+    birthLocation: '',
   });
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [partner2Data, setPartner2Data] = useState({
+    name: '',
+    birthDate: '',
+    birthTime: '',
+    birthLocation: '',
+  });
+  const [compatibility, setCompatibility] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activePartner, setActivePartner] = useState<1 | 2>(1);
 
-  const handleAnalyze = async () => {
+  const handleCalculateCompatibility = async () => {
+    setError('');
+
+    // Validate all required fields
+    if (
+      !partner1Data.name ||
+      !partner1Data.birthDate ||
+      !partner1Data.birthTime ||
+      !partner1Data.birthLocation ||
+      !partner2Data.name ||
+      !partner2Data.birthDate ||
+      !partner2Data.birthTime ||
+      !partner2Data.birthLocation
+    ) {
+      setError('Пожалуйста, заполните все поля для обоих партнеров');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const result = await api.calculateSynastry({
-        partner1BirthDate: formData.person1Date,
-        partner1BirthTime: formData.person1Time,
-        partner1Latitude: 0, // TODO: Add location input
-        partner1Longitude: 0,
-        partner2BirthDate: formData.person2Date,
-        partner2BirthTime: formData.person2Time,
-        partner2Latitude: 0,
-        partner2Longitude: 0,
+      const result = await api.calculateSynastry(partner1Data, partner2Data);
+      setCompatibility({
+        ...result,
+        partner1Data,
+        partner2Data,
       });
-      setAnalysis(result);
     } catch (err: any) {
-      console.error('Error calculating synastry:', err);
+      setError(err.message || 'Ошибка при расчете синастрии');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleNewCalculation = () => {
+    setCompatibility(null);
+    setPartner1Data({
+      name: '',
+      birthDate: '',
+      birthTime: '',
+      birthLocation: '',
+    });
+    setPartner2Data({
+      name: '',
+      birthDate: '',
+      birthTime: '',
+      birthLocation: '',
+    });
+    setError('');
+    setActivePartner(1);
+  };
+
+  const currentPartnerData = activePartner === 1 ? partner1Data : partner2Data;
+  const setCurrentPartnerData = activePartner === 1 ? setPartner1Data : setPartner2Data;
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="mb-12 text-center">
-          <Link href="/dashboard" className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition">
+          <Link
+            href="/dashboard"
+            className="inline-block text-mirastros-gold hover:text-mirastros-gold/80 mb-4 transition"
+          >
             ← Назад к панели
           </Link>
-          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">Синастрия</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">Анализ совместимости по натальным картам</p>
+          <h1 className="font-cinzel text-4xl font-bold text-white mb-4">
+            Синастрия
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Анализ совместимости двух людей через их натальные карты
+          </p>
         </div>
 
-        {!analysis ? (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
-            <h2 className="font-cinzel text-2xl font-bold text-white mb-6">Данные партнеров</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-mirastros-gold mb-3">Первый партнер</h3>
-                <input type="text" placeholder="Имя" value={formData.person1Name}
-                  onChange={(e) => setFormData({ ...formData, person1Name: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-                <input type="date" value={formData.person1Date}
-                  onChange={(e) => setFormData({ ...formData, person1Date: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-                <input type="time" value={formData.person1Time}
-                  onChange={(e) => setFormData({ ...formData, person1Time: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
+        {!compatibility ? (
+          <>
+            {/* Synastry Input */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Данные партнеров
+              </h2>
+
+              {/* Partner Selection Tabs */}
+              <div className="flex gap-4 mb-8 border-b border-white/10">
+                <button
+                  onClick={() => setActivePartner(1)}
+                  className={`pb-4 px-4 font-semibold transition ${
+                    activePartner === 1
+                      ? 'text-mirastros-gold border-b-2 border-mirastros-gold'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Партнер 1
+                </button>
+                <button
+                  onClick={() => setActivePartner(2)}
+                  className={`pb-4 px-4 font-semibold transition ${
+                    activePartner === 2
+                      ? 'text-mirastros-gold border-b-2 border-mirastros-gold'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Партнер 2
+                </button>
               </div>
-              <div className="space-y-4">
-                <h3 className="font-semibold text-mirastros-gold mb-3">Второй партнер</h3>
-                <input type="text" placeholder="Имя" value={formData.person2Name}
-                  onChange={(e) => setFormData({ ...formData, person2Name: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-                <input type="date" value={formData.person2Date}
-                  onChange={(e) => setFormData({ ...formData, person2Date: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-                <input type="time" value={formData.person2Time}
-                  onChange={(e) => setFormData({ ...formData, person2Time: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-mirastros-gold transition" />
-              </div>
+
+              {/* Partner Data Form */}
+              <DataForm
+                data={currentPartnerData}
+                onChange={setCurrentPartnerData}
+                onSubmit={handleCalculateCompatibility}
+                loading={loading}
+                error={error}
+                submitButtonText="Рассчитать совместимость"
+                showSubmitButton={activePartner === 2}
+              />
             </div>
-            <button onClick={handleAnalyze} disabled={loading}
-              className="w-full mt-6 py-4 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition disabled:opacity-50 text-lg">
-              {loading ? 'Анализ совместимости...' : 'Рассчитать синастрию'}
-            </button>
-          </div>
+
+            {/* Info */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-6">
+              <h3 className="font-cinzel text-lg font-bold text-white mb-3">
+                О синастрии
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Синастрия — это астрологический метод анализа совместимости двух людей.
+                Она показывает, как планеты одного человека взаимодействуют с планетами другого,
+                раскрывая гармоничные и напряженные аспекты отношений.
+                Введите данные рождения обоих партнеров для анализа.
+              </p>
+            </div>
+          </>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-8">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-mirastros-gold/20 border-4 border-mirastros-gold mb-4">
-                <span className="text-4xl font-bold text-mirastros-gold">{analysis.compatibilityScore}%</span>
-              </div>
-              <h2 className="font-cinzel text-2xl font-bold text-white">Совместимость</h2>
-            </div>
+          <>
+            {/* Compatibility Result */}
+            <div className="mb-8">
+              <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
+                Анализ совместимости
+              </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                <h3 className="font-cinzel text-lg font-bold text-white mb-3">Сильные стороны</h3>
-                <ul className="space-y-2">
-                  {analysis.strengths.map((s: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-300 text-sm">
-                      <span className="text-green-400">✓</span><span>{s}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
-                <h3 className="font-cinzel text-lg font-bold text-white mb-3">Вызовы</h3>
-                <ul className="space-y-2">
-                  {analysis.challenges.map((c: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-300 text-sm">
-                      <span className="text-yellow-400">⚠</span><span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="font-cinzel text-xl font-bold text-white mb-4">Ключевые аспекты</h3>
-              <div className="space-y-3">
-                {analysis.aspects.map((aspect: any, i: number) => (
-                  <div key={i} className="bg-white/5 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-white font-semibold">{aspect.type}</span>
-                      <span className="text-mirastros-gold text-sm">{aspect.aspect}</span>
+              {/* Partners Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <ResultCard
+                  title={`${compatibility.partner1Data.name}`}
+                  content={
+                    <div className="text-sm text-gray-300">
+                      <p>
+                        <span className="text-gray-400">Дата рождения:</span>{' '}
+                        {compatibility.partner1Data.birthDate}
+                      </p>
+                      <p>
+                        <span className="text-gray-400">Время:</span>{' '}
+                        {compatibility.partner1Data.birthTime}
+                      </p>
+                      <p>
+                        <span className="text-gray-400">Место:</span>{' '}
+                        {compatibility.partner1Data.birthLocation}
+                      </p>
                     </div>
-                    <p className="text-gray-400 text-sm">{aspect.impact}</p>
-                  </div>
-                ))}
+                  }
+                />
+                <ResultCard
+                  title={`${compatibility.partner2Data.name}`}
+                  content={
+                    <div className="text-sm text-gray-300">
+                      <p>
+                        <span className="text-gray-400">Дата рождения:</span>{' '}
+                        {compatibility.partner2Data.birthDate}
+                      </p>
+                      <p>
+                        <span className="text-gray-400">Время:</span>{' '}
+                        {compatibility.partner2Data.birthTime}
+                      </p>
+                      <p>
+                        <span className="text-gray-400">Место:</span>{' '}
+                        {compatibility.partner2Data.birthLocation}
+                      </p>
+                    </div>
+                  }
+                />
               </div>
+
+              {/* Compatibility Score */}
+              {compatibility.compatibilityScore !== undefined && (
+                <ResultCard
+                  title="Оценка совместимости"
+                  content={
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-mirastros-gold mb-2">
+                        {compatibility.compatibilityScore}%
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-2">
+                        <div
+                          className="bg-mirastros-gold h-2 rounded-full transition-all"
+                          style={{ width: `${compatibility.compatibilityScore}%` }}
+                        />
+                      </div>
+                    </div>
+                  }
+                  className="mb-6"
+                />
+              )}
+
+              {/* Aspects */}
+              {compatibility.aspects && compatibility.aspects.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-cinzel text-lg font-bold text-white mb-4">
+                    Аспекты
+                  </h3>
+                  <div className="space-y-3">
+                    {compatibility.aspects.map((aspect: any, i: number) => (
+                      <div
+                        key={i}
+                        className={`p-4 rounded-lg border ${
+                          aspect.type === 'harmonious'
+                            ? 'bg-green-500/10 border-green-500/30'
+                            : 'bg-red-500/10 border-red-500/30'
+                        }`}
+                      >
+                        <h4 className="font-semibold text-white mb-1">
+                          {aspect.planet1} {aspect.aspect} {aspect.planet2}
+                        </h4>
+                        <p className="text-gray-300 text-sm">{aspect.interpretation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Interpretation */}
+              <ResultText
+                title="Толкование"
+                content={compatibility.interpretation}
+                className="mb-6"
+              />
+
+              {/* Recommendations */}
+              {compatibility.recommendations && compatibility.recommendations.length > 0 && (
+                <ResultCard
+                  title="💡 Рекомендации"
+                  content={
+                    <ul className="space-y-2">
+                      {compatibility.recommendations.map((rec: string, i: number) => (
+                        <li key={i} className="text-gray-300 text-sm flex gap-2">
+                          <span className="text-mirastros-gold">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                  className="bg-mirastros-gold/10 border-mirastros-gold/30 mb-6"
+                />
+              )}
+
+              {/* Actions */}
+              <ResultActions
+                onNewConsultation={handleNewCalculation}
+                newConsultationLabel="Новый расчет"
+                historyLink="/history"
+              />
             </div>
 
-            <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-6 mb-6">
-              <h3 className="font-cinzel text-lg font-bold text-white mb-3">Рекомендации</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">{analysis.advice}</p>
-            </div>
-
-            <button onClick={() => { setAnalysis(null); setFormData({ person1Name: '', person1Date: '', person1Time: '', person2Name: '', person2Date: '', person2Time: '' }); }}
-              className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-lg transition">
-              Новый анализ
-            </button>
-          </div>
+            {/* Clarify with Mirastros */}
+            <ClarifyButton
+              onClarify={() => {
+                console.log('Opening chat with synastry context:', compatibility);
+              }}
+              contextType="synastry"
+              contextData={compatibility}
+              available={true}
+            />
+          </>
         )}
       </div>
     </div>

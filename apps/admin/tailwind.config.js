@@ -9,7 +9,12 @@ module.exports = {
         ...createGlobPatternsForDependencies(__dirname),
     ],
     theme: {
-        extend: {},
+        extend: {
+            // Admin-specific theme extensions
+            colors: {
+                // Add any admin-specific color overrides here if needed
+            },
+        },
     },
     plugins: [],
 };

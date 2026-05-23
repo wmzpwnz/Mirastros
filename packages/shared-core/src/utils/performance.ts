@@ -2,6 +2,8 @@
  * Performance optimization utilities
  */
 
+import React from 'react';
+
 /**
  * Lazy load a component with loading fallback
  */
@@ -11,11 +13,12 @@ export function lazyLoad<T extends React.ComponentType<any>>(
 ) {
   const LazyComponent = React.lazy(importFunc);
   
-  return (props: React.ComponentProps<T>) => (
-    <React.Suspense fallback={fallback || <div>Loading...</div>}>
-      <LazyComponent {...props} />
-    </React.Suspense>
-  );
+  return (props: React.ComponentProps<T>) =>
+    React.createElement(
+      React.Suspense,
+      { fallback: fallback || React.createElement('div', null, 'Loading...') },
+      React.createElement(LazyComponent, props),
+    );
 }
 
 /**
@@ -318,6 +321,3 @@ export function preconnect(url: string): void {
   link.href = url;
   document.head.appendChild(link);
 }
-
-// Add React import for TypeScript
-import * as React from 'react';

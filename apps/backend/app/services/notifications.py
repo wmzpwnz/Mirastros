@@ -5,7 +5,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from app.models.push_token import PushToken
@@ -41,7 +41,7 @@ class NotificationService:
             if existing_token:
                 # Update existing token
                 existing_token.is_active = True
-                existing_token.updated_at = datetime.utcnow()
+                existing_token.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new token
                 new_token = PushToken(
@@ -71,7 +71,7 @@ class NotificationService:
             stmt = update(PushToken).where(
                 PushToken.user_id == user_id,
                 PushToken.push_token == push_token
-            ).values(is_active=False, updated_at=datetime.utcnow())
+            ).values(is_active=False, updated_at=datetime.now(timezone.utc))
             
             await db.execute(stmt)
             await db.commit()
@@ -156,7 +156,7 @@ class NotificationService:
             if prefs:
                 prefs.transits = True
                 prefs.transit_types = transit_types
-                prefs.updated_at = datetime.utcnow()
+                prefs.updated_at = datetime.now(timezone.utc)
             else:
                 prefs = NotificationPreference(
                     user_id=user_id,
@@ -181,7 +181,7 @@ class NotificationService:
         try:
             stmt = update(NotificationPreference).where(
                 NotificationPreference.user_id == user_id
-            ).values(transits=False, updated_at=datetime.utcnow())
+            ).values(transits=False, updated_at=datetime.now(timezone.utc))
             
             await db.execute(stmt)
             await db.commit()
@@ -206,7 +206,7 @@ class NotificationService:
 
             if prefs:
                 prefs.lunar_phases = True
-                prefs.updated_at = datetime.utcnow()
+                prefs.updated_at = datetime.now(timezone.utc)
             else:
                 prefs = NotificationPreference(
                     user_id=user_id,
@@ -265,7 +265,7 @@ class NotificationService:
                 prefs.transits = preferences.transits
                 prefs.lunar_phases = preferences.lunar_phases
                 prefs.reminders = preferences.reminders
-                prefs.updated_at = datetime.utcnow()
+                prefs.updated_at = datetime.now(timezone.utc)
             else:
                 prefs = NotificationPreference(
                     user_id=user_id,

@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
-interface ServiceCardProps {
+export interface ServiceCardProps {
   title: string;
   description: string;
   icon: string;
-  gradient: string[];
+  gradient?: string[];
   onPress?: () => void;
 }
 
-export default function ServiceCard({ title, description, icon, gradient, onPress }: ServiceCardProps) {
+export default function ServiceCard({ title, description, icon, onPress }: ServiceCardProps) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 mx-4">

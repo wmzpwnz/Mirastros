@@ -1,6 +1,6 @@
 """Crystals API Endpoints"""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -178,7 +178,7 @@ async def get_crystals_by_property(
 
 @router.get("/by-chakra/{chakra}", response_model=CrystalListResponse)
 async def get_crystals_by_chakra(
-    chakra: str = Query(..., description="Chakra name (root, sacral, solar plexus, heart, throat, third eye, crown)"),
+    chakra: str = Path(..., description="Chakra name (root, sacral, solar plexus, heart, throat, third eye, crown)"),
     crystals_service: CrystalsService = Depends(get_crystals_service)
 ):
     """

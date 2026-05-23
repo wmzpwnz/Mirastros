@@ -4,8 +4,12 @@ from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class ChatConversation(Base):
@@ -21,8 +25,8 @@ class ChatConversation(Base):
     context_data = Column(JSON, nullable=True)  # Original reading data for context
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
     # Relationships
     user = relationship("User", backref="chat_conversations")
@@ -44,7 +48,7 @@ class ChatMessage(Base):
     content = Column(Text, nullable=False)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
     token_count = Column(Integer, nullable=True)  # For tracking usage
     
     # Relationships

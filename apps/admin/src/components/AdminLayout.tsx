@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Sidebar, Container, Button } from '@mirastros-universal/design-system';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminLayout({
     children,
@@ -11,66 +13,77 @@ export default function AdminLayout({
 }) {
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const { user, logout, loading } = useAuth();
 
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: '📊' },
-        { name: 'Users', href: '/users', icon: '👥' },
-        { name: 'Documents', href: '/documents', icon: '📚' },
-        { name: 'Analytics', href: '/analytics', icon: '📈' },
-        { name: 'Shop', href: '/shop', icon: '🛍️' },
-        { name: 'Moderation', href: '/moderation', icon: '🛡️' },
-        { name: 'Settings', href: '/settings', icon: '⚙️' },
+        { name: 'Главная', href: '/', icon: '📊' },
+        { name: 'Пользователи', href: '/users', icon: '👥' },
+        { name: 'Документы', href: '/documents', icon: '📚' },
+        { name: 'Аналитика', href: '/analytics', icon: '📈' },
+        { name: 'Магазин', href: '/shop', icon: '🛍️' },
+        { name: 'Модерация', href: '/moderation', icon: '🛡️' },
+        { name: 'Настройки', href: '/settings', icon: '⚙️' },
     ];
+
+    const menuItems = navigation.map((item) => ({
+        id: item.href || item.name,
+        label: item.name,
+        href: item.href,
+        icon: item.icon,
+        active: pathname === item.href,
+    }));
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto mb-4"></div>
+                        <p className="text-silver/60">Загрузка...</p>
+                    </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex">
             {/* Sidebar */}
-            <aside
-                className={`${sidebarOpen ? 'w-64' : 'w-20'
-                    } glass border-r border-white/10 transition-all duration-300 flex flex-col`}
-            >
-                {/* Logo */}
-                <div className="p-6 border-b border-white/10">
-                    <h1 className="text-2xl font-cinzel text-gold">
-                        {sidebarOpen ? 'Mirastros' : 'M'}
-                    </h1>
-                    <p className="text-xs text-silver/60 mt-1">
-                        {sidebarOpen && 'Admin Panel'}
-                    </p>
-                </div>
-
-                {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-2">
-                    {navigation.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                        ? 'bg-gold/20 text-gold border border-gold/30'
-                                        : 'text-silver/80 hover:bg-white/5 hover:text-silver'
-                                    }`}
-                            >
-                                <span className="text-xl">{item.icon}</span>
-                                {sidebarOpen && <span className="font-medium">{item.name}</span>}
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                {/* Toggle Button */}
-                <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-4 border-t border-white/10 text-silver/60 hover:text-silver transition-colors"
-                >
-                    {sidebarOpen ? '◀' : '▶'}
-                </button>
-            </aside>
+            <Sidebar
+                menuItems={menuItems}
+                open={true}
+                collapsed={!sidebarOpen}
+                onCollapsedChange={(collapsed) => setSidebarOpen(!collapsed)}
+                header={
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xl font-cinzel text-gold font-semibold">Mirastros</span>
+                        <span className="text-xs text-silver/60">Панель администратора</span>
+                    </div>
+                }
+            />
 
             {/* Main Content */}
             <main className="flex-1 overflow-auto">
-                <div className="max-w-7xl mx-auto p-8">{children}</div>
+                {/* Header with user info and logout */}
+                <div className="bg-white/5 border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        {user && (
+                            <div className="text-sm">
+                                <p className="text-silver/60">Вход выполнен:</p>
+                                <p className="text-gold font-medium">{user.email}</p>
+                            </div>
+                        )}
+                    </div>
+                    <Button
+                        variant="secondary"
+                        onClick={logout}
+                        size="sm"
+                    >
+                        Выйти
+                    </Button>
+                </div>
+
+                <Container size="lg" className="py-8">
+                    {children}
+                </Container>
             </main>
         </div>
     );

@@ -2,9 +2,10 @@
 
 /**
  * Z-Scroll container component for VK Mini App
- * Simplified version optimized for VK web view
+ * Uses design system components and tokens
  */
 import React, { useEffect, useRef, useState } from 'react'
+import { Card } from '@mirastros-universal/design-system'
 
 interface ZScrollContainerProps {
   children: React.ReactNode
@@ -35,10 +36,10 @@ export function ZScrollContainer({ children }: ZScrollContainerProps) {
 
   return (
     <>
-      {/* Scroll progress indicator */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-purple-deep/30 z-50">
+      {/* Scroll progress indicator using design system colors */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-800/30 z-50">
         <div
-          className="h-full bg-gradient-to-r from-gold to-purple-light transition-all duration-300"
+          className="h-full bg-gradient-to-r from-gold-500 to-turquoise-400 transition-all duration-300"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
@@ -79,7 +80,7 @@ export function ZScrollSection({ children, index }: ZScrollSectionProps) {
         const progress = 1 - Math.abs(sectionMiddle - windowHeight / 2) / (windowHeight / 2)
         const clampedProgress = Math.max(0, Math.min(1, progress))
 
-        // Simplified animations for VK web view
+        // Animations using design system timing
         setScale(0.8 + clampedProgress * 0.2) // Scale from 0.8 to 1.0
         setOpacity(clampedProgress)
       } else {
@@ -117,17 +118,14 @@ interface ZScrollCardProps {
 
 export function ZScrollCard({ children, className = '' }: ZScrollCardProps) {
   return (
-    <div
+    <Card
+      variant="elevated"
       className={`
-        bg-purple-deep/80 backdrop-blur-md
-        border border-gold/20
-        rounded-2xl p-8
-        shadow-2xl shadow-gold/10
         max-w-md w-full
         ${className}
       `}
     >
       {children}
-    </div>
+    </Card>
   )
 }

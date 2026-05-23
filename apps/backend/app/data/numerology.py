@@ -1,6 +1,6 @@
 """Numerology Data - Number Meanings and Calculations"""
 
-from typing import Dict
+from typing import Dict, Optional, List
 
 # Number meanings (1-9, 11, 22, 33)
 NUMBER_MEANINGS = {
@@ -255,3 +255,189 @@ def get_number_meaning(number: int) -> Dict:
 def get_all_number_meanings() -> Dict[int, Dict]:
     """Get all number meanings"""
     return NUMBER_MEANINGS
+
+
+def calculate_personal_year_number(birth_date: str, target_year: int) -> int:
+    """
+    Calculate Personal Year Number for a specific year
+    
+    Args:
+        birth_date: Birth date in format YYYY-MM-DD
+        target_year: Year to calculate personal year for
+    
+    Returns:
+        Personal Year Number (1-9, 11, 22, 33)
+    """
+    # Extract month and day from birth date
+    parts = birth_date.split("-")
+    birth_month = int(parts[1])
+    birth_day = int(parts[2])
+    
+    # Personal Year = (birth month + birth day + target year) reduced to single digit
+    total = birth_month + birth_day + target_year
+    
+    # Reduce to single digit or master number
+    while total > 9 and total not in [11, 22, 33]:
+        total = sum(int(digit) for digit in str(total))
+    
+    return total
+
+
+def calculate_personal_month_number(personal_year: int, month: int) -> int:
+    """
+    Calculate Personal Month Number
+    
+    Args:
+        personal_year: Personal Year Number
+        month: Month number (1-12)
+    
+    Returns:
+        Personal Month Number (1-9, 11, 22, 33)
+    """
+    total = personal_year + month
+    
+    # Reduce to single digit or master number
+    while total > 9 and total not in [11, 22, 33]:
+        total = sum(int(digit) for digit in str(total))
+    
+    return total
+
+
+def calculate_personal_day_number(personal_month: int, day: int) -> int:
+    """
+    Calculate Personal Day Number
+    
+    Args:
+        personal_month: Personal Month Number
+        day: Day of month (1-31)
+    
+    Returns:
+        Personal Day Number (1-9, 11, 22, 33)
+    """
+    total = personal_month + day
+    
+    # Reduce to single digit or master number
+    while total > 9 and total not in [11, 22, 33]:
+        total = sum(int(digit) for digit in str(total))
+    
+    return total
+
+
+def calculate_lucky_numbers_from_numerology(
+    birth_date: str,
+    target_date: str,
+    life_path: Optional[int] = None,
+    destiny: Optional[int] = None
+) -> List[int]:
+    """
+    Calculate lucky numbers based on numerology for a specific date
+    
+    Args:
+        birth_date: Birth date in format YYYY-MM-DD
+        target_date: Target date in format YYYY-MM-DD
+        life_path: Optional Life Path Number (will be calculated if not provided)
+        destiny: Optional Destiny Number (will be calculated if not provided)
+    
+    Returns:
+        List of 5 lucky numbers (1-99)
+    """
+    from datetime import datetime
+    
+    # Parse dates
+    birth_parts = birth_date.split("-")
+    target_parts = target_date.split("-")
+    
+    birth_year = int(birth_parts[0])
+    birth_month = int(birth_parts[1])
+    birth_day = int(birth_parts[2])
+    
+    target_year = int(target_parts[0])
+    target_month = int(target_parts[1])
+    target_day = int(target_parts[2])
+    
+    # Calculate numerology numbers if not provided
+    if life_path is None:
+        life_path = calculate_life_path_number(birth_date)
+    
+    # Calculate Personal Year, Month, Day
+    personal_year = calculate_personal_year_number(birth_date, target_year)
+    personal_month = calculate_personal_month_number(personal_year, target_month)
+    personal_day = calculate_personal_day_number(personal_month, target_day)
+    
+    # Base numbers from numerology
+    base_numbers = [
+        life_path,
+        personal_year,
+        personal_month,
+        personal_day
+    ]
+    
+    # Add destiny if provided
+    if destiny is not None:
+        base_numbers.append(destiny)
+    
+    # Generate additional numbers based on numerology combinations
+    # Combine personal numbers in various ways
+    lucky_numbers = set()
+    
+    # Add base numbers (ensure they're in valid range 1-99)
+    for num in base_numbers:
+        if 1 <= num <= 99:
+            lucky_numbers.add(num)
+    
+    # Generate combinations
+    # Personal Year + Personal Month
+    combo1 = personal_year + personal_month
+    while combo1 > 99:
+        combo1 = sum(int(d) for d in str(combo1))
+    if 1 <= combo1 <= 99:
+        lucky_numbers.add(combo1)
+    
+    # Personal Month + Personal Day
+    combo2 = personal_month + personal_day
+    while combo2 > 99:
+        combo2 = sum(int(d) for d in str(combo2))
+    if 1 <= combo2 <= 99:
+        lucky_numbers.add(combo2)
+    
+    # Life Path * 10 + Personal Day (if reasonable)
+    combo3 = life_path * 10 + personal_day
+    if 1 <= combo3 <= 99:
+        lucky_numbers.add(combo3)
+    
+    # Personal Year * 10 + Personal Month (if reasonable)
+    combo4 = personal_year * 10 + personal_month
+    if 1 <= combo4 <= 99:
+        lucky_numbers.add(combo4)
+    
+    # Fill to 5 numbers if needed using date-based calculations
+    while len(lucky_numbers) < 5:
+        # Use day of year as additional number
+        day_of_year = datetime(target_year, target_month, target_day).timetuple().tm_yday
+        day_num = day_of_year % 99 + 1
+        lucky_numbers.add(day_num)
+        
+        if len(lucky_numbers) >= 5:
+            break
+        
+        # Use month * day
+        month_day = (target_month * target_day) % 99 + 1
+        lucky_numbers.add(month_day)
+        
+        if len(lucky_numbers) >= 5:
+            break
+    
+    # Convert to sorted list and take first 5
+    result = sorted(list(lucky_numbers))[:5]
+    
+    # Ensure we have exactly 5 numbers
+    while len(result) < 5:
+        # Add numbers based on date components
+        if len(result) < 5:
+            result.append((target_day * 3) % 99 + 1)
+        if len(result) < 5:
+            result.append((target_month * 7) % 99 + 1)
+        if len(result) < 5:
+            result.append((target_year % 100) % 99 + 1)
+    
+    return sorted(result[:5])

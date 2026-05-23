@@ -1,27 +1,14 @@
 /**
  * TypeScript type definitions for the web application
+ * Re-exports common types from shared-core to ensure consistency
  */
 
-// User types
-export interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  birthDate?: string;
-  birthTime?: string;
-  birthLocation?: {
-    city: string;
-    country: string;
-    latitude: number;
-    longitude: number;
-  };
-  zodiacSign?: string;
-  subscriptionTier: 'freemium' | 'premium' | 'platinum';
-  subscriptionExpires?: string;
-  createdAt: string;
-}
+export * from '@mirastros-universal/shared-core';
+import type { User } from '@mirastros-universal/shared-core';
 
-// Authentication types
+// Web-specific types (extended or new)
+
+// Authentication types (extended for local usage if needed)
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -31,6 +18,8 @@ export interface RegisterData {
   email: string;
   password: string;
   fullName: string;
+  preferredLanguage?: string;
+  timezone?: string;
 }
 
 export interface AuthResponse {
@@ -39,79 +28,7 @@ export interface AuthResponse {
   user: User;
 }
 
-// Natal Chart types
-export interface PlanetPosition {
-  sign: string;
-  degree: number;
-  house: number;
-  retrograde: boolean;
-}
-
-export interface NatalChart {
-  id: string;
-  userId: string;
-  planets: {
-    sun: PlanetPosition;
-    moon: PlanetPosition;
-    mercury: PlanetPosition;
-    venus: PlanetPosition;
-    mars: PlanetPosition;
-    jupiter: PlanetPosition;
-    saturn: PlanetPosition;
-    uranus: PlanetPosition;
-    neptune: PlanetPosition;
-    pluto: PlanetPosition;
-  };
-  houses: Array<{
-    number: number;
-    sign: string;
-    degree: number;
-  }>;
-  aspects: Array<{
-    planet1: string;
-    planet2: string;
-    type: string;
-    orb: number;
-  }>;
-  calculatedAt: string;
-}
-
-// Tarot types
-export interface TarotCard {
-  id: string;
-  name: string;
-  suit: string;
-  number: number;
-  position: string;
-  reversed: boolean;
-  meaning: string;
-  imageUrl: string;
-}
-
-export interface TarotReading {
-  id: string;
-  userId: string;
-  spread: string;
-  cards: TarotCard[];
-  interpretation: string;
-  question?: string;
-  createdAt: string;
-}
-
-// Horoscope types
-export interface Horoscope {
-  id: string;
-  sign: string;
-  period: 'daily' | 'weekly' | 'monthly';
-  date: string;
-  prediction: string;
-  luckyNumbers: number[];
-  luckyColors: string[];
-  compatibility: string[];
-  advice: string;
-}
-
-// Shop types
+// Shop types (If not in shared-core)
 export interface Product {
   id: string;
   name: string;
@@ -170,7 +87,7 @@ export interface PaymentIntent {
   clientSecret?: string;
 }
 
-// Journal types
+// Journal types (If not in shared-core)
 export interface JournalEntry {
   id: string;
   userId: string;
@@ -183,31 +100,36 @@ export interface JournalEntry {
   updatedAt: string;
 }
 
-// API Response types
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  error?: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-// Form types
-export interface FormErrors {
-  [key: string]: string;
-}
-
-// Navigation types
-export interface NavItem {
-  label: string;
-  href: string;
-  icon?: string;
-  children?: NavItem[];
+// Destiny Matrix types (If not in shared-core)
+export interface DestinyMatrix {
+  id?: string;
+  birth_date: string;
+  calculation_version?: 'v1' | 'v2';
+  matrix_data: number[][]; // 4x4 grid
+  lines: {
+    destiny: number;
+    character: number;
+    purpose: number;
+    health: number;
+  };
+  lines_basic: {
+    destiny: number;
+    character: number;
+    purpose: number;
+    health: number;
+  };
+  lines_extended: {
+    line_of_earth: number[];
+    line_of_heaven: number[];
+    line_of_man: number[];
+    line_of_woman: number[];
+  };
+  positions: Record<string, number>;
+  layout_meta?: Record<string, unknown>;
+  active_arcana: number[];
+  interpretation: string;
+  matrix_id?: string;
+  clarify_available?: boolean;
 }
 
 // Service types
@@ -239,4 +161,74 @@ export interface Service {
   icon: string;
   href: string;
   tier: 'freemium' | 'premium' | 'platinum';
+}
+
+// API Response types
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// Form types
+export interface FormErrors {
+  [key: string]: string;
+}
+
+// Navigation types
+export interface NavItem {
+  label: string;
+  href: string;
+  icon?: string;
+  children?: NavItem[];
+}
+
+// Consultation history (unified)
+export type ConsultationServiceType =
+  | 'tarot'
+  | 'numerology'
+  | 'iching'
+  | 'dreams'
+  | 'lenormand'
+  | 'synastry';export interface ConsultationHistoryItem {
+  id: string;
+  type: ConsultationServiceType;
+  title: string;
+  question: string | null;
+  preview: string;
+  created_at: string;
+  is_favorite: boolean;
+}export interface ConsultationHistoryResponse {
+  items: ConsultationHistoryItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface ConsultationDetailResponse {
+  id: string;
+  type: ConsultationServiceType;
+  title: string;
+  question: string | null;
+  result: string;
+  created_at: string;
+  is_favorite: boolean;
+  raw: Record<string, unknown>;
+}
+
+export interface HistoryStatsResponse {
+  total_consultations: number;
+  by_service: Record<string, number>;
+  most_used_service: string;
+  first_consultation_at: string | null;
+  last_consultation_at: string | null;
+  favorites_count: number;
 }

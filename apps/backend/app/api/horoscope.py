@@ -1,7 +1,7 @@
 """Horoscope API endpoints"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from typing import Optional, Any
 from datetime import date, timedelta
 import json
 import logging
@@ -26,6 +26,63 @@ from app.services.rag import rag_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/horoscope", tags=["Horoscope"])
+
+
+def _period_value(period: Any) -> str:
+    return period.value if hasattr(period, "value") else str(period)
+
+
+def _build_horoscope_response_data(
+    *,
+    sign: str,
+    period: str,
+    target_date: date,
+    prediction: str,
+    lucky_numbers: Optional[list],
+    lucky_colors: Optional[list],
+    compatibility_signs: Optional[list],
+    advice: Optional[str],
+    is_personalized: bool,
+    transit_data: Optional[dict],
+    ratings: Optional[dict],
+    clarify_available: bool,
+    horoscope_id: Optional[str] = None,
+) -> dict:
+    rich_source = (
+        transit_data.get("rich_text")
+        if transit_data and isinstance(transit_data, dict) and transit_data.get("rich_text")
+        else prediction
+    )
+    normalized = horoscope_service.validate_and_normalize_horoscope_content(
+        sign=sign,
+        period=period,
+        target_date=target_date,
+        prediction=rich_source,
+        advice=advice or "",
+        lucky_colors=lucky_colors or [],
+    )
+    explanations = horoscope_service.build_rating_explanations(ratings)
+    return {
+        "sign": sign,
+        "period": period,
+        "date": target_date.isoformat(),
+        "prediction": normalized["prediction"],
+        "plain_text": normalized["plain_text"],
+        "rich_text": normalized["rich_text"],
+        "lucky_numbers": lucky_numbers,
+        "lucky_colors": normalized["lucky_colors"],
+        "compatibility_signs": compatibility_signs,
+        "advice": normalized["advice"],
+        "is_personalized": is_personalized,
+        "transit_data": transit_data,
+        "ratings": ratings,
+        "explanations": explanations,
+        "best_time_windows": horoscope_service.get_best_time_windows(sign, period),
+        "period_range_label": horoscope_service.get_period_range_label(period, target_date),
+        "language": normalized["language"],
+        "clarify_available": clarify_available,
+        "horoscope_id": horoscope_id,
+    }
 
 
 @router.get("/daily/{sign}", response_model=HoroscopeResponse)
@@ -78,18 +135,41 @@ async def get_daily_horoscope(
         
         if db_horoscope:
             logger.info(f"Returning database cached horoscope for {sign.value}")
-            response_data = {
-                "sign": db_horoscope.zodiac_sign,
-                "period": db_horoscope.period,
-                "date": db_horoscope.date,
-                "prediction": db_horoscope.prediction,
-                "lucky_numbers": db_horoscope.lucky_numbers,
-                "lucky_colors": db_horoscope.lucky_colors,
-                "compatibility_signs": db_horoscope.compatibility_signs,
-                "advice": db_horoscope.advice,
-                "is_personalized": db_horoscope.is_personalized == "true",
-                "transit_data": db_horoscope.transit_data
-            }
+            
+            # Calculate current transits for ratings calculation
+            current_transits = horoscope_service.calculate_current_transits(target_date)
+            
+            # Calculate ratings for cached horoscope if Premium/Platinum
+            ratings = None
+            if current_user and current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
+                try:
+                    cached_transits = db_horoscope.transit_data.get("current_transits", current_transits) if db_horoscope.transit_data else current_transits
+                    ratings = horoscope_service.calculate_life_area_ratings(
+                        zodiac_sign=sign.value,
+                        transits=cached_transits,
+                        natal_chart=natal_chart if is_personalized else None,
+                        target_date=target_date
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to calculate ratings for cached horoscope: {str(e)}")
+            
+            clarify_available = bool(current_user and current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM])
+            
+            response_data = _build_horoscope_response_data(
+                sign=db_horoscope.zodiac_sign,
+                period=_period_value(db_horoscope.period),
+                target_date=db_horoscope.date or target_date,
+                prediction=db_horoscope.prediction,
+                lucky_numbers=db_horoscope.lucky_numbers,
+                lucky_colors=db_horoscope.lucky_colors,
+                compatibility_signs=db_horoscope.compatibility_signs,
+                advice=db_horoscope.advice,
+                is_personalized=db_horoscope.is_personalized == "true",
+                transit_data=db_horoscope.transit_data,
+                ratings=ratings,
+                clarify_available=clarify_available,
+                horoscope_id=str(db_horoscope.id),
+            )
             
             # Cache in Redis if general horoscope
             if not is_personalized:
@@ -133,13 +213,68 @@ async def get_daily_horoscope(
         )
         
         # Generate additional data
-        lucky_numbers = horoscope_service.generate_lucky_numbers(sign.value, target_date)
+        # Try to get user's birth date and numerology for personalized lucky numbers
+        user_birth_date = None
+        user_life_path = None
+        
+        if current_user and current_user.birth_date:
+            user_birth_date = current_user.birth_date
+            # Try to get Life Path Number from numerology calculation if available
+            try:
+                from app.models.numerology_calculation import NumerologyCalculation
+                from sqlalchemy import select
+                result = await db.execute(
+                    select(NumerologyCalculation)
+                    .where(NumerologyCalculation.user_id == current_user.id)
+                    .order_by(NumerologyCalculation.updated_at.desc())
+                    .limit(1)
+                )
+                numerology_calc = result.scalar_one_or_none()
+                if numerology_calc:
+                    user_life_path = numerology_calc.life_path_number
+            except Exception as e:
+                logger.debug(f"Could not fetch numerology calculation: {e}")
+        
+        lucky_numbers = horoscope_service.generate_lucky_numbers(
+            sign.value, 
+            target_date,
+            user_birth_date=user_birth_date,
+            user_life_path=user_life_path
+        )
         lucky_colors = horoscope_service.generate_lucky_colors(sign.value)
         compatibility_signs = horoscope_service.get_compatible_signs(sign.value)
         
         # Extract advice (last paragraph of prediction)
         advice_parts = prediction.strip().split('\n\n')
-        advice = advice_parts[-1] if len(advice_parts) > 1 else "Trust your intuition today."
+        advice = advice_parts[-1] if len(advice_parts) > 1 else "Слушайте интуицию и действуйте последовательно."
+
+        normalized_content = horoscope_service.validate_and_normalize_horoscope_content(
+            sign=sign.value,
+            period="daily",
+            target_date=target_date,
+            prediction=prediction,
+            advice=advice,
+            lucky_colors=lucky_colors,
+        )
+        transit_data = {
+            **(transit_data or {}),
+            "plain_text": normalized_content["plain_text"],
+            "rich_text": normalized_content["rich_text"],
+            "language": "ru",
+        }
+        
+        # Calculate life area ratings for Premium/Platinum users
+        ratings = None
+        if current_user and current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
+            try:
+                ratings = horoscope_service.calculate_life_area_ratings(
+                    zodiac_sign=sign.value,
+                    transits=transits,
+                    natal_chart=natal_chart if is_personalized else None,
+                    target_date=target_date
+                )
+            except Exception as e:
+                logger.warning(f"Failed to calculate ratings: {str(e)}")
         
         # Save to database
         db_horoscope = await horoscope_service.save_horoscope(
@@ -147,33 +282,39 @@ async def get_daily_horoscope(
             sign=sign.value,
             period="daily",
             target_date=target_date,
-            prediction=prediction,
+            prediction=normalized_content["prediction"],
             lucky_numbers=lucky_numbers,
-            lucky_colors=lucky_colors,
+            lucky_colors=normalized_content["lucky_colors"],
             compatibility_signs=compatibility_signs,
-            advice=advice,
+            advice=normalized_content["advice"],
             user_id=user_id,
             is_personalized=is_personalized,
             transit_data=transit_data
         )
         
-        response_data = {
-            "sign": db_horoscope.zodiac_sign,
-            "period": db_horoscope.period,
-            "date": db_horoscope.date,
-            "prediction": db_horoscope.prediction,
-            "lucky_numbers": db_horoscope.lucky_numbers,
-            "lucky_colors": db_horoscope.lucky_colors,
-            "compatibility_signs": db_horoscope.compatibility_signs,
-            "advice": db_horoscope.advice,
-            "is_personalized": db_horoscope.is_personalized == "true",
-            "transit_data": db_horoscope.transit_data
-        }
+        # Check if user has Premium/Platinum for clarify feature
+        clarify_available = bool(current_user and current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM])
         
+        response_data = _build_horoscope_response_data(
+            sign=db_horoscope.zodiac_sign,
+            period=_period_value(db_horoscope.period),
+            target_date=db_horoscope.date or target_date,
+            prediction=db_horoscope.prediction,
+            lucky_numbers=db_horoscope.lucky_numbers,
+            lucky_colors=db_horoscope.lucky_colors,
+            compatibility_signs=db_horoscope.compatibility_signs,
+            advice=db_horoscope.advice,
+            is_personalized=db_horoscope.is_personalized == "true",
+            transit_data=db_horoscope.transit_data,
+            ratings=ratings,
+            clarify_available=clarify_available,
+            horoscope_id=str(db_horoscope.id),
+        )
+
         # Cache in Redis if general horoscope
         if not is_personalized:
             await redis_client.set(cache_key, response_data, ttl=86400)  # 24 hours
-        
+
         return HoroscopeResponse(**response_data)
         
     except Exception as e:
@@ -225,18 +366,41 @@ async def get_weekly_horoscope(
         
         if db_horoscope:
             logger.info(f"Returning cached weekly horoscope for {sign.value}")
-            return HoroscopeResponse(
+            
+            # Calculate current transits for ratings
+            current_transits = horoscope_service.calculate_current_transits(week_start)
+            
+            # Calculate ratings for cached horoscope
+            ratings = None
+            try:
+                cached_transits = db_horoscope.transit_data.get("current_transits", current_transits) if db_horoscope.transit_data else current_transits
+                ratings = horoscope_service.calculate_life_area_ratings(
+                    zodiac_sign=sign.value,
+                    transits=cached_transits,
+                    natal_chart=natal_chart if is_personalized else None,
+                    target_date=week_start
+                )
+            except Exception as e:
+                logger.warning(f"Failed to calculate ratings for cached weekly horoscope: {str(e)}")
+            
+            clarify_available = current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]
+            
+            response_data = _build_horoscope_response_data(
                 sign=db_horoscope.zodiac_sign,
-                period=db_horoscope.period,
-                date=db_horoscope.date,
+                period=_period_value(db_horoscope.period),
+                target_date=db_horoscope.date or week_start,
                 prediction=db_horoscope.prediction,
                 lucky_numbers=db_horoscope.lucky_numbers,
                 lucky_colors=db_horoscope.lucky_colors,
                 compatibility_signs=db_horoscope.compatibility_signs,
                 advice=db_horoscope.advice,
                 is_personalized=db_horoscope.is_personalized == "true",
-                transit_data=db_horoscope.transit_data
+                transit_data=db_horoscope.transit_data,
+                ratings=ratings,
+                clarify_available=clarify_available,
+                horoscope_id=str(db_horoscope.id),
             )
+            return HoroscopeResponse(**response_data)
         
         # Generate new weekly horoscope
         logger.info(f"Generating new weekly horoscope for {sign.value}")
@@ -269,40 +433,98 @@ async def get_weekly_horoscope(
             temperature=0.7
         )
         
-        lucky_numbers = horoscope_service.generate_lucky_numbers(sign.value, week_start)
+        # Try to get user's birth date for personalized lucky numbers
+        user_birth_date = None
+        user_life_path = None
+        if current_user and current_user.birth_date:
+            user_birth_date = current_user.birth_date
+            try:
+                from app.models.numerology_calculation import NumerologyCalculation
+                from sqlalchemy import select
+                result = await db.execute(
+                    select(NumerologyCalculation)
+                    .where(NumerologyCalculation.user_id == current_user.id)
+                    .order_by(NumerologyCalculation.updated_at.desc())
+                    .limit(1)
+                )
+                numerology_calc = result.scalar_one_or_none()
+                if numerology_calc:
+                    user_life_path = numerology_calc.life_path_number
+            except Exception as e:
+                logger.debug(f"Could not fetch numerology calculation: {e}")
+        
+        lucky_numbers = horoscope_service.generate_lucky_numbers(
+            sign.value, 
+            week_start,
+            user_birth_date=user_birth_date,
+            user_life_path=user_life_path
+        )
         lucky_colors = horoscope_service.generate_lucky_colors(sign.value)
         compatibility_signs = horoscope_service.get_compatible_signs(sign.value)
         
         advice_parts = prediction.strip().split('\n\n')
-        advice = advice_parts[-1] if len(advice_parts) > 1 else "Focus on your goals this week."
+        advice = advice_parts[-1] if len(advice_parts) > 1 else "Действуйте по ключевым приоритетам и не распыляйтесь."
+
+        normalized_content = horoscope_service.validate_and_normalize_horoscope_content(
+            sign=sign.value,
+            period="weekly",
+            target_date=week_start,
+            prediction=prediction,
+            advice=advice,
+            lucky_colors=lucky_colors,
+        )
+        transit_data = {
+            **(transit_data or {}),
+            "plain_text": normalized_content["plain_text"],
+            "rich_text": normalized_content["rich_text"],
+            "language": "ru",
+        }
+        
+        # Calculate life area ratings
+        ratings = None
+        try:
+            ratings = horoscope_service.calculate_life_area_ratings(
+                zodiac_sign=sign.value,
+                transits=transits,
+                natal_chart=natal_chart if is_personalized else None,
+                target_date=week_start
+            )
+        except Exception as e:
+            logger.warning(f"Failed to calculate ratings: {str(e)}")
         
         db_horoscope = await horoscope_service.save_horoscope(
             db=db,
             sign=sign.value,
             period="weekly",
             target_date=week_start,
-            prediction=prediction,
+            prediction=normalized_content["prediction"],
             lucky_numbers=lucky_numbers,
-            lucky_colors=lucky_colors,
+            lucky_colors=normalized_content["lucky_colors"],
             compatibility_signs=compatibility_signs,
-            advice=advice,
+            advice=normalized_content["advice"],
             user_id=str(current_user.id) if is_personalized else None,
             is_personalized=is_personalized,
             transit_data=transit_data
         )
         
-        return HoroscopeResponse(
+        clarify_available = current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]
+        
+        response_data = _build_horoscope_response_data(
             sign=db_horoscope.zodiac_sign,
-            period=db_horoscope.period,
-            date=db_horoscope.date,
+            period=_period_value(db_horoscope.period),
+            target_date=db_horoscope.date or week_start,
             prediction=db_horoscope.prediction,
             lucky_numbers=db_horoscope.lucky_numbers,
             lucky_colors=db_horoscope.lucky_colors,
             compatibility_signs=db_horoscope.compatibility_signs,
             advice=db_horoscope.advice,
             is_personalized=db_horoscope.is_personalized == "true",
-            transit_data=db_horoscope.transit_data
+            transit_data=db_horoscope.transit_data,
+            ratings=ratings,
+            clarify_available=clarify_available,
+            horoscope_id=str(db_horoscope.id),
         )
+        return HoroscopeResponse(**response_data)
         
     except HTTPException:
         raise
@@ -355,18 +577,41 @@ async def get_monthly_horoscope(
         
         if db_horoscope:
             logger.info(f"Returning cached monthly horoscope for {sign.value}")
-            return HoroscopeResponse(
+            
+            # Calculate current transits for ratings
+            current_transits = horoscope_service.calculate_current_transits(month_start)
+            
+            # Calculate ratings for cached horoscope
+            ratings = None
+            try:
+                cached_transits = db_horoscope.transit_data.get("current_transits", current_transits) if db_horoscope.transit_data else current_transits
+                ratings = horoscope_service.calculate_life_area_ratings(
+                    zodiac_sign=sign.value,
+                    transits=cached_transits,
+                    natal_chart=natal_chart if is_personalized else None,
+                    target_date=month_start
+                )
+            except Exception as e:
+                logger.warning(f"Failed to calculate ratings for cached monthly horoscope: {str(e)}")
+            
+            clarify_available = current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]
+            
+            response_data = _build_horoscope_response_data(
                 sign=db_horoscope.zodiac_sign,
-                period=db_horoscope.period,
-                date=db_horoscope.date,
+                period=_period_value(db_horoscope.period),
+                target_date=db_horoscope.date or month_start,
                 prediction=db_horoscope.prediction,
                 lucky_numbers=db_horoscope.lucky_numbers,
                 lucky_colors=db_horoscope.lucky_colors,
                 compatibility_signs=db_horoscope.compatibility_signs,
                 advice=db_horoscope.advice,
                 is_personalized=db_horoscope.is_personalized == "true",
-                transit_data=db_horoscope.transit_data
+                transit_data=db_horoscope.transit_data,
+                ratings=ratings,
+                clarify_available=clarify_available,
+                horoscope_id=str(db_horoscope.id),
             )
+            return HoroscopeResponse(**response_data)
         
         # Generate new monthly horoscope
         logger.info(f"Generating new monthly horoscope for {sign.value}")
@@ -399,40 +644,98 @@ async def get_monthly_horoscope(
             temperature=0.7
         )
         
-        lucky_numbers = horoscope_service.generate_lucky_numbers(sign.value, month_start)
+        # Try to get user's birth date for personalized lucky numbers
+        user_birth_date = None
+        user_life_path = None
+        if current_user and current_user.birth_date:
+            user_birth_date = current_user.birth_date
+            try:
+                from app.models.numerology_calculation import NumerologyCalculation
+                from sqlalchemy import select
+                result = await db.execute(
+                    select(NumerologyCalculation)
+                    .where(NumerologyCalculation.user_id == current_user.id)
+                    .order_by(NumerologyCalculation.updated_at.desc())
+                    .limit(1)
+                )
+                numerology_calc = result.scalar_one_or_none()
+                if numerology_calc:
+                    user_life_path = numerology_calc.life_path_number
+            except Exception as e:
+                logger.debug(f"Could not fetch numerology calculation: {e}")
+        
+        lucky_numbers = horoscope_service.generate_lucky_numbers(
+            sign.value, 
+            month_start,
+            user_birth_date=user_birth_date,
+            user_life_path=user_life_path
+        )
         lucky_colors = horoscope_service.generate_lucky_colors(sign.value)
         compatibility_signs = horoscope_service.get_compatible_signs(sign.value)
         
         advice_parts = prediction.strip().split('\n\n')
-        advice = advice_parts[-1] if len(advice_parts) > 1 else "Make this month count."
+        advice = advice_parts[-1] if len(advice_parts) > 1 else "Стройте план на перспективу и действуйте без спешки."
+
+        normalized_content = horoscope_service.validate_and_normalize_horoscope_content(
+            sign=sign.value,
+            period="monthly",
+            target_date=month_start,
+            prediction=prediction,
+            advice=advice,
+            lucky_colors=lucky_colors,
+        )
+        transit_data = {
+            **(transit_data or {}),
+            "plain_text": normalized_content["plain_text"],
+            "rich_text": normalized_content["rich_text"],
+            "language": "ru",
+        }
+        
+        # Calculate life area ratings
+        ratings = None
+        try:
+            ratings = horoscope_service.calculate_life_area_ratings(
+                zodiac_sign=sign.value,
+                transits=transits,
+                natal_chart=natal_chart if is_personalized else None,
+                target_date=month_start
+            )
+        except Exception as e:
+            logger.warning(f"Failed to calculate ratings: {str(e)}")
         
         db_horoscope = await horoscope_service.save_horoscope(
             db=db,
             sign=sign.value,
             period="monthly",
             target_date=month_start,
-            prediction=prediction,
+            prediction=normalized_content["prediction"],
             lucky_numbers=lucky_numbers,
-            lucky_colors=lucky_colors,
+            lucky_colors=normalized_content["lucky_colors"],
             compatibility_signs=compatibility_signs,
-            advice=advice,
+            advice=normalized_content["advice"],
             user_id=str(current_user.id) if is_personalized else None,
             is_personalized=is_personalized,
             transit_data=transit_data
         )
         
-        return HoroscopeResponse(
+        clarify_available = current_user.subscription_tier in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]
+        
+        response_data = _build_horoscope_response_data(
             sign=db_horoscope.zodiac_sign,
-            period=db_horoscope.period,
-            date=db_horoscope.date,
+            period=_period_value(db_horoscope.period),
+            target_date=db_horoscope.date or month_start,
             prediction=db_horoscope.prediction,
             lucky_numbers=db_horoscope.lucky_numbers,
             lucky_colors=db_horoscope.lucky_colors,
             compatibility_signs=db_horoscope.compatibility_signs,
             advice=db_horoscope.advice,
             is_personalized=db_horoscope.is_personalized == "true",
-            transit_data=db_horoscope.transit_data
+            transit_data=db_horoscope.transit_data,
+            ratings=ratings,
+            clarify_available=clarify_available,
+            horoscope_id=str(db_horoscope.id),
         )
+        return HoroscopeResponse(**response_data)
         
     except HTTPException:
         raise

@@ -1,4 +1,5 @@
 """Rituals and meditation schemas for request/response validation"""
+from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import date
@@ -88,7 +89,7 @@ class DailyAffirmationsRequest(BaseModel):
 
 class DailyAffirmationsResponse(BaseModel):
     """Response with daily affirmations"""
-    date: date = Field(..., description="Date")
+    target_date: date = Field(..., alias="date", description="Date")
     affirmations: List[str] = Field(..., description="Daily affirmations")
     zodiac_sign: Optional[str] = Field(default=None, description="User's zodiac sign")
     moon_sign: Optional[str] = Field(default=None, description="Current moon sign")

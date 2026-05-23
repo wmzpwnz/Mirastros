@@ -182,7 +182,24 @@ DELETE /documents/{id}      # Delete document
 
 ## Configuration
 
-Environment variables (`.env`):
+### Required environment variables
+
+The application **will not start** without these variables set (e.g. in `.env`):
+
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | JWT signing key; must be set and not the placeholder value (min 32 characters). |
+| `DATABASE_URL` | PostgreSQL connection string, e.g. `postgresql+asyncpg://user:pass@localhost:5432/mirastros`. |
+
+For AI-powered features (chat, interpretations, RAG):
+
+| Variable | Description |
+|----------|-------------|
+| `DEEPSEEK_API_KEY` | DeepSeek API key; if empty, the app starts but AI features are disabled. |
+
+Optional: `ADMIN_EMAILS` (comma-separated or JSON list) for admin access; defaults to `["admin@mirastros.com"]`.
+
+### Environment variables (`.env`)
 
 ```bash
 # App
@@ -194,14 +211,19 @@ DEBUG=True
 HOST=0.0.0.0
 PORT=8000
 
-# Database
+# Database (required)
 DATABASE_URL=postgresql+asyncpg://mirastros:password@localhost:5432/mirastros
 
 # Redis
 REDIS_URL=redis://localhost:6379/0
 REDIS_CACHE_TTL=3600
 
-# AI Model
+# AI Model (DeepSeek API - optional for dev, required for AI features)
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions
+DEEPSEEK_MODEL=deepseek-chat
+
+# Legacy Ollama (deprecated)
 MODEL_PATH=/home/mirastros/models/qwen2.5-7b-instruct.gguf
 EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 
@@ -210,7 +232,7 @@ CHUNK_SIZE=512
 CHUNK_OVERLAP=50
 TOP_K_RESULTS=5
 
-# Security
+# Security (SECRET_KEY is required - set a strong value in production)
 CORS_ORIGINS=["http://localhost:3000","http://localhost:4200"]
 RATE_LIMIT_PER_MINUTE=60
 ```

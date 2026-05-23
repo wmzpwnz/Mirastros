@@ -1,7 +1,12 @@
 """Analytics event model for tracking user actions and system metrics."""
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -60,11 +65,11 @@ class AnalyticsEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    timestamp = Column(DateTime, default=_utc_now, nullable=False, index=True)
     
     # Event metadata (service-specific data, performance metrics, etc.)
-    metadata = Column(JSON, nullable=True)
+    event_metadata = Column(JSON, nullable=True)
     
     # Platform information
     platform = Column(String, nullable=True)  # web, mobile, telegram, vk

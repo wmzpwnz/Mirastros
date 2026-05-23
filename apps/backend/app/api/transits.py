@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_premium
@@ -204,7 +204,7 @@ async def interpret_transits(
         return {
             "interpretation": interpretation,
             "date": transit_data["date"].isoformat(),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
         
     except HTTPException:

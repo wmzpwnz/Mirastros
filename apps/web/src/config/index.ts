@@ -7,7 +7,7 @@ export const config = {
   // API Configuration
   api: {
     baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-    timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
+    timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '15000', 10), // 15 seconds
   },
 
   // App Configuration
@@ -20,6 +20,12 @@ export const config = {
   features: {
     enable3DBackground: process.env.NEXT_PUBLIC_ENABLE_3D_BACKGROUND === 'true',
     enableZScroll: process.env.NEXT_PUBLIC_ENABLE_ZSCROLL === 'true',
+    enableZScrollMobile:
+      process.env.NEXT_PUBLIC_ENABLE_ZSCROLL_MOBILE === 'true',
+    zScrollDesktopMinWidth: parseInt(
+      process.env.NEXT_PUBLIC_ZSCROLL_DESKTOP_MIN_WIDTH || '1024',
+      10
+    ),
     enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
   },
 

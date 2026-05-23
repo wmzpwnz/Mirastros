@@ -7,7 +7,8 @@ from typing import List
 from uuid import UUID
 
 from app.core.deps import get_db, get_current_user
-from app.models.user import User
+from app.core.access_control import FeatureAccessControl
+from app.models.user import User, SubscriptionTier
 from app.schemas.notifications import (
     PushTokenRegister,
     PushTokenUnregister,
@@ -63,7 +64,8 @@ async def subscribe_to_transits(
     current_user: User = Depends(get_current_user),
 ):
     """Subscribe to transit notifications (Platinum tier only)"""
-    if current_user.subscription_tier != "platinum":
+    tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+    if tier != SubscriptionTier.PLATINUM:
         raise HTTPException(
             status_code=403,
             detail="Transit notifications are only available for Platinum subscribers"
@@ -104,7 +106,8 @@ async def subscribe_to_lunar(
     current_user: User = Depends(get_current_user),
 ):
     """Subscribe to lunar phase notifications (Platinum tier only)"""
-    if current_user.subscription_tier != "platinum":
+    tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+    if tier != SubscriptionTier.PLATINUM:
         raise HTTPException(
             status_code=403,
             detail="Lunar notifications are only available for Platinum subscribers"

@@ -3,10 +3,14 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.database import Base
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class DreamInterpretation(Base):
@@ -21,7 +25,7 @@ class DreamInterpretation(Base):
     interpretation = Column(Text, nullable=False)
     themes = Column(JSON, nullable=True)  # Array of identified themes
     emotions = Column(JSON, nullable=True)  # Array of emotions in the dream
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
     
     # Relationship to User
     user = relationship("User", back_populates="dream_interpretations")

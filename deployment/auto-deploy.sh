@@ -66,3 +66,35 @@ echo ""
 echo "✅ Деплой завершен!"
 echo "Проверьте статус: ssh $SERVER 'systemctl status mirastros-backend'"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

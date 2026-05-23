@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { authenticatedFetch } from '../../lib/auth'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { shareReading } from '../../lib/vk'
+import { Button, Card } from '@mirastros-universal/design-system'
 
 const ZODIAC_SIGNS = [
   { id: 'aries', name: 'Овен', emoji: '♈', dates: '21.03 - 19.04' },
@@ -69,12 +70,12 @@ export default function HoroscopePage() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gold mb-2">⭐ Гороскоп</h1>
+            <h1 className="text-4xl font-bold text-gold-500 mb-2">⭐ Гороскоп</h1>
             <p className="text-gray-300">Ежедневное космическое руководство</p>
           </div>
 
           {!horoscope ? (
-            <div className="bg-purple-deep/80 backdrop-blur-md border border-gold/20 rounded-2xl p-6 shadow-2xl">
+            <Card variant="elevated">
               {/* Zodiac Sign Selection */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -87,8 +88,8 @@ export default function HoroscopePage() {
                       onClick={() => setSelectedSign(sign.id)}
                       className={`p-3 rounded-lg border transition-all ${
                         selectedSign === sign.id
-                          ? 'bg-gold/20 border-gold text-gold'
-                          : 'bg-purple-deep/50 border-gold/20 text-gray-300 hover:border-gold/50'
+                          ? 'bg-gold-500/20 border-gold-500 text-gold-500'
+                          : 'bg-gray-900/50 border-gold-500/20 text-gray-300 hover:border-gold-500/50'
                       }`}
                     >
                       <div className="text-2xl mb-1">{sign.emoji}</div>
@@ -100,20 +101,22 @@ export default function HoroscopePage() {
               </div>
 
               {/* Get Horoscope Button */}
-              <button
-                onClick={handleGetHoroscope}
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
                 disabled={isLoading || !selectedSign}
-                className="w-full bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-4 rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleGetHoroscope}
               >
                 {isLoading ? 'Получаем прогноз...' : 'Получить гороскоп'}
-              </button>
-            </div>
+              </Button>
+            </Card>
           ) : (
             <div className="space-y-6">
               {/* Horoscope Display */}
-              <div className="bg-purple-deep/80 backdrop-blur-md border border-gold/20 rounded-2xl p-6 shadow-2xl">
+              <Card variant="elevated">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gold">
+                  <h2 className="text-xl font-bold text-gold-500">
                     {ZODIAC_SIGNS.find(s => s.id === selectedSign)?.name}
                   </h2>
                   <div className="text-4xl">
@@ -126,11 +129,11 @@ export default function HoroscopePage() {
 
                 {/* Lucky Numbers & Colors */}
                 {(horoscope.lucky_numbers || horoscope.lucky_colors) && (
-                  <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gold/20">
+                  <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gold-500/20">
                     {horoscope.lucky_numbers && (
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Счастливые числа</div>
-                        <div className="text-gold font-medium">
+                        <div className="text-gold-500 font-medium">
                           {horoscope.lucky_numbers.join(', ')}
                         </div>
                       </div>
@@ -138,38 +141,42 @@ export default function HoroscopePage() {
                     {horoscope.lucky_colors && (
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Счастливые цвета</div>
-                        <div className="text-gold font-medium">
+                        <div className="text-gold-500 font-medium">
                           {horoscope.lucky_colors.join(', ')}
                         </div>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="flex-1"
                   onClick={handleShare}
-                  className="flex-1 bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors"
                 >
                   📤 Поделиться
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="flex-1"
                   onClick={() => {
                     setHoroscope(null)
                     setSelectedSign('')
                   }}
-                  className="flex-1 bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
                 >
                   ⭐ Другой знак
-                </button>
+                </Button>
               </div>
 
               {/* Back Button */}
               <a
                 href="/"
-                className="block text-center text-gray-400 hover:text-gold transition-colors"
+                className="block text-center text-gray-400 hover:text-gold-500 transition-colors"
               >
                 ← Вернуться на главную
               </a>

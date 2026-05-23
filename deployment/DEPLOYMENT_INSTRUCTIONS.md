@@ -4,7 +4,7 @@
 
 - **Server IP**: 109.196.100.104
 - **Domain**: www.mirastros.com
-- **Root Password**: hqpQDEoEB5_hnt
+- **Root access**: Use SSH keys or credentials from your secure secret store (never commit passwords to the repo).
 - **OS**: Ubuntu 22.04 LTS (recommended)
 
 ## Prerequisites
@@ -22,7 +22,7 @@ Before starting deployment, ensure you have:
 
 ```bash
 ssh root@109.196.100.104
-# Password: hqpQDEoEB5_hnt
+# Use your SSH key or password from a secure store
 ```
 
 ### Step 2: Upload Deployment Scripts

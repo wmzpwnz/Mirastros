@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
 import { ClarifyButton } from '../../../components/ClarifyButton';
+import { QuestionForm } from '../../../components/ui/QuestionForm';
+import { ResultCard } from '../../../components/ui/ResultCard';
+import { ResultText } from '../../../components/ui/ResultText';
+import { ResultActions } from '../../../components/ui/ResultActions';
+import { ErrorDisplay } from '../../../components/ui/ErrorDisplay';
 
 export default function DreamPage() {
   const [dreamText, setDreamText] = useState('');
@@ -15,11 +20,6 @@ export default function DreamPage() {
   const moods = ['спокойный', 'тревожный', 'радостный', 'странный', 'пугающий'];
 
   const handleInterpret = async () => {
-    if (!dreamText.trim()) {
-      setError('Пожалуйста, опишите ваш сон');
-      return;
-    }
-
     setError('');
     setLoading(true);
 
@@ -32,10 +32,16 @@ export default function DreamPage() {
       });
     } catch (err: any) {
       setError(err.message || 'Ошибка при толковании сна');
-      setLoading(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNewDream = () => {
+    setInterpretation(null);
+    setDreamText('');
+    setMood('');
+    setError('');
   };
 
   return (
@@ -66,22 +72,19 @@ export default function DreamPage() {
               </h2>
 
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Описание сна *
-                  </label>
-                  <textarea
-                    value={dreamText}
-                    onChange={(e) => {
-                      setDreamText(e.target.value);
-                      setError('');
-                    }}
-                    placeholder="Опишите ваш сон как можно подробнее: что вы видели, чувствовали, кто присутствовал..."
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-mirastros-gold focus:border-transparent transition resize-none"
-                    rows={8}
-                  />
-                </div>
+                {/* Dream Text Input */}
+                <QuestionForm
+                  question={dreamText}
+                  onQuestionChange={setDreamText}
+                  onSubmit={handleInterpret}
+                  loading={loading}
+                  error={error}
+                  placeholder="Опишите ваш сон как можно подробнее: что вы видели, чувствовали, кто присутствовал..."
+                  submitButtonText="Получить толкование"
+                  rows={8}
+                />
 
+                {/* Mood Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Настроение сна
@@ -102,27 +105,6 @@ export default function DreamPage() {
                     ))}
                   </div>
                 </div>
-
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  onClick={handleInterpret}
-                  disabled={loading}
-                  className="w-full py-4 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="animate-spin">🌙</span>
-                      Анализ сна...
-                    </span>
-                  ) : (
-                    'Получить толкование'
-                  )}
-                </button>
               </div>
             </div>
 
@@ -141,23 +123,26 @@ export default function DreamPage() {
         ) : (
           <>
             {/* Interpretation Result */}
-            <div className="bg-white/5 border border-white/10 rounded-lg p-8 mb-8">
+            <div className="mb-8">
               <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
                 Толкование вашего сна
               </h2>
 
               {/* Dream Text */}
-              <div className="mb-6 pb-6 border-b border-white/10">
-                <h3 className="font-cinzel text-lg font-bold text-white mb-2">
-                  Ваш сон
-                </h3>
-                <p className="text-gray-300 italic">{interpretation.dream}</p>
-                {interpretation.mood && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    Настроение: <span className="text-mirastros-gold">{interpretation.mood}</span>
-                  </p>
-                )}
-              </div>
+              <ResultCard
+                title="Ваш сон"
+                content={
+                  <div>
+                    <p className="italic mb-3">{interpretation.dream}</p>
+                    {interpretation.mood && (
+                      <p className="text-gray-400 text-sm">
+                        Настроение: <span className="text-mirastros-gold">{interpretation.mood}</span>
+                      </p>
+                    )}
+                  </div>
+                }
+                className="mb-6"
+              />
 
               {/* Symbols */}
               {interpretation.symbols && interpretation.symbols.length > 0 && (
@@ -179,46 +164,27 @@ export default function DreamPage() {
               )}
 
               {/* Interpretation */}
-              <div className="mb-6">
-                <h3 className="font-cinzel text-lg font-bold text-white mb-3">
-                  Толкование
-                </h3>
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                    {interpretation.interpretation}
-                  </p>
-                </div>
-              </div>
+              <ResultText
+                title="Толкование"
+                content={interpretation.interpretation}
+                className="mb-6"
+              />
 
               {/* Advice */}
               {interpretation.advice && (
-                <div className="bg-mirastros-gold/10 border border-mirastros-gold/30 rounded-lg p-4 mb-6">
-                  <h4 className="font-semibold text-mirastros-gold mb-2">
-                    💡 Совет
-                  </h4>
-                  <p className="text-gray-300 text-sm">{interpretation.advice}</p>
-                </div>
+                <ResultCard
+                  title="💡 Совет"
+                  content={interpretation.advice}
+                  className="bg-mirastros-gold/10 border-mirastros-gold/30 mb-6"
+                />
               )}
 
               {/* Actions */}
-              <div className="flex gap-4">
-                <button
-                  onClick={() => {
-                    setInterpretation(null);
-                    setDreamText('');
-                    setMood('');
-                  }}
-                  className="flex-1 py-3 px-6 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-lg transition"
-                >
-                  Новый сон
-                </button>
-                <Link
-                  href="/journal"
-                  className="flex-1 py-3 px-6 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition text-center"
-                >
-                  Дневник снов
-                </Link>
-              </div>
+              <ResultActions
+                onNewConsultation={handleNewDream}
+                newConsultationLabel="Новый сон"
+                historyLink="/journal"
+              />
             </div>
 
             {/* Clarify with Mirastros */}

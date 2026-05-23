@@ -39,6 +39,8 @@ export async function authenticateWithTelegram(): Promise<AuthResponse | null> {
     }
 
     const telegramUser = initData.user
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    const language = telegramUser.language_code?.split('-')[0] || 'ru'
 
     // Send authentication request to backend
     const response = await fetch(`${API_URL}/auth/social/telegram`, {
@@ -52,6 +54,8 @@ export async function authenticateWithTelegram(): Promise<AuthResponse | null> {
         first_name: telegramUser.first_name,
         last_name: telegramUser.last_name,
         photo_url: telegramUser.photo_url,
+        preferred_language: language,
+        timezone: timezone,
       }),
     })
 

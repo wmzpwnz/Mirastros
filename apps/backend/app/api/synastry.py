@@ -6,7 +6,8 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_premium
-from app.models.user import User
+from app.core.access_control import FeatureAccessControl
+from app.models.user import User, SubscriptionTier
 from app.schemas.synastry import (
     SynastryCalculateRequest,
     SynastryResponse,
@@ -41,12 +42,13 @@ async def calculate_synastry(
     """
     try:
         # Check subscription tier (Premium or Platinum required)
-        if current_user.subscription_tier not in ["premium", "platinum"]:
+        tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+        if tier not in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Synastry analysis requires Premium or Platinum subscription"
             )
-        
+
         person1_data = request.person1_birth_data
         person2_data = request.person2_birth_data
         
@@ -199,12 +201,13 @@ async def get_synastry_history(
     """
     try:
         # Check subscription tier
-        if current_user.subscription_tier not in ["premium", "platinum"]:
+        tier = FeatureAccessControl._normalize_tier(current_user.subscription_tier)
+        if tier not in [SubscriptionTier.PREMIUM, SubscriptionTier.PLATINUM]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Synastry history requires Premium or Platinum subscription"
             )
-        
+
         synastries, total = await synastry_service.get_synastry_history(
             db=db,
             user_id=str(current_user.id),

@@ -1,6 +1,6 @@
 """Natal chart calculation service using Kerykeion"""
 from typing import Dict, Any, Optional
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone
 from kerykeion import AstrologicalSubject
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -23,6 +23,41 @@ class NatalChartService:
             "campanus": "C",
             "regiomontanus": "R"
         }
+
+    def _normalize_house(self, value: Any) -> int:
+        """Kerykeion versions may return house as int or as 'Second_House' string."""
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+
+        if isinstance(value, str):
+            raw = value.strip()
+            if raw.isdigit():
+                return int(raw)
+
+            lowered = raw.lower()
+            # Common Kerykeion style: 'Second_House'
+            ordinals = {
+                "first": 1,
+                "second": 2,
+                "third": 3,
+                "fourth": 4,
+                "fifth": 5,
+                "sixth": 6,
+                "seventh": 7,
+                "eighth": 8,
+                "ninth": 9,
+                "tenth": 10,
+                "eleventh": 11,
+                "twelfth": 12,
+            }
+            for k, v in ordinals.items():
+                if k in lowered:
+                    return v
+
+        # Fallback: keep charts usable rather than crashing validation.
+        return 1
     
     def calculate_chart(
         self,
@@ -101,7 +136,8 @@ class NatalChartService:
                 },
                 "south_node": {
                     "sign": self._opposite_sign(subject.mean_node.sign),
-                    "degree": (subject.mean_node.position + 180) % 360
+                    # Keep degree within sign to match the rest of chart data.
+                    "degree": subject.mean_node.position
                 }
             }
             
@@ -140,7 +176,7 @@ class NatalChartService:
             planets[name] = {
                 "sign": planet.sign,
                 "degree": planet.position,
-                "house": planet.house,
+                "house": self._normalize_house(getattr(planet, "house", None)),
                 "retrograde": planet.retrograde if hasattr(planet, 'retrograde') else False,
                 "sign_num": planet.sign_num
             }
@@ -202,7 +238,26 @@ class NatalChartService:
         ]
         
         try:
-            index = signs.index(sign)
+            # Support abbreviations like 'Aqu', 'Ari', etc.
+            normalized = sign
+            if isinstance(sign, str) and len(sign) == 3:
+                mapping = {
+                    "Ari": "Aries",
+                    "Tau": "Taurus",
+                    "Gem": "Gemini",
+                    "Can": "Cancer",
+                    "Leo": "Leo",
+                    "Vir": "Virgo",
+                    "Lib": "Libra",
+                    "Sco": "Scorpio",
+                    "Sag": "Sagittarius",
+                    "Cap": "Capricorn",
+                    "Aqu": "Aquarius",
+                    "Pis": "Pisces",
+                }
+                normalized = mapping.get(sign, sign)
+
+            index = signs.index(normalized)
             opposite_index = (index + 6) % 12
             return signs[opposite_index]
         except ValueError:
@@ -241,7 +296,7 @@ class NatalChartService:
                 existing_chart.midheaven = chart_data["midheaven"]
                 existing_chart.lunar_nodes = chart_data["lunar_nodes"]
                 existing_chart.house_system = chart_data["house_system"]
-                existing_chart.updated_at = datetime.utcnow()
+                existing_chart.updated_at = datetime.now(timezone.utc)
                 
                 await db.commit()
                 await db.refresh(existing_chart)

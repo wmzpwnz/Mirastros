@@ -1,4 +1,5 @@
 """Lunar calendar schemas for request/response validation"""
+from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import date, datetime
@@ -36,7 +37,7 @@ class LunarPhaseResponse(BaseModel):
     phase: str = Field(..., description="Current lunar phase")
     phase_name: str = Field(..., description="Human-readable phase name")
     illumination: float = Field(..., description="Moon illumination percentage (0-100)")
-    date: date = Field(..., description="Date of calculation")
+    target_date: date = Field(..., alias="date", description="Date of calculation")
     zodiac_sign: str = Field(..., description="Zodiac sign the Moon is in")
     moon_degree: float = Field(..., description="Moon's degree in current sign")
     next_full_moon: date = Field(..., description="Date of next full moon")
@@ -55,7 +56,7 @@ class ActivityRecommendation(BaseModel):
 
 class LunarRecommendationsResponse(BaseModel):
     """Response with lunar-based activity recommendations"""
-    date: date = Field(..., description="Date of recommendations")
+    target_date: date = Field(..., alias="date", description="Date of recommendations")
     lunar_phase: str = Field(..., description="Current lunar phase")
     moon_sign: str = Field(..., description="Zodiac sign the Moon is in")
     recommendations: List[ActivityRecommendation] = Field(..., description="Activity recommendations")
@@ -65,7 +66,7 @@ class LunarRecommendationsResponse(BaseModel):
 
 class LunarCalendarDay(BaseModel):
     """Single day in lunar calendar"""
-    date: date = Field(..., description="Date")
+    target_date: date = Field(..., alias="date", description="Date")
     lunar_phase: str = Field(..., description="Lunar phase")
     moon_sign: str = Field(..., description="Moon's zodiac sign")
     illumination: float = Field(..., description="Moon illumination percentage")
@@ -85,7 +86,7 @@ class LunarCalendarResponse(BaseModel):
 class LunarEventNotification(BaseModel):
     """Notification for important lunar event"""
     event_type: str = Field(..., description="Event type: full_moon, new_moon, eclipse")
-    date: datetime = Field(..., description="Date and time of event")
+    event_date: datetime = Field(..., alias="date", description="Date and time of event")
     zodiac_sign: str = Field(..., description="Zodiac sign of the event")
     description: str = Field(..., description="Event description")
     recommendations: str = Field(..., description="Recommendations for the event")

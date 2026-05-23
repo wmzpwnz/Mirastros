@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { BiometricAuthService } from '../../src/services/biometricAuth';
+import { Button, Input } from '../../src/components';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -74,38 +75,33 @@ export default function LoginScreen() {
 
           {/* Login Form */}
           <View className="mb-8">
-            <Text className="text-silver mb-2 text-sm font-semibold">Email</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-4"
+            <Input
+              type="email"
               placeholder="your@email.com"
-              placeholderTextColor="#888"
               value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
+              onChange={setEmail}
+              className="mb-4"
+              accessibilityLabel="Email address"
             />
 
-            <Text className="text-silver mb-2 text-sm font-semibold">Password</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-6"
+            <Input
+              type="password"
               placeholder="••••••••"
-              placeholderTextColor="#888"
               value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
+              onChange={setPassword}
+              className="mb-6"
+              accessibilityLabel="Password"
             />
 
-            <TouchableOpacity
-              className={`bg-gold rounded-xl py-4 mb-4 ${loading ? 'opacity-50' : ''}`}
+            <Button
               onPress={handleLogin}
               disabled={loading}
+              loading={loading}
+              className="w-full mb-4"
+              accessibilityLabel="Sign in button"
             >
-              <Text className="text-cosmic text-center font-bold text-base">
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Text>
-            </TouchableOpacity>
+              {loading ? 'Signing In...' : 'Sign In'}
+            </Button>
 
             <TouchableOpacity onPress={() => console.log('Forgot password')}>
               <Text className="text-gold text-center text-sm">
@@ -123,20 +119,17 @@ export default function LoginScreen() {
                 <View className="flex-1 h-px bg-white/10" />
               </View>
 
-              <TouchableOpacity
-                className={`bg-white/5 border border-gold/30 rounded-xl py-4 flex-row items-center justify-center ${biometricLoading ? 'opacity-50' : ''}`}
+              <Button
+                variant="ghost"
                 onPress={handleBiometricAuth}
                 disabled={biometricLoading}
+                loading={biometricLoading}
+                className="w-full"
+                accessibilityLabel={`Use ${BiometricAuthService.getBiometricTypeName(biometricCapabilities?.biometricType || 'none')}`}
               >
-                <Text className="text-2xl mr-2">
-                  {biometricCapabilities?.biometricType === 'faceId' ? '👤' : '👆'}
-                </Text>
-                <Text className="text-gold font-semibold">
-                  {biometricLoading
-                    ? 'Authenticating...'
-                    : `Use ${BiometricAuthService.getBiometricTypeName(biometricCapabilities?.biometricType || 'none')}`}
-                </Text>
-              </TouchableOpacity>
+                {biometricCapabilities?.biometricType === 'faceId' ? '👤' : '👆'} Use{' '}
+                {BiometricAuthService.getBiometricTypeName(biometricCapabilities?.biometricType || 'none')}
+              </Button>
             </View>
           )}
 
@@ -148,7 +141,7 @@ export default function LoginScreen() {
               <View className="flex-1 h-px bg-white/10" />
             </View>
 
-            <View className="flex-row space-x-4">
+            <View className="flex-row gap-4">
               <TouchableOpacity
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl py-4 items-center"
                 onPress={() => console.log('Google login')}
@@ -160,7 +153,7 @@ export default function LoginScreen() {
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl py-4 items-center"
                 onPress={() => console.log('Apple login')}
               >
-                <Text className="text-2xl"></Text>
+                <Text className="text-2xl">🍎</Text>
               </TouchableOpacity>
             </View>
           </View>

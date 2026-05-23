@@ -1,7 +1,13 @@
+'use client';
+
 import './global.css';
-import { Navbar } from '../components/Navbar';
-import { Background3D } from '../components/Background3D';
-import { Cinzel, Inter } from 'next/font/google';
+import './section-layouts.css';
+import { Preloader } from '../components/Preloader';
+import { LenisProvider } from '../components/LenisProvider';
+import { ToastProvider } from '../contexts/ToastContext';
+import { Cinzel, Inter, Manrope } from 'next/font/google';
+import { useEffect, useState } from 'react';
+import Script from 'next/script';
 
 // Configure fonts
 const cinzel = Cinzel({
@@ -16,30 +22,65 @@ const inter = Inter({
   display: 'swap',
 });
 
-export const metadata = {
-  title: 'Mirastros - Мистический Проводник',
-  description: 'Астрология, Таро, Нумерология и другие эзотерические практики с AI',
-  keywords: ['астрология', 'таро', 'нумерология', 'гороскоп', 'натальная карта'],
-  authors: [{ name: 'Mirastros' }],
-  openGraph: {
-    title: 'Mirastros - Мистический Проводник',
-    description: 'Астрология, Таро, Нумерология и другие эзотерические практики с AI',
-    type: 'website',
-    locale: 'ru_RU',
-  },
-};
+const manrope = Manrope({
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
+  variable: '--font-manrope',
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+  useEffect(() => {
+    const hasVisited = sessionStorage.getItem('mirastros_visited');
+
+    if (hasVisited) {
+      setShowPreloader(false);
+      setIsFirstLoad(false);
+    } else {
+      sessionStorage.setItem('mirastros_visited', 'true');
+      document.body.classList.add('preloader-active');
+    }
+  }, []);
+
+  const handlePreloaderComplete = () => {
+    document.body.classList.remove('preloader-active');
+    setShowPreloader(false);
+  };
+
   return (
-    <html lang="ru" className={`${cinzel.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased">
-        <Background3D />
-        <Navbar />
-        {children}
+    <html lang="ru" className={`${cinzel.variable} ${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Splitting.js CSS */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.min.css"
+        />
+      </head>
+      <body className={`font-sans antialiased ${cinzel.variable} ${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
+        {/* Preloader - показывается только при первом визите */}
+        {isFirstLoad && showPreloader && (
+          <Preloader onComplete={handlePreloaderComplete} />
+        )}
+
+        {/* Toast Provider for error/success notifications */}
+        <ToastProvider>
+          {/* Lenis Smooth Scroll Provider */}
+          <LenisProvider>
+            {children}
+          </LenisProvider>
+        </ToastProvider>
+
+        {/* Splitting.js Script */}
+        <Script
+          src="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.min.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

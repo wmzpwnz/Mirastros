@@ -1,6 +1,6 @@
 """add lenormand readings table
 
-Revision ID: 006
+Revision ID: 006a
 Revises: 005
 Create Date: 2025-11-21 16:00:00.000000
 
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '006'
-down_revision = '005'
+revision = '006_1'
+down_revision = '006'
 branch_labels = None
 depends_on = None
 

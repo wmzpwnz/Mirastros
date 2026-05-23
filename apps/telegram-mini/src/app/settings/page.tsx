@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { authenticatedFetch } from '../../lib/auth'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { ZScrollCard } from '../../components/ZScrollContainer'
+import { Button, Spinner, Badge } from '@mirastros-universal/design-system'
 import {
   updateNotificationPreferences,
   triggerHapticFeedback,
@@ -147,7 +148,7 @@ export default function SettingsPage() {
         <CosmicBackground />
         <main className="min-h-screen p-6 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto mb-4"></div>
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="text-gray-300">Loading settings...</p>
           </div>
         </main>
@@ -186,9 +187,9 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Subscription</span>
-                  <span className="text-gold font-semibold capitalize">
-                    {auth.user.subscription_tier}
-                  </span>
+                  <Badge variant="primary">
+                    {auth.user.subscription_tier.toUpperCase()}
+                  </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">User ID</span>
@@ -198,12 +199,14 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gold/20">
-                <a
-                  href="/subscription"
-                  className="block w-full bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full text-center hover:scale-105 transition-transform"
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => window.location.href = '/subscription'}
+                  className="w-full"
                 >
                   Manage Subscription
-                </a>
+                </Button>
               </div>
             </ZScrollCard>
           )}
@@ -320,18 +323,22 @@ export default function SettingsPage() {
           <ZScrollCard className="mb-6">
             <h2 className="text-xl font-bold text-gold mb-4">Actions</h2>
             <div className="space-y-3">
-              <button
+              <Button
+                variant="ghost"
+                size="lg"
                 onClick={handleLogout}
-                className="w-full bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors"
+                className="w-full"
               >
                 Logout
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
+                size="lg"
                 onClick={handleDeleteAccount}
-                className="w-full bg-red-500/10 border border-red-500/30 text-red-400 font-semibold py-3 rounded-full hover:bg-red-500/20 transition-colors"
+                className="w-full"
               >
                 Delete Account
-              </button>
+              </Button>
             </div>
           </ZScrollCard>
 

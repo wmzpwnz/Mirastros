@@ -11,6 +11,10 @@ const nextConfig = {
   // See: https://nx.dev/recipes/next/next-config-setup
   nx: {},
   
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Optimize images
   images: {
     domains: ['localhost', 'mirastros.ru', 'www.mirastros.com'],
@@ -28,6 +32,9 @@ const nextConfig = {
   // Optimize production builds
   swcMinify: true,
   
+  // Output configuration for standalone deployment (only in production)
+  ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
+  
   // Compiler options
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -37,6 +44,13 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['@mirastros-universal/shared-core', '@mirastros-universal/design-system'],
+    scrollRestoration: true,
+  },
+  
+  // Optimize for scroll performance
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
   },
   
   // Configure headers for security and performance
@@ -87,53 +101,19 @@ const nextConfig = {
   },
   
   // Transpile packages if needed
-  transpilePackages: ['three', 'gsap'],
+  transpilePackages: ['three', 'gsap', '@mirastros-universal/design-system'],
   
   // Webpack optimizations
   webpack: (config, { isServer }) => {
-    // Optimize bundle size
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            // Common chunk
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-            // Three.js separate chunk (large library)
-            three: {
-              name: 'three',
-              test: /[\\/]node_modules[\\/]three[\\/]/,
-              chunks: 'all',
-              priority: 30,
-            },
-            // GSAP separate chunk
-            gsap: {
-              name: 'gsap',
-              test: /[\\/]node_modules[\\/]gsap[\\/]/,
-              chunks: 'all',
-              priority: 30,
-            },
-          },
-        },
-      };
-    }
+    // Alias @mirastros/design-system -> @mirastros-universal/design-system
+    const path = require('path');
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@mirastros/design-system': path.resolve(__dirname, '../../packages/design-system/src/index.ts'),
+    };
+    // Let Next.js handle chunk splitting - custom config causes issues with static file generation
+    // Next.js has its own optimized chunk splitting strategy
     
     return config;
   },

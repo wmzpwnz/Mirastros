@@ -3,10 +3,14 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON, Integer, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.database import Base
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 
 class IChingConsultation(Base):
@@ -33,7 +37,7 @@ class IChingConsultation(Base):
     # AI interpretation
     interpretation = Column(Text, nullable=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
     
     # Relationship to User
     user = relationship("User", back_populates="iching_consultations")

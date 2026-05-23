@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { authenticatedFetch } from '../../lib/auth'
 import { CosmicBackground } from '../../components/CosmicBackground'
 import { ZScrollCard } from '../../components/ZScrollContainer'
+import { Button, Textarea, Spinner, Badge } from '@mirastros-universal/design-system'
 
 interface TarotCard {
   name: string
@@ -133,11 +134,10 @@ export default function TarotPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Your Question
                 </label>
-                <textarea
+                <Textarea
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="What guidance do you seek?"
-                  className="w-full px-4 py-3 bg-purple-deep/50 border border-gold/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold resize-none"
                   rows={4}
                 />
               </div>
@@ -150,26 +150,28 @@ export default function TarotPage() {
               )}
 
               {/* Get Reading Button */}
-              <button
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleGetReading}
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                    <Spinner size="sm" className="mr-2" />
                     Drawing Cards...
                   </span>
                 ) : (
                   'Draw Cards'
                 )}
-              </button>
+              </Button>
 
               {/* Subscription Info */}
               {auth && auth.user.subscription_tier === 'freemium' && (
-                <div className="mt-4 p-3 bg-purple-deep/30 border border-gold/20 rounded-lg text-xs text-gray-400 text-center">
+                <Badge variant="secondary" className="mt-4 w-full text-center">
                   Freemium: 1 reading per week • Upgrade for unlimited readings
-                </div>
+                </Badge>
               )}
             </ZScrollCard>
           ) : (
@@ -205,18 +207,22 @@ export default function TarotPage() {
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
                   onClick={handleNewReading}
-                  className="flex-1 bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
+                  className="flex-1"
                 >
                   New Reading
-                </button>
-                <a
-                  href="/"
-                  className="flex-1 bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors text-center"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => window.location.href = '/'}
+                  className="flex-1"
                 >
                   Home
-                </a>
+                </Button>
               </div>
             </div>
           )}

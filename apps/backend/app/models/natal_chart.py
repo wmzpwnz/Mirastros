@@ -1,7 +1,11 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 class NatalChart(Base):
     """Natal chart model with astrological data"""
@@ -26,8 +30,8 @@ class NatalChart(Base):
     
     # Calculation metadata
     house_system = Column(JSON, nullable=True)  # Placidus, Koch, Equal, etc.
-    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    calculated_at = Column(DateTime, default=_utc_now, nullable=False)
+    updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
     def __repr__(self):
         return f"<NatalChart user_id={self.user_id}>"

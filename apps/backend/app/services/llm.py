@@ -9,12 +9,13 @@ from app.core.config import get_settings
 settings = get_settings()
 
 class UnifiedLLMService:
-    """Unified LLM Service using Ollama API for Qwen 2.5 with optimized streaming"""
+    """Unified LLM Service using DeepSeek API with optimized streaming"""
     
     def __init__(self):
-        self.ollama_url = "http://localhost:11434"
-        self.model_name = "mirastros-ai"
-        self.is_loaded = False
+        self.api_key = settings.DEEPSEEK_API_KEY
+        self.api_url = settings.DEEPSEEK_API_URL
+        self.model_name = settings.DEEPSEEK_MODEL
+        self.is_loaded = True  # DeepSeek API is always available
         self.system_prompt = """You are Mirastros, a mystical AI oracle specializing in astrology, tarot, numerology, and esoteric wisdom.
 
 Your personality:
@@ -35,24 +36,30 @@ Your responses should:
 Remember: You are here to guide, inspire, and illuminate the path, not to dictate fate."""
     
     async def load_model(self):
-        """Check if Ollama service is available"""
+        """Check if DeepSeek API is available"""
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.ollama_url}/api/tags", timeout=5.0)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                # Test API with a simple request
+                response = await client.post(
+                    self.api_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": self.model_name,
+                        "messages": [{"role": "user", "content": "test"}],
+                        "max_tokens": 5
+                    }
+                )
                 if response.status_code == 200:
-                    models = response.json().get("models", [])
-                    model_exists = any(m.get("name") == self.model_name for m in models)
-                    if model_exists:
-                        self.is_loaded = True
-                        print(f"✅ Ollama model '{self.model_name}' is available")
-                    else:
-                        print(f"⚠️  Model '{self.model_name}' not found. Available models: {[m.get('name') for m in models]}")
-                        print(f"⚠️  Run: ollama pull qwen2.5:7b-instruct-q4_K_M && ollama create mirastros-ai")
+                    self.is_loaded = True
+                    print(f"✅ DeepSeek API is available (model: {self.model_name})")
                 else:
-                    print(f"⚠️  Ollama service returned status {response.status_code}")
+                    print(f"⚠️  DeepSeek API returned status {response.status_code}: {response.text}")
         except Exception as e:
-            print(f"⚠️  Could not connect to Ollama: {e}")
-            print(f"⚠️  Make sure Ollama is running: sudo systemctl start ollama")
+            print(f"⚠️  Could not connect to DeepSeek API: {e}")
+            print(f"⚠️  Check your API key and network connection")
     
     async def generate(
         self,
@@ -92,27 +99,29 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         else:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    f"{self.ollama_url}/api/generate",
+                    self.api_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
                     json={
                         "model": self.model_name,
-                        "prompt": full_prompt,
-                        "stream": False,
-                        "options": {
+                        "messages": [
+                            {"role": "system", "content": self.system_prompt},
+                            {"role": "user", "content": full_prompt}
+                        ],
+                        "max_tokens": max_tokens,
                             "temperature": temperature,
-                            "num_predict": max_tokens,
-                            "stop": ["User:", "\n\n"],
-                            # Optimal model parameters
-                            "num_batch": 512,
-                            "num_thread": 10
-                        }
+                        "stop": ["User:", "\n\n"]
                     }
                 )
                 
                 if response.status_code == 200:
                     result = response.json()
-                    return result.get("response", "").strip()
+                    return result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
                 else:
-                    raise Exception(f"Ollama API error: {response.status_code} - {response.text}")
+                    error_text = response.text
+                    raise Exception(f"DeepSeek API error: {response.status_code} - {error_text}")
     
     async def _stream_generate_optimized(
         self,
@@ -121,13 +130,12 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         temperature: float,
         fast_start: bool = False
     ) -> AsyncGenerator[Dict[str, Any], None]:
-        """Optimized streaming with zero-latency delivery and two-phase generation
+        """Optimized streaming with zero-latency delivery using DeepSeek API
         
         Features:
-        - Threading worker with asyncio.Queue for zero-latency delivery
+        - Streaming from DeepSeek API
         - Quick response marker after first token
-        - Two-phase generation for fast initial feedback
-        - Optimal model parameters (n_batch=512, n_threads=10)
+        - Fast initial feedback
         """
         # Create queue for zero-latency token delivery
         token_queue: asyncio.Queue = asyncio.Queue()
@@ -135,64 +143,78 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         first_token_sent = False
         
         async def producer():
-            """Producer coroutine that fetches tokens from Ollama"""
+            """Producer coroutine that fetches tokens from DeepSeek API"""
             nonlocal token_count, first_token_sent
             
             try:
                 async with httpx.AsyncClient(timeout=300.0) as client:
-                    # Configure optimal parameters
-                    options = {
-                        "temperature": temperature,
-                        "num_predict": max_tokens,
-                        "stop": ["User:", "\n\n"],
-                        # Optimal model parameters for streaming
-                        "num_batch": 512,  # Optimal batch size for throughput
-                        "num_thread": 10,  # Parallel processing threads
-                    }
+                    # Build messages with system prompt
+                    messages = [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": prompt}
+                    ]
                     
                     # Fast-start mode: reduce initial latency for simple queries
-                    if fast_start:
-                        options["num_predict"] = min(max_tokens, 256)  # Shorter initial response
-                        options["temperature"] = max(0.5, temperature - 0.2)  # More focused
+                    current_max_tokens = min(max_tokens, 256) if fast_start else max_tokens
+                    current_temperature = max(0.5, temperature - 0.2) if fast_start else temperature
                     
                     async with client.stream(
                         "POST",
-                        f"{self.ollama_url}/api/generate",
+                        self.api_url,
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json"
+                        },
                         json={
                             "model": self.model_name,
-                            "prompt": prompt,
+                            "messages": messages,
                             "stream": True,
-                            "options": options
+                            "max_tokens": current_max_tokens,
+                            "temperature": current_temperature,
+                            "stop": ["User:", "\n\n"]
                         }
                     ) as response:
+                        if response.status_code != 200:
+                            error_text = await response.aread()
+                            raise Exception(f"DeepSeek API error: {response.status_code} - {error_text.decode()}")
+                        
                         async for line in response.aiter_lines():
                             if line:
-                                try:
-                                    data = json.loads(line)
-                                    if "response" in data:
-                                        text = data["response"]
-                                        if text:
-                                            token_count += 1
+                                # DeepSeek uses Server-Sent Events format: "data: {...}"
+                                if line.startswith("data: "):
+                                    try:
+                                        data = json.loads(line[6:])  # Remove "data: " prefix
+                                        
+                                        # Check for delta content
+                                        if "choices" in data and len(data["choices"]) > 0:
+                                            delta = data["choices"][0].get("delta", {})
+                                            content = delta.get("content", "")
                                             
-                                            # Send quick response marker after first token
-                                            if token_count == 1 and not first_token_sent:
+                                            if content:
+                                                token_count += 1
+                                                
+                                                # Send quick response marker after first token
+                                                if token_count == 1 and not first_token_sent:
+                                                    await token_queue.put({
+                                                        "type": "quick_response"
+                                                    })
+                                                    first_token_sent = True
+                                                
+                                                # Send token
                                                 await token_queue.put({
-                                                    "type": "quick_response"
+                                                    "type": "token",
+                                                    "content": content
                                                 })
-                                                first_token_sent = True
-                                            
-                                            # Send token
-                                            await token_queue.put({
-                                                "type": "token",
-                                                "content": text
-                                            })
-                                    
-                                    # Check if generation is done
-                                    if data.get("done", False):
-                                        await token_queue.put({"type": "done"})
-                                        break
-                                except json.JSONDecodeError:
-                                    continue
+                                        
+                                        # Check if generation is done
+                                        if data.get("choices", [{}])[0].get("finish_reason"):
+                                            await token_queue.put({"type": "done"})
+                                            break
+                                    except json.JSONDecodeError:
+                                        continue
+                                elif line == "[DONE]":
+                                    await token_queue.put({"type": "done"})
+                                    break
             except Exception as e:
                 await token_queue.put({
                     "type": "error",

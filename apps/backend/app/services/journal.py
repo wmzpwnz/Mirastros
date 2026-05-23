@@ -3,7 +3,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_, extract
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import Counter
 
 from app.models.journal_entry import JournalEntry, EntryType
@@ -178,7 +178,7 @@ class JournalService:
         if metadata is not None:
             entry.metadata = metadata
         
-        entry.updated_at = datetime.utcnow()
+        entry.updated_at = datetime.now(timezone.utc)
         
         await db.commit()
         await db.refresh(entry)
@@ -290,7 +290,7 @@ class JournalService:
             return 0
         
         # Check if today or yesterday has an entry
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         if dates[0] != today and dates[0] != today - timedelta(days=1):
             return 0
         
@@ -638,7 +638,7 @@ Themes:"""
         
         # 1. Entries over time (last 60 days for better trend visibility)
         entries_over_time = []
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         for i in range(60):
             date = today - timedelta(days=59 - i)
             count = sum(1 for e in entries if e.created_at.date() == date)

@@ -89,8 +89,8 @@ async def verify_token_validity(
     This endpoint is useful for frontend to check token validity before showing success message
     """
     from sqlalchemy import select
-    from datetime import datetime
-    
+    from datetime import datetime, timezone
+
     result = await db.execute(
         select(User).where(User.email_verification_token == token)
     )
@@ -102,7 +102,7 @@ async def verify_token_validity(
             detail="Invalid verification token"
         )
     
-    if user.email_verification_expires < datetime.utcnow():
+    if user.email_verification_expires < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Verification token has expired"

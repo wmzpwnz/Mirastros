@@ -7,6 +7,7 @@ from app.models.tarot_reading import TarotReading
 from app.models.iching_consultation import IChingConsultation
 from app.models.horoscope import Horoscope, HoroscopePeriod
 from app.models.numerology_calculation import NumerologyCalculation
+from app.models.destiny_matrix import DestinyMatrix
 from app.models.dream_interpretation import DreamInterpretation
 from app.models.chat_conversation import ChatConversation, ChatMessage
 from app.models.journal_entry import JournalEntry, EntryType
@@ -15,6 +16,9 @@ from app.models.order import Order
 from app.models.analytics_event import AnalyticsEvent, EventType
 from app.models.push_token import PushToken
 from app.models.notification_preference import NotificationPreference
+from app.models.lenormand_reading import LenormandReading
+from app.models.synastry import Synastry
+from app.models.astro_context import AstroContext
 
 __all__ = [
     "Document",
@@ -31,6 +35,7 @@ __all__ = [
     "Horoscope",
     "HoroscopePeriod",
     "NumerologyCalculation",
+    "DestinyMatrix",
     "DreamInterpretation",
     "ChatConversation",
     "ChatMessage",
@@ -42,4 +47,7 @@ __all__ = [
     "EventType",
     "PushToken",
     "NotificationPreference",
+    "LenormandReading",
+    "Synastry",
+    "AstroContext",
 ]

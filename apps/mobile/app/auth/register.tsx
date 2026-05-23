@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { Button, Input } from '../../src/components';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -89,59 +90,50 @@ export default function RegisterScreen() {
 
           {/* Registration Form */}
           <View className="mb-8">
-            <Text className="text-silver mb-2 text-sm font-semibold">Full Name</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-4"
-              placeholder="John Doe"
-              placeholderTextColor="#888"
+            <Input
+              placeholder="Full Name"
               value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
+              onChange={setFullName}
+              className="mb-4"
+              accessibilityLabel="Full name"
             />
 
-            <Text className="text-silver mb-2 text-sm font-semibold">Email</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-4"
+            <Input
+              type="email"
               placeholder="your@email.com"
-              placeholderTextColor="#888"
               value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
+              onChange={setEmail}
+              className="mb-4"
+              accessibilityLabel="Email address"
             />
 
-            <Text className="text-silver mb-2 text-sm font-semibold">Password</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-4"
+            <Input
+              type="password"
               placeholder="••••••••"
-              placeholderTextColor="#888"
               value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
+              onChange={setPassword}
+              className="mb-4"
+              accessibilityLabel="Password"
             />
 
-            <Text className="text-silver mb-2 text-sm font-semibold">Confirm Password</Text>
-            <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-silver mb-6"
+            <Input
+              type="password"
               placeholder="••••••••"
-              placeholderTextColor="#888"
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
+              onChange={setConfirmPassword}
+              className="mb-6"
+              accessibilityLabel="Confirm password"
             />
 
-            <TouchableOpacity
-              className={`bg-gold rounded-xl py-4 mb-4 ${loading ? 'opacity-50' : ''}`}
+            <Button
               onPress={handleRegister}
               disabled={loading}
+              loading={loading}
+              className="w-full mb-4"
+              accessibilityLabel="Create account button"
             >
-              <Text className="text-cosmic text-center font-bold text-base">
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Text>
-            </TouchableOpacity>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Button>
 
             <Text className="text-silver/60 text-xs text-center mb-4">
               By signing up, you agree to our Terms of Service and Privacy Policy
@@ -156,7 +148,7 @@ export default function RegisterScreen() {
               <View className="flex-1 h-px bg-white/10" />
             </View>
 
-            <View className="flex-row space-x-4">
+            <View className="flex-row gap-4">
               <TouchableOpacity
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl py-4 items-center"
                 onPress={() => console.log('Google signup')}
@@ -168,7 +160,7 @@ export default function RegisterScreen() {
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl py-4 items-center"
                 onPress={() => console.log('Apple signup')}
               >
-                <Text className="text-2xl"></Text>
+                <Text className="text-2xl">🍎</Text>
               </TouchableOpacity>
             </View>
           </View>

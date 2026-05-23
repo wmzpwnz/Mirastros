@@ -1,20 +1,90 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '../../../services/api';
 
+function formatBirthPlace(birthLocation: unknown): string {
+  if (!birthLocation) return '';
+  if (typeof birthLocation === 'string') return birthLocation;
+  if (typeof birthLocation === 'object' && birthLocation !== null) {
+    const loc = birthLocation as { city?: string; country?: string };
+    const parts = [loc.city, loc.country].filter(Boolean);
+    return parts.length ? parts.join(', ') : '';
+  }
+  return '';
+}
+
+function getCoords(birthLocation: unknown): { latitude: number; longitude: number } {
+  const def = { latitude: 55.7558, longitude: 37.6173 };
+  if (!birthLocation || typeof birthLocation !== 'object') return def;
+  const loc = birthLocation as { latitude?: number; longitude?: number };
+  if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+    return { latitude: loc.latitude, longitude: loc.longitude };
+  }
+  return def;
+}
+
+async function geocodePlace(place: string): Promise<{ latitude: number; longitude: number } | null> {
+  if (!place || place.trim().length < 2) return null;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place.trim())}&limit=1`,
+      { headers: { Accept: 'application/json' } }
+    );
+    const data = await res.json();
+    if (Array.isArray(data) && data[0]) {
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { latitude: lat, longitude: lon };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function NatalChartPage() {
+  const [userName, setUserName] = useState('');
   const [formData, setFormData] = useState({
     birthDate: '',
     birthTime: '',
     birthPlace: '',
-    latitude: 0,
-    longitude: 0,
+    latitude: 55.7558,
+    longitude: 37.6173,
   });
   const [chart, setChart] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = await api.getCurrentUser();
+        if (cancelled || !user) return;
+        setUserName(user.fullName || '');
+        const place = formatBirthPlace(user.birthLocation);
+        const coords = getCoords(user.birthLocation);
+        setFormData((prev) => ({
+          ...prev,
+          birthDate: user.birthDate || prev.birthDate,
+          birthTime: user.birthTime ? String(user.birthTime).slice(0, 5) : prev.birthTime,
+          birthPlace: place || prev.birthPlace,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }));
+      } catch {
+        if (!cancelled) setProfileLoading(false);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -33,12 +103,32 @@ export default function NatalChartPage() {
     setError('');
     setLoading(true);
 
+    let latitude = formData.latitude ?? 55.7558;
+    let longitude = formData.longitude ?? 37.6173;
+
     try {
+      if (formData.birthPlace?.trim()) {
+        const coords = await geocodePlace(formData.birthPlace);
+        if (coords) {
+          latitude = coords.latitude;
+          longitude = coords.longitude;
+          setFormData((prev) => ({ ...prev, latitude, longitude }));
+        }
+      }
+
+      const birthTime = formData.birthTime.length === 5 ? `${formData.birthTime}:00` : formData.birthTime;
+      const name = userName.trim() || 'User';
+      const placeParts = formData.birthPlace.trim().split(',').map((s) => s.trim()).filter(Boolean);
+      const city = placeParts[0] || undefined;
+      const country = placeParts[1] || undefined;
       const result = await api.calculateNatalChart({
+        name,
         birthDate: formData.birthDate,
-        birthTime: formData.birthTime,
-        latitude: formData.latitude || 55.7558, // Moscow default
-        longitude: formData.longitude || 37.6173,
+        birthTime,
+        latitude,
+        longitude,
+        city,
+        country,
       });
       setChart(result);
     } catch (err: any) {
@@ -75,6 +165,11 @@ export default function NatalChartPage() {
               <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
                 Данные рождения
               </h2>
+              {formData.birthDate && formData.birthTime && !profileLoading && (
+                <p className="text-mirastros-gold/90 text-sm mb-4">
+                  Данные подставлены из вашего профиля. При необходимости измените и нажмите «Рассчитать».
+                </p>
+              )}
 
               <div className="space-y-6">
                 <div>
@@ -225,7 +320,7 @@ export default function NatalChartPage() {
                             {data.retrograde && ' ℞'}
                           </p>
                         </div>
-                        <div className="text-2xl">{getPlaneSymbol(planet)}</div>
+                        <div className="text-2xl">{getPlanetSymbol(planet)}</div>
                       </div>
                     ))}
                   </div>

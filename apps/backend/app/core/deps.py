@@ -1,11 +1,12 @@
 """FastAPI dependencies for authentication and database"""
 from typing import AsyncGenerator, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
+from app.core.config import get_settings
 from app.core.security import decode_token
 from app.models.user import User, SubscriptionTier
 
@@ -124,7 +125,7 @@ def require_subscription(min_tier: SubscriptionTier):
         
         # Check if subscription is expired (for paid tiers)
         if current_user.subscription_tier != SubscriptionTier.FREEMIUM:
-            if current_user.subscription_expires and current_user.subscription_expires < datetime.utcnow():
+            if current_user.subscription_expires and current_user.subscription_expires < datetime.now(timezone.utc):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Your subscription has expired. Please renew to continue."
@@ -143,11 +144,9 @@ require_platinum = require_subscription(SubscriptionTier.PLATINUM)
 async def require_admin(
     current_user: User = Depends(get_current_active_user)
 ) -> User:
-    """Require admin role (for now, check if user has admin email or specific flag)"""
-    # TODO: Add proper role-based access control with admin role in User model
-    # For now, we'll use a simple check - you can extend this later
-    admin_emails = ["admin@mirastros.ru", "admin@example.com"]  # Configure in settings
-    
+    """Require admin role (for now, check if user has admin email or specific flag)."""
+    admin_emails = list(get_settings().ADMIN_EMAILS) if get_settings().ADMIN_EMAILS else []
+
     if current_user.email not in admin_emails:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

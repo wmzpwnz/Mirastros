@@ -6,7 +6,7 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 from decimal import Decimal
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.product import Product
 from app.models.order import Order
@@ -120,7 +120,7 @@ class ShopService:
         for field, value in update_data.items():
             setattr(product, field, value)
         
-        product.updated_at = datetime.utcnow()
+        product.updated_at = datetime.now(timezone.utc)
         
         await db.commit()
         await db.refresh(product)
@@ -159,7 +159,7 @@ class ShopService:
             total_amount += item.price * item.quantity
         
         # Generate order number
-        order_number = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
+        order_number = f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
         
         # Create order
         order = Order(
@@ -244,7 +244,7 @@ class ShopService:
         order.status = status
         if tracking_number:
             order.tracking_number = tracking_number
-        order.updated_at = datetime.utcnow()
+        order.updated_at = datetime.now(timezone.utc)
         
         await db.commit()
         await db.refresh(order)

@@ -40,6 +40,9 @@ export async function authenticateWithVK(): Promise<AuthResponse | null> {
       console.log('VK access token not required for basic auth')
     }
 
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    const language = (navigator.language || 'ru').split('-')[0]
+
     // Authenticate with backend
     const response = await fetch(`${API_BASE_URL}/auth/vk`, {
       method: 'POST',
@@ -52,6 +55,8 @@ export async function authenticateWithVK(): Promise<AuthResponse | null> {
         last_name: vkUser.last_name,
         photo_url: vkUser.photo_200,
         access_token: vkAccessToken,
+        preferred_language: language,
+        timezone: timezone,
       }),
     })
 

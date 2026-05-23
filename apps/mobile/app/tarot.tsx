@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'rea
 import { useRouter } from 'expo-router';
 import { TarotAPI } from '../src/services/api';
 import { useOfflineApi } from '../src/hooks/useOfflineApi';
+import { Button, Card } from '../src/components';
 
 const tarotCards = [
     { name: 'The Fool', number: 0 },
@@ -64,6 +65,8 @@ export default function TarotScreen() {
                                     ? 'bg-turquoise/20 border-2 border-turquoise'
                                     : 'bg-white/5 border border-white/10'
                                 }`}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: selectedCards.includes(index) }}
                         >
                             <Text className="text-3xl mb-2">🔮</Text>
                             <Text
@@ -79,46 +82,30 @@ export default function TarotScreen() {
 
             {/* Get Reading Button */}
             <View className="px-6 pb-6">
-                <TouchableOpacity
+                <Button
                     onPress={getReading}
                     disabled={loading || selectedCards.length !== 3}
-                    className={`rounded-xl p-4 ${selectedCards.length === 3
-                            ? 'bg-turquoise/20 border border-turquoise/30'
-                            : 'bg-white/5 border border-white/10 opacity-50'
-                        }`}
+                    loading={loading}
+                    className="w-full"
+                    accessibilityLabel="Get your tarot reading button"
                 >
-                    <Text
-                        className={`text-center font-bold text-lg ${selectedCards.length === 3 ? 'text-turquoise' : 'text-silver/40'
-                            }`}
-                    >
-                        {loading ? 'Reading Cards...' : 'Get Your Reading'}
-                    </Text>
-                </TouchableOpacity>
+                    {loading ? 'Reading Cards...' : 'Get Your Reading'}
+                </Button>
             </View>
-
-            {/* Loading */}
-            {loading && (
-                <View className="px-6 pb-6">
-                    <ActivityIndicator size="large" color="#40E0D0" />
-                    <Text className="text-silver/60 text-center mt-4">
-                        Consulting the cards...
-                    </Text>
-                </View>
-            )}
 
             {/* Error Message */}
             {error && !loading && (
                 <View className="px-6 pb-6">
-                    <View className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                    <Card variant="outlined" className="bg-red-500/10 border-red-500/30">
                         <Text className="text-red-400 text-center">{error}</Text>
-                    </View>
+                    </Card>
                 </View>
             )}
 
             {/* Reading Result */}
             {data && !loading && (
                 <View className="px-6 pb-12">
-                    <View className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                    <Card>
                         {fromCache && (
                             <View className="bg-turquoise/10 border border-turquoise/30 rounded-lg px-3 py-2 mb-4">
                                 <Text className="text-turquoise text-xs text-center">
@@ -132,7 +119,7 @@ export default function TarotScreen() {
                         <Text className="text-silver/80 leading-6">
                             {data.interpretation || data.response || 'No interpretation available'}
                         </Text>
-                    </View>
+                    </Card>
                 </View>
             )}
         </ScrollView>

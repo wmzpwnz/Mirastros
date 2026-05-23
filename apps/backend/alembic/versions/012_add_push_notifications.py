@@ -21,7 +21,7 @@ def upgrade() -> None:
     op.create_table(
         'push_tokens',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('user_id', sa.String(), nullable=False),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('push_token', sa.String(), nullable=False),
         sa.Column('platform', sa.String(), nullable=False),
         sa.Column('device_type', sa.String(), nullable=True),
@@ -38,7 +38,7 @@ def upgrade() -> None:
     op.create_table(
         'notification_preferences',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('user_id', sa.String(), nullable=False),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('daily_horoscope', sa.Boolean(), nullable=False, server_default='true'),
         sa.Column('daily_horoscope_time', sa.String(), nullable=False, server_default='09:00'),
         sa.Column('transits', sa.Boolean(), nullable=False, server_default='false'),

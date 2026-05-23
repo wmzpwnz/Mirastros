@@ -1,35 +1,33 @@
 import AdminLayout from '../components/AdminLayout';
+import { Card, Grid, Stack, Button, Badge } from '@mirastros-universal/design-system';
 
 export default function DashboardPage() {
   const stats = [
-    { label: 'Total Documents', value: '42', icon: '📚', color: 'gold' },
-    { label: 'Total Queries', value: '1,234', icon: '💬', color: 'turquoise' },
-    { label: 'Cache Hit Rate', value: '87%', icon: '⚡', color: 'purple' },
-    { label: 'Active Users', value: '156', icon: '👥', color: 'gold' },
+    { label: 'Документов', value: '42', icon: '📚', color: 'gold' },
+    { label: 'Запросов', value: '1,234', icon: '💬', color: 'turquoise' },
+    { label: 'Кэш (попадания)', value: '87%', icon: '⚡', color: 'purple' },
+    { label: 'Активных пользователей', value: '156', icon: '👥', color: 'gold' },
   ];
 
   const recentQueries = [
-    { query: 'What does Aries have in store today?', type: 'horoscope', time: '2 min ago' },
-    { query: 'Three card tarot spread', type: 'tarot', time: '5 min ago' },
-    { query: 'Natal chart interpretation', type: 'natal', time: '12 min ago' },
+    { query: 'Что сегодня у Овна?', type: 'гороскоп', time: '2 мин назад' },
+    { query: 'Расклад на три карты', type: 'таро', time: '5 мин назад' },
+    { query: 'Интерпретация натальной карты', type: 'натальная', time: '12 мин назад' },
   ];
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <Stack gap="8">
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-cinzel text-gold mb-2">Dashboard</h1>
-          <p className="text-silver/60">Welcome to Mirastros Admin Panel</p>
+          <h1 className="text-4xl font-cinzel text-gold mb-2">Главная</h1>
+          <p className="text-silver/60">Панель администратора Mirastros</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Grid columns={{ mobile: 1, tablet: 2, desktop: 4 }} gap="6">
           {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="glass rounded-xl p-6 hover:border-gold/30 transition-all"
-            >
+            <Card key={stat.label} variant="elevated" className="hover:border-gold/30">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-3xl">{stat.icon}</span>
                 <span className={`text-3xl font-bold text-${stat.color}`}>
@@ -37,14 +35,14 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="text-silver/60 text-sm">{stat.label}</p>
-            </div>
+            </Card>
           ))}
-        </div>
+        </Grid>
 
         {/* Recent Queries */}
-        <div className="glass rounded-xl p-6">
-          <h2 className="text-2xl font-cinzel text-gold mb-6">Recent Queries</h2>
-          <div className="space-y-4">
+        <Card variant="elevated">
+          <h2 className="text-2xl font-cinzel text-gold mb-6">Последние запросы</h2>
+          <Stack gap="4">
             {recentQueries.map((item, idx) => (
               <div
                 key={idx}
@@ -53,36 +51,36 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className="text-silver">{item.query}</p>
                   <p className="text-xs text-silver/60 mt-1">
-                    Type: <span className="text-turquoise">{item.type}</span>
+                    Тип: <span className="text-turquoise">{item.type}</span>
                   </p>
                 </div>
                 <span className="text-xs text-silver/60">{item.time}</span>
               </div>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button className="glass rounded-xl p-6 hover:border-gold/30 transition-all text-left">
+        <Grid columns={{ mobile: 1, tablet: 3 }} gap="6">
+          <Card variant="elevated" className="hover:border-gold/30 cursor-pointer">
             <span className="text-3xl mb-3 block">📤</span>
-            <h3 className="text-lg font-semibold text-gold mb-2">Upload Document</h3>
-            <p className="text-sm text-silver/60">Add new knowledge to RAG</p>
-          </button>
+            <h3 className="text-lg font-semibold text-gold mb-2">Загрузить документ</h3>
+            <p className="text-sm text-silver/60">Добавить материал в базу знаний</p>
+          </Card>
 
-          <button className="glass rounded-xl p-6 hover:border-turquoise/30 transition-all text-left">
+          <Card variant="elevated" className="hover:border-turquoise/30 cursor-pointer">
             <span className="text-3xl mb-3 block">🔍</span>
-            <h3 className="text-lg font-semibold text-turquoise mb-2">Test RAG</h3>
-            <p className="text-sm text-silver/60">Query the knowledge base</p>
-          </button>
+            <h3 className="text-lg font-semibold text-turquoise mb-2">Проверить RAG</h3>
+            <p className="text-sm text-silver/60">Запрос к базе знаний</p>
+          </Card>
 
-          <button className="glass rounded-xl p-6 hover:border-purple/30 transition-all text-left">
+          <Card variant="elevated" className="hover:border-purple/30 cursor-pointer">
             <span className="text-3xl mb-3 block">🗑️</span>
-            <h3 className="text-lg font-semibold text-purple mb-2">Clear Cache</h3>
-            <p className="text-sm text-silver/60">Reset Redis cache</p>
-          </button>
-        </div>
-      </div>
+            <h3 className="text-lg font-semibold text-purple mb-2">Очистить кэш</h3>
+            <p className="text-sm text-silver/60">Сбросить Redis кэш</p>
+          </Card>
+        </Grid>
+      </Stack>
     </AdminLayout>
   );
 }

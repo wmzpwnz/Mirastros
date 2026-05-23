@@ -5,6 +5,7 @@ import WebApp from '@twa-dev/sdk'
 import { useAuth } from '../contexts/AuthContext'
 import { CosmicBackground } from '../components/CosmicBackground'
 import { ZScrollContainer, ZScrollSection, ZScrollCard } from '../components/ZScrollContainer'
+import { Button, Spinner, Badge } from '@mirastros-universal/design-system'
 
 export default function Home() {
   const { auth, isLoading, isAuthenticated } = useAuth()
@@ -22,7 +23,7 @@ export default function Home() {
         <CosmicBackground />
         <main className="min-h-screen p-6 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto mb-4"></div>
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="text-gray-300">Connecting to Mirastros...</p>
           </div>
         </main>
@@ -70,9 +71,9 @@ export default function Home() {
                 <p className="text-sm text-gray-300">
                   Welcome, <span className="text-gold">{auth.user.full_name}</span>!
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Subscription: <span className="text-gold capitalize">{auth.user.subscription_tier}</span>
-                </p>
+                <Badge variant="primary" className="mt-2">
+                  {auth.user.subscription_tier.toUpperCase()}
+                </Badge>
               </div>
             )}
 
@@ -125,18 +126,22 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gold mb-6">
                 Quick Actions
               </h2>
-              <a
-                href="/subscription"
-                className="block bg-gradient-to-r from-gold to-purple-light text-black font-semibold py-3 rounded-full hover:scale-105 transition-transform"
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => window.location.href = '/subscription'}
               >
                 💎 Upgrade Subscription
-              </a>
-              <a
-                href="/settings"
-                className="block bg-purple-deep/50 border border-gold/20 text-gold font-semibold py-3 rounded-full hover:border-gold/50 transition-colors"
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full"
+                onClick={() => window.location.href = '/settings'}
               >
                 ⚙️ Settings
-              </a>
+              </Button>
             </div>
           </ZScrollCard>
         </ZScrollSection>
@@ -164,12 +169,13 @@ function ServiceCard({
       </h3>
       <p className="text-gray-300 mb-3">{description}</p>
       <p className="text-sm text-gray-400 mb-6">{details}</p>
-      <a
-        href={href}
-        className="inline-block bg-gradient-to-r from-gold to-purple-light text-black font-semibold px-8 py-3 rounded-full hover:scale-105 transition-transform"
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={() => window.location.href = href}
       >
         Explore
-      </a>
+      </Button>
     </div>
   )
 }

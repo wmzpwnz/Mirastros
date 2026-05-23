@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import List
 from app.core.database import get_db
+from app.core.deps import require_admin
+from app.models.user import User
 from app.services.rag import rag_service
 from app.models.document import Document
 from sqlalchemy import select
@@ -26,7 +28,8 @@ class DocumentResponse(BaseModel):
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     doc: DocumentCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Upload and ingest a document"""
     doc_id = await rag_service.ingest_document(
@@ -51,7 +54,8 @@ async def upload_document(
 async def upload_pdf(
     file: UploadFile = File(...),
     category: str = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Upload and ingest a PDF document"""
     if not file.filename.endswith('.pdf'):
@@ -131,7 +135,8 @@ async def get_document(
 async def update_document(
     document_id: int,
     doc: DocumentCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Update a document"""
     result = await db.execute(select(Document).where(Document.id == document_id))
@@ -170,7 +175,8 @@ async def update_document(
 @router.delete("/{document_id}")
 async def delete_document(
     document_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin)
 ):
     """Delete a document and its chunks"""
     result = await db.execute(select(Document).where(Document.id == document_id))

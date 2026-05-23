@@ -1,24 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [require('@mirastros-universal/design-system/tailwind')],
   content: [
     './src/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/design-system/src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    extend: {
-      colors: {
-        cosmic: '#0F0A1F',
-        purple: {
-          deep: '#1E0A3C',
-          light: '#9D4EDD',
-        },
-        gold: '#D4AF37',
-        turquoise: '#40E0D0',
-      },
-      animation: {
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-    },
+    extend: {},
   },
   plugins: [],
 }

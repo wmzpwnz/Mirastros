@@ -1,10 +1,39 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api';
 import type { User } from '../../types';
+import { PersonalHeroSection } from '../../components/PersonalHeroSection';
+import { TarotSection } from '../../components/sections/TarotSection';
+import { AstrologySection } from '../../components/sections/AstrologySection';
+import { HoroscopeSection } from '../../components/sections/HoroscopeSection';
+import { NatalSection } from '../../components/sections/NatalSection';
+import DestinyMatrixSection from '../../components/sections/DestinyMatrixSection';
+import { RunesSection } from '../../components/sections/RunesSection';
+import { NumerologySection } from '../../components/sections/NumerologySection';
+import { DreamSection } from '../../components/sections/DreamSection';
+import { IChingSection } from '../../components/sections/IChingSection';
+import { LenormandSection } from '../../components/sections/LenormandSection';
+import { ChakraSection } from '../../components/sections/ChakraSection';
+import { TransitsSection } from '../../components/sections/TransitsSection';
+import { SynastrySection } from '../../components/sections/SynastrySection';
+import { LunarSection } from '../../components/sections/LunarSection';
+import { CrystalsSection } from '../../components/sections/CrystalsSection';
+import { RitualsSection } from '../../components/sections/RitualsSection';
+import { HorarySection } from '../../components/sections/HorarySection';
+import { SolarReturnSection } from '../../components/sections/SolarReturnSection';
+import { KarmicSection } from '../../components/sections/KarmicSection';
+import { MandalaSection } from '../../components/sections/MandalaSection';
+import { ShopSection } from '../../components/sections/ShopSection';
+import { DynamicBackground } from '../../components/DynamicBackground';
+import { Background3D } from '../../components/Background3D';
+import { SectionNavigationMenu } from '../../components/SectionNavigationMenu';
+import { config } from '../../config';
+import { DASHBOARD_TUNNEL_MEDIA } from '../../constants/tunnelMedia';
+import { useZScrollTunnel } from '../../hooks/useZScrollTunnel';
+import { createDashboardAnimations } from '../tunnel/dashboardAnimations';
 
 interface ServiceCard {
   id: string;
@@ -102,22 +131,137 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentReadings, setRecentReadings] = useState<any[]>([]);
+  const [loadingReadings, setLoadingReadings] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const loadUser = async () => {
       try {
+        console.log('Loading user data...');
         const userData = await api.getCurrentUser();
-        setUser(userData);
-      } catch (error) {
+        console.log('User data loaded:', userData);
+        if (isMounted) {
+          setUser(userData);
+          setLoading(false);
+        }
+      } catch (error: any) {
         console.error('Failed to load user:', error);
-        router.push('/auth/login');
+        console.error('Error details:', {
+          message: error?.message,
+          name: error?.name,
+          stack: error?.stack
+        });
+        if (isMounted) {
+          setLoading(false);
+          // Redirect to login on any error (user not authenticated or network issue)
+          router.push('/auth/login');
+        }
       } finally {
-        setLoading(false);
+        if (timeoutId) clearTimeout(timeoutId);
       }
     };
 
+    // Set timeout for loading state
+    timeoutId = setTimeout(() => {
+      if (isMounted && loading) {
+        console.error('Timeout: User data loading took too long');
+        setLoading(false);
+        router.push('/auth/login');
+      }
+    }, 5000); // 5 second timeout
+
     loadUser();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [router]);
+
+  const dashboardTunnelInit = useMemo(() => createDashboardAnimations(), []);
+
+  useZScrollTunnel({
+    enabled: config.features.enableZScroll && !!user,
+    enableMobile: config.features.enableZScrollMobile,
+    desktopMinWidth: config.features.zScrollDesktopMinWidth,
+    onInit: dashboardTunnelInit,
+  });
+
+  useEffect(() => {
+    const loadRecentReadings = async () => {
+      if (!user) return;
+      setLoadingReadings(true);
+      try {
+        // Load recent readings from different services
+        const [tarotHistory, numerologyHistory, dreamHistory] = await Promise.allSettled([
+          api.getTarotHistory(5, 0).catch(() => ({ readings: [], total: 0 })),
+          api.request('/numerology/history?limit=5&offset=0').catch(() => ({ calculations: [], total: 0 })),
+          api.request('/dreams/history?limit=5&offset=0').catch(() => ({ dreams: [], total: 0 })),
+        ]);
+
+        const readings: any[] = [];
+
+        // Add Tarot readings
+        if (tarotHistory.status === 'fulfilled' && tarotHistory.value.readings) {
+          tarotHistory.value.readings.forEach((r: any) => {
+            readings.push({
+              type: 'tarot',
+              title: `Расклад Таро: ${r.spread_type || 'Неизвестно'}`,
+              question: r.question,
+              timestamp: r.created_at || r.timestamp,
+              id: r.id,
+            });
+          });
+        }
+
+        // Add Numerology calculations
+        if (numerologyHistory.status === 'fulfilled' && (numerologyHistory.value as any).calculations) {
+          (numerologyHistory.value as any).calculations.forEach((c: any) => {
+            readings.push({
+              type: 'numerology',
+              title: 'Нумерологический расчет',
+              question: c.name || 'Расчет',
+              timestamp: c.created_at || c.timestamp,
+              id: c.id,
+            });
+          });
+        }
+
+        // Add Dream interpretations
+        if (dreamHistory.status === 'fulfilled' && (dreamHistory.value as any).dreams) {
+          (dreamHistory.value as any).dreams.forEach((d: any) => {
+            readings.push({
+              type: 'dream',
+              title: 'Толкование сна',
+              question: d.description?.substring(0, 50) || 'Сон',
+              timestamp: d.created_at || d.timestamp,
+              id: d.id,
+            });
+          });
+        }
+
+        // Sort by timestamp (most recent first)
+        readings.sort((a, b) => {
+          const timeA = new Date(a.timestamp).getTime();
+          const timeB = new Date(b.timestamp).getTime();
+          return timeB - timeA;
+        });
+
+        setRecentReadings(readings.slice(0, 10));
+      } catch (error) {
+        console.error('Failed to load readings:', error);
+      } finally {
+        setLoadingReadings(false);
+      }
+    };
+
+    if (user) {
+      loadRecentReadings();
+    }
+  }, [user]);
 
   const canAccessService = (tier: string) => {
     if (!user) return false;
@@ -150,173 +294,62 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="font-cinzel text-4xl font-bold text-white mb-2">
-            Добро пожаловать, {user.fullName}
-          </h1>
-          <p className="text-gray-400">
-            Ваш тариф:{' '}
-            <span className="text-mirastros-gold font-semibold capitalize">
-              {user.subscriptionTier}
-            </span>
-          </p>
-        </div>
+    <>
+      {/* Background 3D Stars */}
+      <Background3D />
 
-        {/* Natal Chart Summary */}
-        {user.birthDate && (
-          <div className="mb-12 bg-white/5 border border-white/10 rounded-lg p-6">
-            <h2 className="font-cinzel text-2xl font-bold text-white mb-4">
-              Ваша натальная карта
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Дата рождения</p>
-                <p className="text-white font-semibold">{user.birthDate}</p>
-              </div>
-              {user.zodiacSign && (
-                <div>
-                  <p className="text-gray-400 text-sm mb-1">Знак зодиака</p>
-                  <p className="text-white font-semibold">{user.zodiacSign}</p>
-                </div>
-              )}
-              <div>
-                <Link
-                  href="/services/natal"
-                  className="inline-block px-4 py-2 bg-mirastros-gold hover:bg-mirastros-gold/90 text-black font-semibold rounded-lg transition"
-                >
-                  Подробнее
-                </Link>
-              </div>
-            </div>
-          </div>
+      {/* Dynamic Backgrounds */}
+      <DynamicBackground
+        sources={DASHBOARD_TUNNEL_MEDIA}
+        blurAmount={100}
+        scale={1.2}
+      />
+
+      {/* Fixed Viewport for Z-Scroll */}
+      <main className="viewport">
+        {/* Personal Hero Section - First Section */}
+        {user && (
+          <section
+            className="mira-section mira-hero"
+            id="hero"
+            style={{ alignItems: 'flex-start', justifyContent: 'center' }}
+          >
+            <PersonalHeroSection user={user} />
+          </section>
         )}
 
-        {/* Service Cards */}
-        <div className="mb-12">
-          <h2 className="font-cinzel text-2xl font-bold text-white mb-6">
-            Эзотерические практики
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => {
-              const hasAccess = canAccessService(service.tier);
-              
-              return (
-                <Link
-                  key={service.id}
-                  href={hasAccess ? service.href : '/subscription'}
-                  className={`group relative bg-white/5 border border-white/10 rounded-lg p-6 transition ${
-                    hasAccess
-                      ? 'hover:bg-white/10 hover:border-mirastros-gold/50'
-                      : 'opacity-60 cursor-not-allowed'
-                  }`}
-                >
-                  {/* Lock Icon for Premium/Platinum */}
-                  {!hasAccess && (
-                    <div className="absolute top-4 right-4 text-2xl">🔒</div>
-                  )}
+        {/* Service Sections with Tunnel Effect */}
+        <TarotSection id="tarot" />
+        <AstrologySection id="astrology" />
+        <HoroscopeSection id="horoscope" />
+        <NatalSection id="natal" />
+        <DestinyMatrixSection id="destiny-matrix" embedded />
+        <RunesSection id="runes" />
+        <NumerologySection id="numerology" />
+        <DreamSection id="dream" />
+        <IChingSection id="iching" />
+        <LenormandSection id="lenormand" />
+        <ChakraSection id="chakra" />
+        <TransitsSection id="transits" />
+        <SynastrySection id="synastry" />
+        <LunarSection id="lunar" />
+        <CrystalsSection id="crystals" />
+        <RitualsSection id="rituals" />
+        <HorarySection id="horary" />
+        <SolarReturnSection id="solar-return" />
+        <KarmicSection id="karmic" />
+        <MandalaSection id="mandala" />
+        <ShopSection id="shop" />
+      </main>
 
-                  <div className="text-4xl mb-4">{service.icon}</div>
-                  <h3 className="font-cinzel text-xl font-bold text-white mb-2">
-                    {service.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    {service.description}
-                  </p>
-
-                  {/* Tier Badge */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        service.tier === 'freemium'
-                          ? 'bg-gray-500/20 text-gray-400'
-                          : service.tier === 'premium'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-purple-500/20 text-purple-400'
-                      }`}
-                    >
-                      {service.tier === 'freemium'
-                        ? 'Бесплатно'
-                        : service.tier === 'premium'
-                        ? 'Premium'
-                        : 'Platinum'}
-                    </span>
-
-                    {hasAccess && (
-                      <span className="text-mirastros-gold text-sm group-hover:translate-x-1 transition-transform">
-                        →
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Recent Readings */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-cinzel text-2xl font-bold text-white">
-              Последние предсказания
-            </h2>
-            <Link
-              href="/history"
-              className="text-mirastros-gold hover:text-mirastros-gold/80 text-sm transition"
-            >
-              Смотреть все →
-            </Link>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center text-gray-400">
-            <p>У вас пока нет предсказаний</p>
-            <p className="text-sm mt-2">Начните с выбора практики выше</p>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            href="/journal"
-            className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 hover:border-mirastros-gold/50 transition"
-          >
-            <div className="text-3xl mb-3">📔</div>
-            <h3 className="font-cinzel text-lg font-bold text-white mb-2">
-              Дневник практик
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Записывайте свои наблюдения
-            </p>
-          </Link>
-
-          <Link
-            href="/shop"
-            className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 hover:border-mirastros-gold/50 transition"
-          >
-            <div className="text-3xl mb-3">🛍️</div>
-            <h3 className="font-cinzel text-lg font-bold text-white mb-2">
-              Эзотерический магазин
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Кристаллы, таро, книги
-            </p>
-          </Link>
-
-          <Link
-            href="/profile"
-            className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 hover:border-mirastros-gold/50 transition"
-          >
-            <div className="text-3xl mb-3">⚙️</div>
-            <h3 className="font-cinzel text-lg font-bold text-white mb-2">
-              Настройки
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Профиль и подписка
-            </p>
-          </Link>
-        </div>
+      {/* Scroll Indicator */}
+      <div className="scroll-indicator-bottom">
+        <span>SCROLL</span>
+        <span className="scroll-percent text-shine" id="scrollPercent">0%</span>
       </div>
-    </div>
+
+      {/* Section Navigation Menu */}
+      <SectionNavigationMenu />
+    </>
   );
 }

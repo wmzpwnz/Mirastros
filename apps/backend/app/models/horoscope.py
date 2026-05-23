@@ -3,9 +3,13 @@ from sqlalchemy import Column, String, DateTime, Date, Text, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import enum
+
+
+def _utc_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class HoroscopePeriod(str, enum.Enum):
@@ -37,7 +41,7 @@ class Horoscope(Base):
     transit_data = Column(JSON, nullable=True)  # Current transits affecting the user
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utc_now, nullable=False)
     
     def __repr__(self):
         return f"<Horoscope {self.zodiac_sign} {self.period} {self.date}>"
