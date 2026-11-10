@@ -4,6 +4,146 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Modal } from '@mirastros-universal/design-system';
 import { api } from '../services/api';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+
+interface StripePaymentFormProps {
+  planId: string;
+  planName: string;
+  price: number;
+  currency: string;
+  onSuccess: () => void;
+  onClose: () => void;
+}
+
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
+  planId,
+  planName,
+  price,
+  currency,
+  onSuccess,
+  onClose,
+}) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const subscription = await api.createSubscription({
+        tier: planId as 'premium' | 'platinum',
+        paymentMethod: 'stripe',
+        billingPeriod: 'monthly',
+      });
+
+      if (!subscription.clientSecret) {
+        throw new Error('No payment intent created');
+      }
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Card element not found');
+      }
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
+        subscription.clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              // Add billing details if available from user profile
+            },
+          },
+        }
+      );
+
+      if (stripeError) {
+        throw new Error(stripeError.message || 'Payment failed');
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess();
+        onClose();
+      }
+    } catch (err: any) {
+      console.error('Stripe payment error:', err);
+      setError(err.message || 'Ошибка при обработке платежа');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 border border-white/10 rounded-lg bg-white/5">
+        <label className="block text-sm font-medium text-gray-300 mb-3">
+          Номер карты
+        </label>
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#ffffff',
+                '::placeholder': {
+                  color: '#6b7280',
+                },
+              },
+              invalid: {
+                color: '#ef4444',
+              },
+            },
+          }}
+          className="stripe-card-element"
+        />
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <Button
+          type="button"
+          onClick={onClose}
+          variant="secondary"
+          className="flex-1"
+          disabled={loading}
+        >
+          Отмена
+        </Button>
+        <Button
+          type="submit"
+          disabled={!stripe || loading}
+          loading={loading}
+          className="flex-1"
+        >
+          Оплатить {price} {currency === 'RUB' ? '₽' : '$'}
+        </Button>
+      </div>
+    </form>
+  );
+};
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -30,7 +170,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Auto-detect payment method based on currency or user location
     if (currency === 'RUB') {
       setPaymentMethod('yookassa');
     } else {
@@ -38,7 +177,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [currency]);
 
-  const handlePayment = async () => {
+  const handleYooKassaPayment = async () => {
     if (!planId || planId === 'freemium') {
       return;
     }
@@ -47,40 +186,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setError('');
 
     try {
-      // Create subscription
       const subscription = await api.createSubscription({
         tier: planId as 'premium' | 'platinum',
-        paymentMethod,
+        paymentMethod: 'yookassa',
         billingPeriod: 'monthly',
       });
 
-      // If we have a confirmation URL (YooKassa), redirect
-      if (subscription.confirmationUrl) {
-        window.location.href = subscription.confirmationUrl;
+      const paymentUrl = subscription.confirmationUrl || subscription.paymentUrl;
+      if (paymentUrl) {
+        const redirect = new URL(paymentUrl);
+        if (redirect.protocol !== 'https:') throw new Error('Некорректный адрес оплаты');
+        window.location.href = redirect.href;
         return;
       }
 
-      // If we have clientSecret (Stripe), we would integrate Stripe Elements here
-      // For now, show success message
-      if (subscription.clientSecret) {
-        // TODO: Integrate Stripe Elements for card payment
-        alert('Stripe integration coming soon. Please use YooKassa for now.');
-        onClose();
-        return;
-      }
-
-      // If payment URL is provided, redirect
-      if (subscription.paymentUrl) {
-        window.location.href = subscription.paymentUrl;
-        return;
-      }
-
-      // Fallback: show success
-      onSuccess();
-      onClose();
+      throw new Error('Платёж не подтверждён. Попробуйте позже.');
     } catch (err: any) {
-      console.error('Payment error:', err);
-      setError(err.message || 'Ошибка при создании платежа. Попробуйте снова.');
+      console.error('YooKassa payment error:', err);
+      setError(err.message || 'Ошибка при создании платежа.');
     } finally {
       setLoading(false);
     }
@@ -104,7 +227,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         )}
 
-        {/* Payment Method Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-3">
             Способ оплаты
@@ -138,7 +260,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
 
-        {/* Payment Info */}
         <div className="p-4 bg-white/5 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400 text-sm">Подписка</span>
@@ -156,24 +277,38 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button
-            onClick={onClose}
-            variant="secondary"
-            className="flex-1"
-          >
-            Отмена
-          </Button>
-          <Button
-            onClick={handlePayment}
-            disabled={loading}
-            loading={loading}
-            className="flex-1"
-          >
-            Оплатить
-          </Button>
-        </div>
+        {paymentMethod === 'stripe' && !stripePromise ? (
+          <p role="status">Оплата картой временно недоступна.</p>
+        ) : paymentMethod === 'stripe' ? (
+          <Elements stripe={stripePromise}>
+            <StripePaymentForm
+              planId={planId}
+              planName={planName}
+              price={price}
+              currency={currency}
+              onSuccess={onSuccess}
+              onClose={onClose}
+            />
+          </Elements>
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              onClick={onClose}
+              variant="secondary"
+              className="flex-1"
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handleYooKassaPayment}
+              disabled={loading}
+              loading={loading}
+              className="flex-1"
+            >
+              Оплатить
+            </Button>
+          </div>
+        )}
 
         <p className="text-xs text-gray-500 text-center">
           Нажимая "Оплатить", вы соглашаетесь с условиями подписки

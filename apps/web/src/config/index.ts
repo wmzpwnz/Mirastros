@@ -6,7 +6,7 @@
 export const config = {
   // API Configuration
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8000'),
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '15000', 10), // 15 seconds
   },
 

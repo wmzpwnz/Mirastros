@@ -3,7 +3,10 @@
  * Displays a button to open the AI chat with service context
  */
 
-import React from 'react';
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import { ChatInterface } from './ChatInterface';
 
 export interface ClarifyButtonProps {
   onClarify: () => void;
@@ -20,6 +23,8 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
   available = true,
   className = '',
 }) => {
+  const [chatOpen, setChatOpen] = useState(false);
+  const context = useMemo(() => ({ type: contextType, title: 'интерпретацией', data: contextData }), [contextType, contextData]);
   if (!available) {
     return (
       <div className={`bg-gradient-to-r from-gray-800/50 to-gray-700/50 border border-gray-700 rounded-lg p-6 ${className}`}>
@@ -57,6 +62,7 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
   }
 
   return (
+    <>
     <div className={`bg-gradient-to-r from-mirastros-gold/10 to-mirastros-gold/5 border border-mirastros-gold/30 rounded-lg p-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
@@ -69,9 +75,8 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
         </div>
         <button
           onClick={() => {
-            // TODO: Implement chat opening with context
-            console.log('Opening chat with context:', { contextType, contextData });
             onClarify();
+            setChatOpen(true);
           }}
           className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-mirastros-gold to-mirastros-gold/80 text-black rounded-lg font-semibold hover:from-mirastros-gold/90 hover:to-mirastros-gold/70 transition-all duration-300 shadow-lg hover:shadow-mirastros-gold/50"
         >
@@ -92,5 +97,7 @@ export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
         </button>
       </div>
     </div>
+    <ChatInterface context={context} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 };

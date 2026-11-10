@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Mirastros API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
+    FRONTEND_URL: str = "http://localhost:4200"
 
     # Server
     HOST: str = "0.0.0.0"
@@ -81,6 +82,15 @@ class Settings(BaseSettings):
                 emails = [email.strip() for email in v.split(',') if email.strip()]
                 return emails if emails else ["admin@mirastros.com"]
         return v if isinstance(v, list) else ["admin@mirastros.com"]
+
+    # Email: credentials are supplied through the runtime environment.
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@mirastros.com"
+    SMTP_USE_TLS: bool = True
+    SENDGRID_API_KEY: str = ""
 
     # Payment Gateways
     # YooKassa (ЮKassa) for Russian market

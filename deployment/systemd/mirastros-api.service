@@ -1,0 +1,19 @@
+[Unit]
+Description=Mirastros API
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+User=mirastros
+Group=mirastros
+WorkingDirectory=/srv/mirastros/current/backend
+EnvironmentFile=/srv/mirastros/shared/backend.env
+ExecStart=/srv/mirastros/current/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

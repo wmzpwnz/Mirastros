@@ -16,7 +16,7 @@ pgvector==0.3.5
 redis==5.2.0
 hiredis==3.0.0
 
-# AI & ML (for embeddings only, LLM via Ollama)
+# Optional local embeddings (LLM requests use DeepSeek API)
 sentence-transformers==3.2.1
 torch>=2.2.2
 transformers==4.46.2
@@ -44,3 +44,9 @@ PyPDF2==3.0.1
 
 # Email validation
 email-validator==2.1.0
+
+# Email transports
+aiosmtplib==3.0.2
+sendgrid==6.11.0
+# Compatible with passlib 1.7.4
+bcrypt==4.0.1

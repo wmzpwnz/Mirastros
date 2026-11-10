@@ -515,7 +515,7 @@ class ApiClient {
 
   // ==================== Social Authentication ====================
 
-  async loginWithGoogle(googleToken: string, googleId: string, email: string, name?: string): Promise<AuthResponse> {
+  async loginWithGoogle(googleToken: string, googleId?: string, email?: string, name?: string): Promise<AuthResponse> {
     const response = await this.request<any>('/auth/social/google', {
       method: 'POST',
       body: JSON.stringify({
@@ -637,7 +637,7 @@ class ApiClient {
     return normalizedResponse;
   }
 
-  async loginWithTelegram(telegramData: {
+  async loginWithTelegram(telegramData: string | {
     id: number;
     first_name?: string;
     last_name?: string;
@@ -649,6 +649,7 @@ class ApiClient {
     const response = await this.request<any>('/auth/social/telegram', {
       method: 'POST',
       body: JSON.stringify({
+        ...(typeof telegramData === 'string' ? { init_data: telegramData } : {
         telegram_id: telegramData.id.toString(),
         first_name: telegramData.first_name,
         last_name: telegramData.last_name,
@@ -656,6 +657,7 @@ class ApiClient {
         photo_url: telegramData.photo_url,
         auth_date: telegramData.auth_date,
         hash: telegramData.hash,
+        }),
       }),
     });
 
@@ -1437,7 +1439,28 @@ class ApiClient {
     return this.request('/mandala/instructions');
   }
 
-  // ==================== Legacy Methods (for backward compatibility) ====================
+  // ==================== Chat & AI ====================
+
+  async requestChatCompletion(
+    message: string,
+    options: { conversationId: string }
+  ): Promise<{ content: string }> {
+    return this.request(`/chat/conversations/${encodeURIComponent(options.conversationId)}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async startConversation(contextType = 'general', contextData?: Record<string, unknown>): Promise<{ id: string }> {
+    return this.request('/chat/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ service_type: contextType, context_data: contextData }),
+    });
+  }
+
+  async getConversationHistory(conversationId: string): Promise<any> {
+    return this.request(`/chat/conversations/${encodeURIComponent(conversationId)}`);
+  }
 
   async getTarotReadingLegacy(question: string): Promise<PredictionResponse> {
     try {

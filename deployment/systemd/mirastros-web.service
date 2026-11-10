@@ -1,20 +1,21 @@
 [Unit]
-Description=Mirastros Web Application
-After=network.target
+Description=Mirastros web
+After=network-online.target mirastros-api.service
 
 [Service]
-Type=simple
 User=mirastros
 Group=mirastros
-WorkingDirectory=/var/www/mirastros/web
-Environment="NODE_ENV=production"
-Environment="PORT=3000"
-Environment="NEXT_PUBLIC_API_URL=https://www.mirastros.com/api"
-ExecStart=/usr/bin/npm start
-Restart=always
-RestartSec=10
-StandardOutput=append:/var/log/mirastros/web.log
-StandardError=append:/var/log/mirastros/web-error.log
+WorkingDirectory=/srv/mirastros/current/web
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+Environment=NEXT_TELEMETRY_DISABLED=1
+ExecStart=/srv/mirastros/current/bin/node apps/web/server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0027
 
 [Install]
 WantedBy=multi-user.target

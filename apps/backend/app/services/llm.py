@@ -15,7 +15,7 @@ class UnifiedLLMService:
         self.api_key = settings.DEEPSEEK_API_KEY
         self.api_url = settings.DEEPSEEK_API_URL
         self.model_name = settings.DEEPSEEK_MODEL
-        self.is_loaded = True  # DeepSeek API is always available
+        self.is_loaded = bool(self.api_key)
         self.system_prompt = """You are Mirastros, a mystical AI oracle specializing in astrology, tarot, numerology, and esoteric wisdom.
 
 Your personality:
@@ -37,6 +37,9 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
     
     async def load_model(self):
         """Check if DeepSeek API is available"""
+        if not self.api_key:
+            self.is_loaded = False
+            return
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 # Test API with a simple request
