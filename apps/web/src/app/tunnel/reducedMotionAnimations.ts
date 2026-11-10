@@ -13,10 +13,19 @@ export function createReducedMotionAnimations(ctx: TunnelAnimationContext) {
     const tl = registerTimeline(gsap.timeline({ scrollTrigger: { trigger: document.body, start: `${start}px top`, end: `${end}px top`, scrub: true } }));
     if (index !== 0) tl.to(slide, { opacity: 1, duration: .12, ease: 'none' }, 0);
     if (index !== slides.length - 1) tl.to(slide, { opacity: 0, duration: .12, ease: 'none' }, .88);
-    const activate = () => {
-      slides.forEach(item => item.classList.remove('active'));
-      slide.classList.add('active');
-    };
-    registerTrigger(ScrollTrigger.create({ trigger: document.body, start: `${start}px top`, end: `${end}px top`, onEnter: activate, onEnterBack: activate }));
+
   });
+  // Overlapping timelines cannot each own pointer activation. In particular,
+  // rebuilding at a later scene and returning to the start must restore CTA clicks.
+  const updateActive = () => {
+    let active = 0;
+    for (let index = 0; index < slides.length - 1; index++) {
+      const { start, end } = getSectionRange(index, scrollPerSlide, overlap);
+      if (window.scrollY < start + (end - start) * .94) break;
+      active = index + 1;
+    }
+    slides.forEach((slide, index) => slide.classList.toggle('active', index === active));
+  };
+  registerTrigger(ScrollTrigger.create({ trigger: document.body, start: 'top top', end: 'bottom bottom', onUpdate: updateActive, onRefresh: updateActive }));
+  updateActive();
 }
