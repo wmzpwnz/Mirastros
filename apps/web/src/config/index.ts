@@ -20,6 +20,7 @@ export const config = {
   features: {
     enable3DBackground: process.env.NEXT_PUBLIC_ENABLE_3D_BACKGROUND === 'true',
     enableZScroll: process.env.NEXT_PUBLIC_ENABLE_ZSCROLL === 'true',
+    enableLandingZScrollMobile: process.env.NEXT_PUBLIC_ENABLE_LANDING_ZSCROLL_MOBILE !== 'false',
     enableZScrollMobile:
       process.env.NEXT_PUBLIC_ENABLE_ZSCROLL_MOBILE === 'true',
     zScrollDesktopMinWidth: parseInt(

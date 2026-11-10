@@ -5467,3 +5467,8 @@ button:active {
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+/* The mobile landing uses its own scroll cue above the portal. */
+@media (max-width: 600px) {
+  .landing-scroll-indicator { display: none; }
+}

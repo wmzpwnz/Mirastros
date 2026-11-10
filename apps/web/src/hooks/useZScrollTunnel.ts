@@ -53,6 +53,7 @@ export const useZScrollTunnel = ({
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     let retryInitTimer: ReturnType<typeof setTimeout> | null = null;
     let preloaderObserver: MutationObserver | null = null;
+    let currentScrollPerSlide: number | null = null;
 
     const root = document.documentElement;
     const body = document.body;
@@ -170,6 +171,7 @@ export const useZScrollTunnel = ({
 
       const viewportHeight = window.innerHeight;
       const scrollPerSlide = getScrollPerSlide(viewportHeight);
+      currentScrollPerSlide = scrollPerSlide;
       const totalHeight = getTotalHeight(slides.length, viewportHeight, overlap);
 
       body.style.height = `${totalHeight}px`;
@@ -222,7 +224,15 @@ export const useZScrollTunnel = ({
       if (resizeTimer) clearTimeout(resizeTimer);
 
       resizeTimer = setTimeout(() => {
+        // Browser chrome and orientation changes alter the mobile viewport.
+        // Preserve the position within the scene rather than jumping sections.
+        const progress = body.classList.contains('zscroll-enabled') && currentScrollPerSlide
+          ? window.scrollY / currentScrollPerSlide : null;
         initAfterPreloader();
+        if (progress !== null && body.classList.contains('zscroll-enabled') && currentScrollPerSlide) {
+          window.scrollTo({ top: progress * currentScrollPerSlide, behavior: 'instant' });
+          ScrollTrigger.update();
+        }
       }, 150);
     };
 

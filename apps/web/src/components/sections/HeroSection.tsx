@@ -24,12 +24,6 @@ function Astrolabe() {
   </svg>;
 }
 
-const directions = [
-  { href: '/services/tarot', symbol: '✧', title: 'Таро и руны', detail: 'Символы и интерпретации' },
-  { href: '/services/natal', symbol: '☉', title: 'Астрология', detail: 'Ваша карта звёздного неба' },
-  { href: '/destiny-matrix', symbol: '◇', title: 'Матрица судьбы', detail: 'Числа и личные смыслы' },
-];
-
 export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
   <section id={id} className={`mira-section active ${styles.root}`} aria-labelledby="landing-title">
     <div className={`hero-bg-wrapper ${styles.background}`} aria-hidden="true">
@@ -47,17 +41,14 @@ export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
     <div className={`hero-logo-buttons-group ${styles.content}`}>
       <Astrolabe />
       <h1 id="landing-title" className={styles.logo}><img src="/logo.png" alt="Mirastros" width="800" height="205" fetchPriority="high" /></h1>
-      <p className={styles.tagline}>Ваш путь. Ваша судьба. Ваша вселенная.</p>
+      <p className={styles.tagline}><span>Ваш путь.</span> <span>Ваша судьба.</span> <span>Ваша вселенная.</span></p>
       <div className={styles.rule} aria-hidden="true"><span>✦</span></div>
-      <h2 className={styles.invitation}>Открой свой космический путь</h2>
       <p className={styles.description}>Пространство астрологии, древних знаний<br className={styles.desktopBreak} /> и символических практик для осознанной жизни.</p>
       <nav className={styles.actions} aria-label="Вход в Mirastros">
         <Link href="/auth/login" className={styles.login}><span aria-hidden="true">✧</span> Вход</Link>
         <Link href="/auth/register" className={styles.register}><span aria-hidden="true">✦</span> Регистрация</Link>
       </nav>
-      <nav className={styles.directions} aria-label="Направления Mirastros">
-        {directions.map(item => <Link key={item.href} href={item.href}><span className={styles.directionSymbol} aria-hidden="true">{item.symbol}</span><span><strong>{item.title}</strong><small>{item.detail}</small></span></Link>)}
-      </nav>
+
     </div>
     <div className={styles.scrollCue} aria-hidden="true"><span />Листайте — впереди ваш мир Mirastros</div>
   </section>
