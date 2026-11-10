@@ -20,6 +20,18 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: pgvector/pgvector:pg14@sha256:ffb60737442caac42305621859cba8f674b1a89f70526a9167df868c88e08cbf
+        env:
+          POSTGRES_USER: mirastros
+          POSTGRES_PASSWORD: ci-database-only
+          POSTGRES_DB: mirastros_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mirastros -d mirastros_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,6 +54,15 @@ jobs:
         env:
           PYTHONPATH: .
           SECRET_KEY: ci-test-only-0123456789abcdef0123456789abcdef
+      - name: Verify fresh database and authenticated API flow
+        working-directory: apps/backend
+        run: |
+          python initialize_database.py
+          python ../../deployment/smoke-backend.py
+        env:
+          SECRET_KEY: ci-test-only-0123456789abcdef0123456789abcdef
+          DATABASE_URL: postgresql+asyncpg://mirastros:ci-database-only@127.0.0.1:5432/mirastros_ci
+          DEBUG: 'false'
       - run: npx nx build web --skip-nx-cache
         env:
           NX_DAEMON: 'false'
