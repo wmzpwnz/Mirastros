@@ -72,6 +72,7 @@ jobs:
           NEXT_PUBLIC_ENABLE_3D_BACKGROUND: 'true'
           NEXT_PUBLIC_ENABLE_ZSCROLL: 'true'
       - run: bash deployment/package-release.sh
+      - run: node deployment/smoke-web.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: mirastros-release
