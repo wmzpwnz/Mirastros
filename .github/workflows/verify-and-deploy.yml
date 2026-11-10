@@ -81,7 +81,7 @@ jobs:
           retention-days: 7
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.actor == github.repository_owner
     needs: verify
     runs-on: ubuntu-22.04
     environment: production
