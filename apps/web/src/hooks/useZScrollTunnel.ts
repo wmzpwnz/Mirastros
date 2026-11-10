@@ -17,6 +17,7 @@ export interface TunnelAnimationContext {
   overlap: number;
   isLiteMode: boolean;
   isMobile: boolean;
+  reducedMotion: boolean;
   registerTrigger: (trigger: ScrollTrigger) => ScrollTrigger;
   registerTimeline: (timeline: gsap.core.Timeline) => gsap.core.Timeline;
 }
@@ -54,6 +55,9 @@ export const useZScrollTunnel = ({
     let retryInitTimer: ReturnType<typeof setTimeout> | null = null;
     let preloaderObserver: MutationObserver | null = null;
     let currentScrollPerSlide: number | null = null;
+    let touchNormalizer: ReturnType<typeof ScrollTrigger.normalizeScroll>;
+    let layoutWidth = window.innerWidth;
+    let layoutHeight = window.innerHeight;
 
     const root = document.documentElement;
     const body = document.body;
@@ -76,6 +80,18 @@ export const useZScrollTunnel = ({
     };
 
     const killRegisteredAnimations = () => {
+      document.querySelectorAll<HTMLVideoElement>('.hero-flying-gif').forEach(video => {
+        video.pause();
+        video.removeAttribute('src');
+        video.querySelectorAll('source').forEach(source => source.remove());
+        video.load();
+        video.remove();
+      });
+      if (touchNormalizer) {
+        if (ScrollTrigger.normalizeScroll() === touchNormalizer) ScrollTrigger.normalizeScroll(false);
+        else touchNormalizer.kill();
+        touchNormalizer = undefined;
+      }
       createdTimelines.forEach((timeline) => {
         try {
           timeline.kill();
@@ -119,7 +135,7 @@ export const useZScrollTunnel = ({
     const isDesktopViewport = () => window.innerWidth >= desktopMinWidth;
 
     const canEnableTunnel = () => {
-      if (!enabled || reducedMotion.matches) return false;
+      if (!enabled) return false;
       if (isDesktopViewport()) return true;
       return enableMobile;
     };
@@ -172,6 +188,8 @@ export const useZScrollTunnel = ({
       const viewportHeight = window.innerHeight;
       const scrollPerSlide = getScrollPerSlide(viewportHeight);
       currentScrollPerSlide = scrollPerSlide;
+      layoutWidth = window.innerWidth;
+      layoutHeight = viewportHeight;
       const totalHeight = getTotalHeight(slides.length, viewportHeight, overlap);
 
       body.style.height = `${totalHeight}px`;
@@ -183,6 +201,7 @@ export const useZScrollTunnel = ({
         overlap,
         isLiteMode: isTunnelLiteMode(),
         isMobile: !isDesktopViewport(),
+        reducedMotion: reducedMotion.matches,
         registerTrigger,
         registerTimeline,
       };
@@ -191,6 +210,11 @@ export const useZScrollTunnel = ({
 
       setModeClass(true);
       ScrollTrigger.refresh();
+      if (!isDesktopViewport()) {
+        // GSAP's touch normalizer works around Safari scroll/pinning quirks.
+        // https://gsap.com/docs/v3/Plugins/ScrollTrigger/static.normalizeScroll()/
+        touchNormalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true });
+      }
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
     };
 
@@ -219,7 +243,7 @@ export const useZScrollTunnel = ({
       });
     };
 
-    const handleResize = () => {
+    const scheduleRebuild = () => {
       updateAppVh();
       if (resizeTimer) clearTimeout(resizeTimer);
 
@@ -236,13 +260,24 @@ export const useZScrollTunnel = ({
       }, 150);
     };
 
+    const handleResize = () => {
+      // Safari address-bar changes must not tear down a gesture in progress.
+      if (!isDesktopViewport() && body.classList.contains('zscroll-enabled') &&
+          Math.abs(window.innerWidth - layoutWidth) <= 1 &&
+          Math.abs(window.innerHeight - layoutHeight) < layoutHeight * .25) {
+        updateAppVh();
+        return;
+      }
+      scheduleRebuild();
+    };
+
     updateAppVh();
     initAfterPreloader();
 
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
     window.visualViewport?.addEventListener('resize', handleResize);
-    reducedMotion.addEventListener('change', handleResize);
+    reducedMotion.addEventListener('change', scheduleRebuild);
 
     return () => {
       if (resizeTimer) clearTimeout(resizeTimer);
@@ -255,7 +290,7 @@ export const useZScrollTunnel = ({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
       window.visualViewport?.removeEventListener('resize', handleResize);
-      reducedMotion.removeEventListener('change', handleResize);
+      reducedMotion.removeEventListener('change', scheduleRebuild);
 
       hardCleanup({ removeClasses: true });
       root.style.removeProperty('--app-vh');

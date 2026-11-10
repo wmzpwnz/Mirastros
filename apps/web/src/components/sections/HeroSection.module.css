@@ -55,3 +55,6 @@
 @media (max-height:500px) and (min-width:601px) { .root { padding:24px 35px 35px; min-height:var(--app-vh,100svh); }.content { margin-top:0; }.astrolabe { width:64px; height:64px; margin-bottom:8px; }.logo { width:300px; }.tagline { font-size:10px; margin-top:10px; }.description { display:none; }.actions { margin-top:18px; max-width:360px; }.scrollCue { display:none; } }
 
 
+
+/* Required by the original GSAP fly-through timeline. */
+.flyingPortals { position:absolute; inset:0; z-index:4; pointer-events:none; overflow:hidden; }
