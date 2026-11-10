@@ -38,6 +38,13 @@ function Astrolabe({ symbol }: { symbol: string }) {
   );
 }
 
+function Artifact({ kind }: { kind: 'energy' | 'event' | 'advice' }) {
+  return <svg className={styles.artifact} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <circle cx="32" cy="32" r="29" strokeOpacity=".25" /><circle cx="32" cy="32" r="25" strokeOpacity=".15" />
+    {kind === 'energy' ? <><path d="m32 8 13 21-13 25-13-25L32 8Zm0 0v46M19 29h26M32 8l5 21-5 25-5-25 5-21Z" /><path d="m10 15 2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4Z" /></> : kind === 'event' ? <><path d="M39 12a21 21 0 1 0 13 32A22 22 0 0 1 39 12Z" /><path d="m43 10 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" /><circle cx="21" cy="33" r="3" strokeOpacity=".4" /></> : <><path d="M32 21c-6-5-14-5-21-2v28c7-3 15-3 21 2 6-5 14-5 21-2V19c-7-3-15-3-21 2Zm0 0v28M16 25l10 1m-10 5 10 1m-10 5 10 1m12-12 10-1m-10 7 10-1m-10 7 10-1" /><path d="m32 5 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" /></>}
+  </svg>;
+}
+
 function MoonVisual({ phase }: { phase?: string }) {
   const waxing = phase?.startsWith('waxing') || phase === 'first_quarter';
   const shadow = phase === 'new_moon' ? 0 : phase === 'full_moon' ? 130 :
@@ -50,11 +57,12 @@ function MoonVisual({ phase }: { phase?: string }) {
           <radialGradient id="daily-moon-surface" cx="32%" cy="25%" r="80%">
             <stop stopColor="#f7f2e9" /><stop offset=".5" stopColor="#b9bdce" /><stop offset="1" stopColor="#6a708a" />
           </radialGradient>
+          <filter id="daily-moon-texture"><feTurbulence type="fractalNoise" baseFrequency=".075" numOctaves="4" seed="11" /><feColorMatrix type="saturate" values="0" /><feBlend in="SourceGraphic" mode="soft-light" /></filter>
           <clipPath id="daily-moon-disc"><circle cx="80" cy="80" r="55" /></clipPath>
         </defs>
         {phase ? <g clipPath="url(#daily-moon-disc)">
-          <circle cx="80" cy="80" r="55" fill="url(#daily-moon-surface)" />
-          <g fill="#62697f" opacity=".22"><circle cx="60" cy="65" r="15" /><circle cx="92" cy="103" r="19" /><circle cx="103" cy="55" r="9" /><circle cx="50" cy="98" r="7" /></g>
+          <circle cx="80" cy="80" r="55" fill="url(#daily-moon-surface)" filter="url(#daily-moon-texture)" />
+
           <circle cx={80 + (waxing ? -shadow : shadow)} cy="80" r="55" fill="#121126" opacity=".96" />
         </g> : <circle cx="80" cy="80" r="55" fill="#141326" stroke="#a5a4be" strokeOpacity=".3" />}
         <circle cx="80" cy="80" r="55" fill="none" stroke="#d9d7e7" strokeOpacity=".3" />
@@ -95,7 +103,7 @@ export function DailyOverview({ user }: { user: User }) {
   return (
     <section className={`personal-hero-root ${styles.root}`} aria-labelledby="daily-overview-title">
       <div className={`personal-hero-bg ${styles.background}`} aria-hidden="true">
-        <img className="hero-bg-img" src="/images/mirastros-sanctuary.webp" alt="" />
+        <img className="hero-bg-img" src="/images/mirastros-cosmos.webp" alt="" />
       </div>
       <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
       <div className={styles.screenFrame} aria-hidden="true" />
@@ -133,8 +141,7 @@ export function DailyOverview({ user }: { user: User }) {
             <Link className={styles.textLink} href="/services/lunar">Лунный календарь <ArrowIcon diagonal /></Link>
           </article>
 
-          <article className={`${styles.panel} ${styles.focusPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
-            {panelOrnaments}
+          <article className={`${styles.focusPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
             <p className={styles.eyebrow}>✦ Фокус дня</p>
             <div className={styles.portalEmblem}><Astrolabe symbol={zodiacSymbol} /><span className={styles.portalHalo} aria-hidden="true" /></div>
             <h2>{copy.focus || (forecastState === 'missing' ? 'Начните с себя' : forecastState === 'error' ? 'Ваш день — больше одного прогноза' : 'Настраиваем ваш дневной ориентир…')}</h2>
@@ -158,20 +165,23 @@ export function DailyOverview({ user }: { user: User }) {
         <div className={styles.bottomGrid}>
           <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
             {panelOrnaments}
-            <p className={styles.eyebrow}><span aria-hidden="true">✧</span> Энергия дня</p>
+            <Artifact kind="energy" />
+            <p className={styles.eyebrow}>Энергия дня</p>
             <h2>{rhythm?.title || (moonState === 'loading' ? 'Определяем ритм…' : 'Ритм пока неизвестен')}</h2>
             <p>{rhythm?.text || 'Появится после загрузки лунной фазы.'}</p>
             <span className={styles.caption}>Символика лунной фазы</span>
           </article>
           <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
             {panelOrnaments}
-            <p className={styles.eyebrow}><span aria-hidden="true">◷</span> Ближайшее событие</p>
+            <Artifact kind="event" />
+            <p className={styles.eyebrow}>Ближайшее событие</p>
             <h2>{event?.title || (moonState === 'loading' ? 'Сверяем календарь…' : 'Дата пока неизвестна')}</h2>
             {event ? <><p className={styles.eventDate}><time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p><Link className={styles.textLink} href="/services/lunar">Посмотреть календарь <ArrowIcon diagonal /></Link></> : <p>Покажем ближайшее новолуние или полнолуние, когда получим дату.</p>}
           </article>
           <article className={`${styles.panel} ${styles.smallPanel} ${styles.advicePanel} personal-hero-block`}>
             {panelOrnaments}
-            <p className={styles.eyebrow}><span aria-hidden="true">✦</span> Рекомендация дня</p>
+            <Artifact kind="advice" />
+            <p className={styles.eyebrow}>Рекомендация дня</p>
             <h2>Один шаг для себя</h2>
             <p>{copy.advice || (forecastState === 'missing' ? 'Начните с профиля: ваши данные помогут настроить личную сводку.' : forecastState === 'loading' ? 'Совет появится вместе с прогнозом.' : 'Отдельной рекомендации пока нет. Выберите полезное действие из полного прогноза.')}</p>
           </article>
