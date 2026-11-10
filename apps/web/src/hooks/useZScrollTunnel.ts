@@ -56,6 +56,7 @@ export const useZScrollTunnel = ({
 
     const root = document.documentElement;
     const body = document.body;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     const clearModeClasses = () => {
       body.classList.remove('zscroll-enabled');
@@ -117,7 +118,7 @@ export const useZScrollTunnel = ({
     const isDesktopViewport = () => window.innerWidth >= desktopMinWidth;
 
     const canEnableTunnel = () => {
-      if (!enabled) return false;
+      if (!enabled || reducedMotion.matches) return false;
       if (isDesktopViewport()) return true;
       return enableMobile;
     };
@@ -231,6 +232,7 @@ export const useZScrollTunnel = ({
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
     window.visualViewport?.addEventListener('resize', handleResize);
+    reducedMotion.addEventListener('change', handleResize);
 
     return () => {
       if (resizeTimer) clearTimeout(resizeTimer);
@@ -243,6 +245,7 @@ export const useZScrollTunnel = ({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
       window.visualViewport?.removeEventListener('resize', handleResize);
+      reducedMotion.removeEventListener('change', handleResize);
 
       hardCleanup({ removeClasses: true });
       root.style.removeProperty('--app-vh');
