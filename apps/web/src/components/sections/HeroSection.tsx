@@ -50,6 +50,7 @@ export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
       </nav>
 
     </div>
+    <div className={`hero-flying-gifs ${styles.flyingPortals}`} aria-hidden="true" />
     <div className={styles.scrollCue} aria-hidden="true"><span />Листайте — впереди ваш мир Mirastros</div>
   </section>
 );

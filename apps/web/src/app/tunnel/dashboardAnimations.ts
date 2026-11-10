@@ -1,3 +1,4 @@
+import { createReducedMotionAnimations } from './reducedMotionAnimations';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { TunnelAnimationContext } from '../../hooks/useZScrollTunnel';
@@ -5,6 +6,7 @@ import { getSectionRange } from '../../utils/tunnelScrollMath';
 
 export const createDashboardAnimations = () => {
   return (ctx: TunnelAnimationContext) => {
+    if (ctx.reducedMotion) { createReducedMotionAnimations(ctx); return; }
     const { slides, totalSlides, scrollPerSlide, overlap, registerTimeline, registerTrigger } =
       ctx;
 

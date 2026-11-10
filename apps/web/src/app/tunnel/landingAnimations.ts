@@ -1,3 +1,4 @@
+import { createReducedMotionAnimations } from './reducedMotionAnimations';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { TunnelMediaTrack } from '../../constants/tunnelMedia';
@@ -16,6 +17,7 @@ const seededScatter = (index: number, salt: number) => {
 
 export const createLandingAnimations = ({ mediaTrack }: LandingAnimationOptions) => {
   return (ctx: TunnelAnimationContext) => {
+    if (ctx.reducedMotion) { createReducedMotionAnimations(ctx); return; }
     const { slides, totalSlides, scrollPerSlide, overlap, registerTimeline, registerTrigger } =
       ctx;
 
