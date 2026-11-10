@@ -1,252 +1,64 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@mirastros-universal/design-system';
-import { useSplitting } from '../../hooks/useSplitting';
+import Link from 'next/link';
+import styles from './HeroSection.module.css';
 
-interface HeroSectionProps {
-    id?: string;
+interface HeroSectionProps { id?: string; }
+
+function Corner({ className }: { className: string }) {
+  return <svg className={className} viewBox="0 0 80 80" fill="none" aria-hidden="true">
+    <path d="M3 77V14C3 7 7 3 14 3h63M9 68V17c0-5 3-8 8-8h51M3 35C22 35 35 22 35 3M9 47C26 44 44 26 47 9" />
+    <path d="M8 8c20-3 28 11 20 19C19 35 5 22 8 8Zm7 7c12 0 18 8 10 11-5 2-11-4-10-11ZM3 54c16-20 20-7 13-3S5 66 9 70M54 3c-20 16-7 20-3 13S66 5 70 9M37 17l7 7-7 7-7-7Z" />
+    <path d="M40 40c9-3 16-9 20-18-2 13-9 22-20 25-3 11-12 18-25 20 9-4 15-11 18-20l7-7Z" /><circle cx="24" cy="24" r="3" />
+  </svg>;
 }
 
-export const HeroSection = ({ id }: HeroSectionProps) => {
-    const router = useRouter();
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const subtitleRef = useSplitting('words');
+// A decorative astrolabe, not a replacement brand mark. The original logo
+// remains unmodified at /logo.png. No external animation runtime is added.
+function Astrolabe() {
+  return <svg className={styles.astrolabe} viewBox="0 0 180 180" fill="none" aria-hidden="true">
+    <circle cx="90" cy="90" r="80" /><circle cx="90" cy="90" r="68" /><circle cx="90" cy="90" r="47" />
+    <path d="m90 8 18 57 62 25-62 18-18 62-18-62L8 90l64-25L90 8Zm0 28 38 54-38 38-38-38 38-54Z" />
+    {Array.from({ length: 12 }, (_, i) => <g key={i} transform={`rotate(${i * 30} 90 90)`}><path d="M90 10v12" /><circle cx="90" cy="29" r="1.5" /></g>)}
+    <path d="m90 71 5 14 14 5-14 5-5 14-5-14-14-5 14-5 5-14Z" />
+  </svg>;
+}
 
-    // Mouse move parallax effect
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const x = (e.clientX - window.innerWidth / 2) * 0.05;
-            const y = (e.clientY - window.innerHeight / 2) * 0.05;
-            setMousePosition({ x, y });
-        };
+const directions = [
+  { href: '/services/tarot', symbol: '✧', title: 'Таро и руны', detail: 'Символы и интерпретации' },
+  { href: '/services/natal', symbol: '☉', title: 'Астрология', detail: 'Ваша карта звёздного неба' },
+  { href: '/destiny-matrix', symbol: '◇', title: 'Матрица судьбы', detail: 'Числа и личные смыслы' },
+];
 
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
-
-  return (
-    <section
-        className="mira-section mira-hero active"
-        id={id}
-        style={{
-            background: '#000'
-        }}
-    >
-            {/* Background Images Wrapper */}
-            <div
-                className="hero-bg-wrapper"
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    minWidth: '100%',
-                    minHeight: '100%',
-                    zIndex: 0,
-                    overflow: 'hidden'
-                }}
-            >
-                <img
-                    src="/backweb.png"
-                    alt="Background"
-                    className="hero-bg-img desktop-only"
-                    style={{
-                        transition: 'transform 0.1s ease-out',
-                        width: '100vw',
-                        height: '100vh',
-                        minWidth: '100%',
-                        minHeight: '100%',
-                        objectFit: 'cover',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: `translate(calc(-50% + ${mousePosition.x}px), calc(-50% + ${mousePosition.y}px)) scale(1.15)`
-                    }}
-                />
-                <img
-                    src="/backmobile.png"
-                    alt="Background"
-                    className="hero-bg-img mobile-only"
-                    style={{
-                        transition: 'transform 0.1s ease-out',
-                        width: '100vw',
-                        height: '100vh',
-                        minWidth: '100%',
-                        minHeight: '100%',
-                        objectFit: 'cover',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: `translate(calc(-50% + ${mousePosition.x}px), calc(-50% + ${mousePosition.y}px)) scale(1.15)`
-                    }}
-                />
-            </div>
-
-            {/* Gradient Overlay (Darker for better contrast) */}
-            <div
-                className="hero-overlay"
-                style={{
-                    zIndex: 1,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    minWidth: '100%',
-                    minHeight: '100%',
-                    background: 'radial-gradient(circle at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.95) 100%)',
-                    pointerEvents: 'none'
-                }}
-            ></div>
-
-            {/* Welcome Content */}
-            <div
-                className="hero-welcome-content"
-                style={{
-                    position: 'relative',
-                    zIndex: 100,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: '100vw',
-                    textAlign: 'center'
-                }}
-            >
-                {/* Magic Circle Background */}
-                <div className="hero-magic-circle"></div>
-                <div className="hero-portal-orb" aria-hidden="true">
-                    <div className="hero-portal-ring hero-portal-ring-1"></div>
-                    <div className="hero-portal-ring hero-portal-ring-2"></div>
-                    <div className="hero-portal-ring hero-portal-ring-3"></div>
-                    <div className="hero-portal-core"></div>
-                </div>
-
-                {/* Light Rays */}
-                <div className="hero-light-rays">
-                    <div className="ray ray-1"></div>
-                    <div className="ray ray-2"></div>
-                    <div className="ray ray-3"></div>
-                    <div className="ray ray-4"></div>
-                </div>
-
-                {/* Logo */}
-                <div className="hero-logo-container hero-logo-buttons-group" style={{ width: '100%', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 10 }}>
-                    <img
-                        src="/logo.png"
-                        alt="Mirastros"
-                        className="hero-logo-large"
-                        style={{ maxWidth: '80vw', height: 'auto' }}
-                    />
-                </div>
-
-                {/* Subtitle with decorative lines */}
-                <p className="hero-subtitle hero-subtitle-text hero-subtitle-enhanced" style={{ position: 'relative', zIndex: 10 }}>
-                    <span className="subtitle-line subtitle-line-glow"></span>
-                    <span ref={subtitleRef as any} data-splitting className="subtitle-text-glow">
-                        ОТКРОЙ КАРТУ СВОЕГО ПУТИ
-                    </span>
-                    <span className="subtitle-line subtitle-line-glow"></span>
-                </p>
-
-                {/* Floating particles */}
-                <div className="hero-particles">
-                    <div className="particle particle-1"></div>
-                    <div className="particle particle-2"></div>
-                    <div className="particle particle-3"></div>
-                    <div className="particle particle-4"></div>
-                    <div className="particle particle-5"></div>
-                    <div className="particle particle-6"></div>
-                </div>
-
-                {/* Decorative stars */}
-                <div className="hero-stars">
-                    <div className="star star-1">✦</div>
-                    <div className="star star-2">✧</div>
-                    <div className="star star-3">✦</div>
-                    <div className="star star-4">✧</div>
-                </div>
-
-                {/* Flying GIFs Container - для эффекта вылета разделов */}
-                <div className="hero-flying-gifs" style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '100%',
-                    height: '100%',
-                    zIndex: 50,
-                    pointerEvents: 'none',
-                    overflow: 'hidden'
-                }}>
-                    {/* GIF элементы будут созданы динамически через GSAP */}
-                </div>
-
-                {/* Auth Buttons - Using Design System Button Component */}
-                <div className="hero-logo-buttons-group hero-buttons-enhanced" style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    marginTop: '3rem',
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                    maxWidth: '450px',
-                    width: '100%',
-                    position: 'relative',
-                    zIndex: 100,
-                    pointerEvents: 'auto'
-                }}>
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        onClick={() => router.push('/auth/register')}
-                        className="flex-1 min-w-[180px] hero-btn-register"
-                        style={{
-                            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.95) 0%, rgba(190, 143, 68, 0.95) 100%)',
-                            border: 'none',
-                            boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
-                            fontSize: '0.95rem',
-                            padding: '0.875rem 1.5rem',
-                            fontWeight: '600',
-                            borderRadius: '0.5rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}
-                    >
-                        <span className="hero-btn-bg" aria-hidden="true"></span>
-                        <span className="hero-btn-glow" aria-hidden="true"></span>
-                        <span className="hero-btn-label">Начать</span>
-                    </Button>
-
-                    <Button
-                        variant="ghost"
-                        size="lg"
-                        onClick={() => router.push('/auth/login')}
-                        className="flex-1 min-w-[180px] hero-btn-login"
-                        style={{
-                            background: 'transparent',
-                            backdropFilter: 'none',
-                            border: '2px solid rgba(212, 175, 55, 0.6)',
-                            color: 'rgba(255, 255, 255, 0.95)',
-                            fontSize: '0.95rem',
-                            padding: '0.875rem 1.5rem',
-                            fontWeight: '600',
-                            borderRadius: '0.5rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}
-                    >
-                        <span className="hero-btn-bg" aria-hidden="true"></span>
-                        <span className="hero-btn-glow" aria-hidden="true"></span>
-                        <span className="hero-btn-label">Войти</span>
-                    </Button>
-                </div>
-
-            </div>
-        </section>
-    );
-};
+export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
+  <section id={id} className={`mira-section active ${styles.root}`} aria-labelledby="landing-title">
+    <div className={`hero-bg-wrapper ${styles.background}`} aria-hidden="true">
+      <picture>
+        <source media="(max-width: 600px)" srcSet="/images/mirastros-cosmos-mobile.webp" />
+        <img className="hero-bg-img" src="/images/mirastros-cosmos.webp" alt="" fetchPriority="high" decoding="async" />
+      </picture>
+    </div>
+    <div className={`hero-overlay ${styles.overlay}`} aria-hidden="true" />
+    <div className={styles.frame} aria-hidden="true">
+      <Corner className={`${styles.corner} ${styles.topLeft}`} /><Corner className={`${styles.corner} ${styles.topRight}`} />
+      <Corner className={`${styles.corner} ${styles.bottomLeft}`} /><Corner className={`${styles.corner} ${styles.bottomRight}`} />
+      <span className={styles.frameCrest}>◇ ── ✧ ── ◇</span>
+    </div>
+    <div className={`hero-logo-buttons-group ${styles.content}`}>
+      <Astrolabe />
+      <h1 id="landing-title" className={styles.logo}><img src="/logo.png" alt="Mirastros" width="800" height="205" fetchPriority="high" /></h1>
+      <p className={styles.tagline}>Ваш путь. Ваша судьба. Ваша вселенная.</p>
+      <div className={styles.rule} aria-hidden="true"><span>✦</span></div>
+      <h2 className={styles.invitation}>Открой свой космический путь</h2>
+      <p className={styles.description}>Пространство астрологии, древних знаний<br className={styles.desktopBreak} /> и символических практик для осознанной жизни.</p>
+      <nav className={styles.actions} aria-label="Вход в Mirastros">
+        <Link href="/auth/login" className={styles.login}><span aria-hidden="true">✧</span> Вход</Link>
+        <Link href="/auth/register" className={styles.register}><span aria-hidden="true">✦</span> Регистрация</Link>
+      </nav>
+      <nav className={styles.directions} aria-label="Направления Mirastros">
+        {directions.map(item => <Link key={item.href} href={item.href}><span className={styles.directionSymbol} aria-hidden="true">{item.symbol}</span><span><strong>{item.title}</strong><small>{item.detail}</small></span></Link>)}
+      </nav>
+    </div>
+    <div className={styles.scrollCue} aria-hidden="true"><span />Листайте — впереди ваш мир Mirastros</div>
+  </section>
+);
