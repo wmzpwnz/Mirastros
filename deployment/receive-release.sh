@@ -32,6 +32,7 @@ chown mirastros:mirastros "$next"
 chmod 750 "$next"
 chown mirastros:mirastros "$archive"
 runuser -u mirastros -- tar -xzf "$archive" --no-same-owner -C "$next"
+install -d -m 750 -o mirastros -g mirastros "$next/backend/logs"
 runuser -u mirastros -- python3 -m venv "$next/venv"
 runuser -u mirastros -- "$next/venv/bin/pip" install --no-cache-dir --disable-pip-version-check -r "$next/backend/requirements-server.txt"
 (
