@@ -84,11 +84,11 @@ class EmailService:
     async def send_verification_email(
         db: AsyncSession,
         user: User,
-        frontend_url: str = "https://www.mirastros.com"
+        frontend_url: Optional[str] = None
     ) -> bool:
         """Send email verification email"""
         token = await EmailService.create_verification_token(db, user)
-        verification_url = f"{frontend_url}/auth/verify-email?token={token}"
+        verification_url = f"{(frontend_url or settings.FRONTEND_URL).rstrip('/')}/auth/verify-email?token={token}"
         
         subject = "Verify your Mirastros account"
         body = f"""
@@ -171,11 +171,11 @@ class EmailService:
     async def send_password_reset_email(
         db: AsyncSession,
         user: User,
-        frontend_url: str = "https://www.mirastros.com"
+        frontend_url: Optional[str] = None
     ) -> bool:
         """Send password reset email"""
         token = await EmailService.create_password_reset_token(db, user)
-        reset_url = f"{frontend_url}/auth/reset-password?token={token}"
+        reset_url = f"{(frontend_url or settings.FRONTEND_URL).rstrip('/')}/auth/reset-password?token={token}"
         
         subject = "Reset your Mirastros password"
         body = f"""

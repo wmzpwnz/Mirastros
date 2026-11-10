@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Mirastros API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
+    FRONTEND_URL: str = "http://localhost:4200"
 
     # Server
     HOST: str = "0.0.0.0"

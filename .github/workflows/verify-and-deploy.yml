@@ -68,6 +68,7 @@ jobs:
           NX_DAEMON: 'false'
           NEXT_TELEMETRY_DISABLED: '1'
           NEXT_PUBLIC_API_URL: /api
+          NEXT_PUBLIC_APP_URL: https://vertigostra.ru
           NEXT_PUBLIC_ENABLE_3D_BACKGROUND: 'true'
           NEXT_PUBLIC_ENABLE_ZSCROLL: 'true'
       - run: bash deployment/package-release.sh
