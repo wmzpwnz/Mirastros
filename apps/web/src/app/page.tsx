@@ -7,12 +7,13 @@ import { LANDING_TUNNEL_MEDIA } from '../constants/tunnelMedia';
 import { createLandingAnimations } from './tunnel/landingAnimations';
 import { useZScrollTunnel } from '../hooks/useZScrollTunnel';
 
+import { HeroSection } from '../components/sections/HeroSection';
+
 // Critical components load first
 import { Background3D } from '../components/Background3D';
 import { DynamicBackground } from '../components/DynamicBackground';
 
 // Dynamic imports for all sections to prevent heavy initial load
-const HeroSection = dynamic(() => import('../components/sections/HeroSection').then(m => m.HeroSection), { ssr: false });
 const TarotSection = dynamic(() => import('../components/sections/TarotSection').then(m => m.TarotSection), { ssr: false });
 const AstrologySection = dynamic(() => import('../components/sections/AstrologySection').then(m => m.AstrologySection), { ssr: false });
 const HoroscopeSection = dynamic(() => import('../components/sections/HoroscopeSection').then(m => m.HoroscopeSection), { ssr: false });
