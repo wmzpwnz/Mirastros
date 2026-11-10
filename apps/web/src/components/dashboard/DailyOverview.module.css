@@ -174,3 +174,67 @@
   .footer { align-items: start; flex-direction: column; gap: 12px; }
   .catalogLink { align-self: center; padding-top: 8px; }
 }
+
+/* Reference-led second pass: an illuminated observatory, carved frames and
+   a central celestial portal. React Bits effects were reviewed in the first
+   pass; CSS/SVG keeps these ornaments crisp without another runtime. */
+.root { --daily-gold: #c8ad79; --daily-muted: #c4bdd4; background: #050611; }
+.background img { opacity: 1; object-position: center 58%; }
+.overlay { background: linear-gradient(180deg, #0707163d, #09061833 55%, #06071388), radial-gradient(ellipse at 50% 44%, transparent 15%, #05061230 80%); }
+.screenFrame { position: absolute; inset: 14px; z-index: 0; pointer-events: none; border: 1px solid #cbb8cc91; outline: 1px solid #bda47545; outline-offset: 5px; border-radius: 3px; box-shadow: inset 0 0 0 5px #09091b55, inset 0 0 0 6px #bca2c22e, inset 0 0 65px #04030ee0; }
+.screenFrame::before, .screenFrame::after { content: '◇ ───── ✧ ───── ◇'; position: absolute; left: 50%; transform: translateX(-50%); color: #dfced9; font-size: 13px; letter-spacing: 5px; white-space: nowrap; text-shadow: 0 0 12px #d3a8ff; }
+.screenFrame::before { top: -10px; }
+.screenFrame::after { bottom: -10px; }
+.shell { width: min(100%, 1380px); padding: 35px 65px 42px; gap: 17px; }
+.corner { width: 76px; height: 76px; stroke: #e3d2de; stroke-width: .7; opacity: .85; filter: drop-shadow(0 0 4px #c694da44); }
+.topLeft { top: 16px; left: 16px; }.topRight { top: 16px; right: 16px; }.bottomLeft { bottom: 17px; left: 16px; }.bottomRight { bottom: 17px; right: 16px; }
+.header { padding: 0 8px; }
+.brand { color: #f0e5d3; letter-spacing: .24em; font-size: 21px; text-shadow: 0 0 20px #d4bcf84d; }
+.brandSeal { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #d8c5db99; outline: 1px solid #b5a0c655; outline-offset: 4px; transform: rotate(45deg); font-family: Georgia, serif; font-size: 20px !important; color: #e7d3ab; background: #120f27aa; border-radius: 8px; }
+.brandSeal b { transform: rotate(-45deg); font-weight: 400; }
+.tier { border-color: #c9a9d477; border-radius: 2px; background: linear-gradient(100deg,#25143b9c,#141329aa); }
+.intro { margin-top: 2px; padding: 0 8px; }
+.intro h1 { font-size: clamp(26px, 2.4vw, 35px); text-shadow: 0 2px 18px #000; }
+.eyebrow { color: #dfcda5; letter-spacing: .19em; font-size: 10px; }
+.divider { opacity: .9; }
+.divider::before, .divider::after { background: linear-gradient(90deg, transparent, #dcc4a88c); }
+.mainGrid { grid-template-columns: minmax(0,1fr) minmax(0,1.38fr) minmax(0,1fr); gap: 23px; min-height: 380px; }
+.panel { padding: 25px; border: 1px solid #baa3c36b; border-radius: 3px; background: linear-gradient(160deg,#100d25cc,#080c1bdc); box-shadow: inset 0 0 0 4px #09091f88, inset 0 0 0 5px #bca0d024, inset 0 0 32px #9974c50d,0 10px 35px #0004; }
+.panel::before { inset: 8px; border: 1px solid #ccb1d020; border-radius: 1px; background: none; opacity: 1; }
+.panelTrim { position: absolute; inset: 0; pointer-events: none; }
+.panelTrim svg { position: absolute; width: 39px; height: 39px; stroke: #cbb6d1; stroke-width: .85; opacity: .85; }
+.panelTrim svg:nth-child(1) { left: 2px; top: 2px; }.panelTrim svg:nth-child(2) { right: 2px; top: 2px; transform: rotate(90deg); }.panelTrim svg:nth-child(3) { left: 2px; bottom: 2px; transform: rotate(-90deg); }.panelTrim svg:nth-child(4) { right: 2px; bottom: 2px; transform: rotate(180deg); }
+.moonPanel { background: radial-gradient(ellipse at 50% 35%,#6474c52e,transparent 65%),linear-gradient(155deg,#11132bce,#060d1cdb); }
+.moonOrbit { width: 135px; height: 135px; margin: 6px auto; box-shadow: 0 0 45px #a9a1ed22,inset 0 0 25px #a9a1ed16; }
+.moonOrbit::before { inset: -13px; border-style: solid; border-color: #c7bbec38; outline: 1px dashed #c7bbec24; outline-offset: 6px; }
+.moon { filter: drop-shadow(0 0 21px #aaa3ff66); }
+.moonPanel h2 { font-size: 24px; }
+.focusPanel { border-color: #ceb3ce8f; background: radial-gradient(ellipse at 50% 33%,#7648c136,transparent 67%),linear-gradient(180deg,#110b24a6,#130b29bf 65%,#1d1047b0); box-shadow: inset 0 0 0 4px #0b071b55,inset 0 0 0 5px #ddbbd930,0 0 50px #9b5cf026; gap: 13px; }
+.focusPanel::after { top: auto; bottom: 8px; left: 12%; right: 12%; height: 2px; background: linear-gradient(90deg,transparent,#c391ff,#f1d1ff,#c391ff,transparent); box-shadow: 0 0 15px #d98fff,0 -8px 50px 15px #8c3dff35; }
+.portalEmblem { position: relative; width: 152px; height: 152px; display: grid; place-items: center; flex-shrink: 0; }
+.focusPanel .astrolabe { position: relative; width: 152px; height: 152px; opacity: 1; stroke: #e6cfeb; stroke-width: .8; filter: drop-shadow(0 0 9px #d6a0ff66); top: auto; right: auto; }
+.astrolabe text { fill: #f1d9bd; font-size: 46px; }
+.portalHalo { position: absolute; inset: 19%; border-radius: 50%; box-shadow: 0 0 36px 15px #a364ed19,inset 0 0 25px #ad67ea26; }
+.focusPanel h2 { font-size: clamp(25px,2.15vw,32px); line-height: 1.25; text-shadow: 0 0 25px #b78be43b; }
+.focusNote { color: #d0c3df; font-size: 11px; max-width: 295px; }
+.primaryAction { min-width: 205px; background: linear-gradient(180deg,#572775b5,#231338d9); border: 1px solid #c2a0cd99; border-radius: 4px 12px; box-shadow: inset 0 0 0 3px #e4c4de10,inset 0 0 16px #ac76d52e,0 0 17px #b16cdb30; color: #f4e6d2; letter-spacing: .04em; }
+.primaryAction:hover { background: linear-gradient(180deg,#724097d9,#321a50e0); border-color: #f0d0f3; box-shadow: 0 0 22px #b16cdb55; }
+.forecastPanel { background: radial-gradient(ellipse at 80% 15%,#76489035,transparent 70%),linear-gradient(155deg,#1d112cce,#0c0b20df); }
+.forecastText { color: #e1d6e8; font-size: 13px; line-height: 1.85; }
+.forecastHeading > span { border: 1px solid #cab1da66; outline: 1px solid #c5a7dc22; outline-offset: 4px; box-shadow: 0 0 18px #a97dd42b; }
+.bottomGrid { gap: 23px; grid-template-columns: 1fr 1fr 1.25fr; }
+.smallPanel { min-height: 145px; padding: 22px 25px; background: linear-gradient(150deg,#181029dc,#080c1cdf); }
+.smallPanel .panelTrim svg { width: 31px; height: 31px; }
+.advicePanel { border-color: #c3a57877; background: radial-gradient(ellipse at 90% 30%,#9e6c3230,transparent 70%),linear-gradient(155deg,#211429cf,#0c1020df); }
+.advicePanel .panelTrim svg { stroke: #ddc190; }
+.footer { padding: 0 8px; color: #cfc0d9; text-shadow: 0 1px 6px #000; }
+.caption { color: #bdb0cd; }
+@media (min-width:1024px) and (max-height:820px) {
+ .shell { padding: 25px 54px 33px; gap: 11px; }.mainGrid { min-height: 300px; gap: 18px; }.panel { padding: 21px; }.intro h1 { font-size: 28px; }.header { min-height: 37px; }.brand { font-size: 19px; }.brandSeal { width: 30px; height: 30px; }.portalEmblem,.focusPanel .astrolabe { width: 100px; height: 100px; }.focusPanel { gap: 8px; }.focusPanel h2 { font-size: 26px; }.focusNote { font-size: 10px; }.moonOrbit { width: 87px; height: 87px; margin: 5px auto; }.moonPanel h2 { font-size: 21px; }.smallPanel { min-height: 125px; padding: 18px 22px; }.bottomGrid { gap: 18px; }.forecastPanel { gap: 11px; }.forecastText { font-size: 12px; -webkit-line-clamp: 4; }.smallPanel h2 { font-size: 19px; }
+}
+@media (max-width:1023px) {
+ .shell { padding: 38px 45px 46px; }.focusPanel { padding: 26px; min-height: 360px; }.portalEmblem,.focusPanel .astrolabe { width: 145px; height: 145px; }.mainGrid { grid-template-columns: 1fr 1fr; min-height: 0; }.moonPanel,.forecastPanel { min-height: 340px; }.bottomGrid { grid-template-columns: 1fr 1fr; }.advicePanel { grid-column: 1/-1; }.background img { object-position: center top; }.intro h1 { font-size: 29px; }
+}
+@media (max-width:580px) {
+ .screenFrame { inset: 10px; outline-offset: 3px; }.screenFrame::before,.screenFrame::after { font-size: 10px; letter-spacing: 2px; }.shell { padding: 29px 25px 43px; gap: 18px; }.corner { width: 54px; height: 54px; }.topLeft,.bottomLeft { left: 11px; }.topRight,.bottomRight { right: 11px; }.topLeft,.topRight { top: 11px; }.bottomLeft,.bottomRight { bottom: 11px; }.header { padding: 0 3px; }.brand { font-size: 14px; gap: 10px; letter-spacing: .14em; }.brandSeal { width: 25px; height: 25px; font-size: 16px !important; border-radius: 5px; outline-offset: 2px; }.tier { font-size: 8px; padding: 5px 6px; }.account { gap: 7px; }.intro { padding: 0 4px; margin-top: 6px; }.intro h1 { font-size: 28px; }.intro .eyebrow { font-size: 8px; }.date { font-size: 11px; }.mainGrid,.bottomGrid { grid-template-columns: minmax(0,1fr); gap: 18px; }.focusPanel { min-height: 415px; padding: 30px 23px; gap: 16px; }.portalEmblem,.focusPanel .astrolabe { width: 160px; height: 160px; }.focusPanel h2 { font-size: 27px; }.focusNote { font-size: 11px; }.primaryAction { width: auto; min-width: 215px; justify-content: center; gap: 24px; }.moonPanel,.forecastPanel { min-height: 0; padding: 26px; }.moonOrbit { width: 75px; height: 75px; }.smallPanel { padding: 24px 26px; min-height: 145px; }.smallPanel h2 { font-size: 22px; }.smallPanel > p:not(.eyebrow) { font-size: 13px; }.smallPanel > p.eventDate { font-size: 24px; }.advicePanel { grid-column: auto; }.panelTrim svg { width: 37px; height: 37px; }.footer { padding: 0 4px; }.background { position: absolute; }.background img { object-position: center top; }.overlay { background: linear-gradient(180deg,#05061122,#08071955 35%,#060713b0 75%); }
+}

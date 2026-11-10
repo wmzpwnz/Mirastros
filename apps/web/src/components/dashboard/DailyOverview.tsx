@@ -13,10 +13,11 @@ function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
 
 function Ornament({ className = '' }: { className?: string }) {
   return (
-    <svg className={className} width="42" height="42" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-      <path d="M2 40V11C2 6 6 2 11 2H40M8 34V13c0-3 2-5 5-5h21M2 19c9 0 17-8 17-17M8 26c7-2 12-7 14-14" />
-      <path d="m7 7 5 2-3 3-2-5ZM23 2l3 3 3-3M2 23l3 3-3 3" />
-      <circle cx="16" cy="16" r="2" />
+    <svg className={className} width="76" height="76" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+      <path d="M3 77V14C3 7 7 3 14 3h63M9 68V17c0-5 3-8 8-8h51M3 35C22 35 35 22 35 3M9 47C26 44 44 26 47 9" />
+      <path d="M8 8c20-3 28 11 20 19C19 35 5 22 8 8Zm7 7c12 0 18 8 10 11-5 2-11-4-10-11ZM3 54c16-20 20-7 13-3S5 66 9 70M54 3c-20 16-7 20-3 13S66 5 70 9M19 3l8 8M3 19l8 8M37 17l7 7-7 7-7-7Z" />
+      <path d="M40 40c9-3 16-9 20-18-2 13-9 22-20 25-3 11-12 18-25 20 9-4 15-11 18-20l7-7Z" />
+      <circle cx="24" cy="24" r="3" /><circle cx="8" cy="8" r="2" /><path d="m50 50 3-7 3 7-3 7-3-7Z" />
     </svg>
   );
 }
@@ -89,12 +90,15 @@ export function DailyOverview({ user }: { user: User }) {
   const name = user.fullName?.trim().split(/\s+/)[0] || 'Искатель';
   const tier = user.subscriptionTier === 'platinum' ? 'Platinum' : user.subscriptionTier === 'premium' ? 'Premium' : 'Базовый доступ';
 
+  const panelOrnaments = <span className={styles.panelTrim} aria-hidden="true"><Ornament /><Ornament /><Ornament /><Ornament /></span>;
+
   return (
     <section className={`personal-hero-root ${styles.root}`} aria-labelledby="daily-overview-title">
       <div className={`personal-hero-bg ${styles.background}`} aria-hidden="true">
-        <img className="hero-bg-img" src="/background.jpg" alt="" />
+        <img className="hero-bg-img" src="/images/mirastros-sanctuary.webp" alt="" />
       </div>
       <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
+      <div className={styles.screenFrame} aria-hidden="true" />
       <div className={styles.shell}>
         <Ornament className={`${styles.corner} ${styles.topLeft}`} />
         <Ornament className={`${styles.corner} ${styles.topRight}`} />
@@ -102,7 +106,7 @@ export function DailyOverview({ user }: { user: User }) {
         <Ornament className={`${styles.corner} ${styles.bottomRight}`} />
 
         <header className={styles.header}>
-          <Link href="/dashboard" className={styles.brand} aria-label="Mirastros — личный кабинет"><span aria-hidden="true">✧</span> MIRASTROS</Link>
+          <Link href="/dashboard" className={styles.brand} aria-label="Mirastros — личный кабинет"><span className={styles.brandSeal} aria-hidden="true"><b>M</b></span> MIRASTROS</Link>
           <div className={styles.account}>
             <Link href="/subscription" className={styles.tier}>{tier}</Link>
             <Link href="/profile" className={styles.profile} aria-label="Открыть профиль">{name.slice(0, 1).toUpperCase()}</Link>
@@ -117,6 +121,7 @@ export function DailyOverview({ user }: { user: User }) {
 
         <div className={styles.mainGrid}>
           <article className={`${styles.panel} ${styles.moonPanel} personal-hero-block`} aria-busy={moonState === 'loading'}>
+            {panelOrnaments}
             <p className={styles.eyebrow}><span aria-hidden="true">☽</span> Луна сейчас</p>
             {moonState !== 'error' && <MoonVisual phase={rhythm ? moon?.phase : undefined} />}
             <h2>{moon?.phase_name || (moonState === 'loading' ? 'Считываем лунный ритм…' : 'Лунные данные недоступны')}</h2>
@@ -129,8 +134,9 @@ export function DailyOverview({ user }: { user: User }) {
           </article>
 
           <article className={`${styles.panel} ${styles.focusPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
+            {panelOrnaments}
             <p className={styles.eyebrow}>✦ Фокус дня</p>
-            <Astrolabe symbol={zodiacSymbol} />
+            <div className={styles.portalEmblem}><Astrolabe symbol={zodiacSymbol} /><span className={styles.portalHalo} aria-hidden="true" /></div>
             <h2>{copy.focus || (forecastState === 'missing' ? 'Начните с себя' : forecastState === 'error' ? 'Ваш день — больше одного прогноза' : 'Настраиваем ваш дневной ориентир…')}</h2>
             <p className={styles.focusNote}>{forecastState === 'missing'
               ? 'Добавьте данные рождения в профиль, чтобы здесь появился ваш прогноз.'
@@ -140,6 +146,7 @@ export function DailyOverview({ user }: { user: User }) {
           </article>
 
           <article className={`${styles.panel} ${styles.forecastPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
+            {panelOrnaments}
             <p className={styles.eyebrow}><span aria-hidden="true">☉</span> Гороскоп сегодня</p>
             <div className={styles.forecastHeading}><h2>{zodiac?.[1].name || 'Ваш знак'}</h2><span aria-hidden="true">{zodiacSymbol}</span></div>
             {forecast ? <><p className={styles.forecastText}>{copy.forecast}</p><p className={styles.caption}>{forecast.is_personalized ? 'Персональная интерпретация' : 'Общий прогноз по знаку'}</p></>
@@ -150,17 +157,20 @@ export function DailyOverview({ user }: { user: User }) {
 
         <div className={styles.bottomGrid}>
           <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
+            {panelOrnaments}
             <p className={styles.eyebrow}><span aria-hidden="true">✧</span> Энергия дня</p>
             <h2>{rhythm?.title || (moonState === 'loading' ? 'Определяем ритм…' : 'Ритм пока неизвестен')}</h2>
             <p>{rhythm?.text || 'Появится после загрузки лунной фазы.'}</p>
             <span className={styles.caption}>Символика лунной фазы</span>
           </article>
           <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
+            {panelOrnaments}
             <p className={styles.eyebrow}><span aria-hidden="true">◷</span> Ближайшее событие</p>
             <h2>{event?.title || (moonState === 'loading' ? 'Сверяем календарь…' : 'Дата пока неизвестна')}</h2>
             {event ? <><p className={styles.eventDate}><time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p><Link className={styles.textLink} href="/services/lunar">Посмотреть календарь <ArrowIcon diagonal /></Link></> : <p>Покажем ближайшее новолуние или полнолуние, когда получим дату.</p>}
           </article>
           <article className={`${styles.panel} ${styles.smallPanel} ${styles.advicePanel} personal-hero-block`}>
+            {panelOrnaments}
             <p className={styles.eyebrow}><span aria-hidden="true">✦</span> Рекомендация дня</p>
             <h2>Один шаг для себя</h2>
             <p>{copy.advice || (forecastState === 'missing' ? 'Начните с профиля: ваши данные помогут настроить личную сводку.' : forecastState === 'loading' ? 'Совет появится вместе с прогнозом.' : 'Отдельной рекомендации пока нет. Выберите полезное действие из полного прогноза.')}</p>
