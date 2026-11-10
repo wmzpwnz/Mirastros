@@ -43,7 +43,7 @@ export default function Home() {
 
   useZScrollTunnel({
     enabled: config.features.enableZScroll,
-    enableMobile: config.features.enableZScrollMobile,
+    enableMobile: config.features.enableLandingZScrollMobile,
     desktopMinWidth: config.features.zScrollDesktopMinWidth,
     expectedFirstSlideId: 'hero',
     expectedLastSlideId: 'shop',
@@ -81,7 +81,7 @@ export default function Home() {
         <ShopSection id="shop" />
       </main>
 
-      <div className="scroll-indicator-bottom">
+      <div className="scroll-indicator-bottom landing-scroll-indicator">
         <span>SCROLL</span>
         <span className="scroll-percent text-shine" id="scrollPercent">
           0%
