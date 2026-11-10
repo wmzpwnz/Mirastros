@@ -40,7 +40,7 @@ runuser -u mirastros -- "$next/venv/bin/pip" install --no-cache-dir --disable-pi
   source "$root/shared/backend.env"
   set +a
   cd "$next/backend"
-  runuser -u mirastros --preserve-environment -- "$next/venv/bin/python" initialize_database.py --if-empty
+  runuser -u mirastros -- "$next/venv/bin/python" initialize_database.py --if-empty
 )
 previous="$(readlink -f "$root/current" || true)"
 ln -s "$next" "$root/current.next"
