@@ -82,6 +82,15 @@ class Settings(BaseSettings):
                 return emails if emails else ["admin@mirastros.com"]
         return v if isinstance(v, list) else ["admin@mirastros.com"]
 
+    # Email: credentials are supplied through the runtime environment.
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@mirastros.com"
+    SMTP_USE_TLS: bool = True
+    SENDGRID_API_KEY: str = ""
+
     # Payment Gateways
     # YooKassa (ЮKassa) for Russian market
     YOOKASSA_SHOP_ID: str = ""

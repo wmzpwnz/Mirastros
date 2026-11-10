@@ -1,0 +1,85 @@
+name: Verify and deploy Mirastros
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy this checked version to the public server'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirastros-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.20.1'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc -p apps/web/tsconfig.json --noEmit --incremental false
+      - run: npx vitest run --root apps/web
+      - run: npx vitest run --root packages/shared-core
+      - run: pip install -r apps/backend/requirements-server.txt -r apps/backend/requirements-test.txt
+        env:
+          CC: gcc
+          CXX: g++
+      - run: pytest -q test_email_delivery.py
+        working-directory: apps/backend
+        env:
+          PYTHONPATH: .
+          SECRET_KEY: ci-test-only-0123456789abcdef0123456789abcdef
+      - run: npx nx build web --skip-nx-cache
+        env:
+          NX_DAEMON: 'false'
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_PUBLIC_API_URL: /api
+          NEXT_PUBLIC_ENABLE_3D_BACKGROUND: 'true'
+          NEXT_PUBLIC_ENABLE_ZSCROLL: 'true'
+      - run: bash deployment/package-release.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mirastros-release
+          path: |
+            mirastros-release.tar.gz
+            mirastros-release.tar.gz.sha256
+          retention-days: 7
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    needs: verify
+    runs-on: ubuntu-22.04
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mirastros-release
+      - name: Deploy verified artifact over SSH
+        env:
+          SSH_KEY: ${{ secrets.MIRASTROS_DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.MIRASTROS_SSH_KNOWN_HOSTS }}
+          SERVER: '84.200.80.125'
+          RELEASE: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c mirastros-release.tar.gz.sha256
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/mirastros
+          chmod 600 ~/.ssh/mirastros
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/mirastros -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "root@$SERVER" "$RELEASE" < mirastros-release.tar.gz

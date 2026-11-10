@@ -1,5 +1,10 @@
 """Email service for sending verification and password reset emails"""
 import secrets
+import asyncio
+import logging
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,52 +13,61 @@ from app.models.user import User
 from app.core.config import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
     """Service for handling email operations"""
-    
+
     @staticmethod
     def generate_token() -> str:
         """Generate a secure random token"""
         return secrets.token_urlsafe(32)
-    
+
     @staticmethod
-    async def send_email(to_email: str, subject: str, body: str) -> bool:
+    async def send_email(to_email: str, subject: str, body: str, is_html: bool = True) -> bool:
         """
-        Send email (placeholder implementation)
-        
-        In production, integrate with:
-        - SendGrid
-        - AWS SES
-        - Mailgun
+        Send email via SMTP or SendGrid
+
+        Supports:
         - SMTP server
-        
-        For now, just log the email content
+        - SendGrid API
         """
-        print(f"\n{'='*60}")
-        print(f"EMAIL TO: {to_email}")
-        print(f"SUBJECT: {subject}")
-        print(f"BODY:\n{body}")
-        print(f"{'='*60}\n")
-        
-        # TODO: Implement actual email sending
-        # Example with SendGrid:
-        # from sendgrid import SendGridAPIClient
-        # from sendgrid.helpers.mail import Mail
-        # 
-        # message = Mail(
-        #     from_email='noreply@mirastros.com',
-        #     to_emails=to_email,
-        #     subject=subject,
-        #     html_content=body
-        # )
-        # sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        # response = sg.send(message)
-        # return response.status_code == 202
-        
-        return True
-    
+        try:
+            if settings.SENDGRID_API_KEY:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail
+                message = Mail(
+                    from_email=settings.SMTP_FROM_EMAIL,
+                    to_emails=to_email,
+                    subject=subject,
+                    html_content=body if is_html else None,
+                    plain_text_content=None if is_html else body,
+                )
+                response = await asyncio.to_thread(
+                    SendGridAPIClient(settings.SENDGRID_API_KEY).send, message
+                )
+                return response.status_code == 202
+            if not settings.SMTP_HOST:
+                logger.warning("Email transport is not configured; delivery skipped")
+                return False
+            msg = MIMEMultipart('alternative')
+            msg['Subject'], msg['From'], msg['To'] = subject, settings.SMTP_FROM_EMAIL, to_email
+            msg.attach(MIMEText(body, 'html' if is_html else 'plain', 'utf-8'))
+            await aiosmtplib.send(
+                msg, hostname=settings.SMTP_HOST, port=settings.SMTP_PORT,
+                username=settings.SMTP_USER or None,
+                password=settings.SMTP_PASSWORD or None,
+                use_tls=settings.SMTP_PORT == 465,
+                start_tls=settings.SMTP_USE_TLS if settings.SMTP_PORT != 465 else None,
+                timeout=20,
+            )
+            return True
+        except Exception as exc:
+            # Do not log recipient, body, tokens, credentials or provider responses.
+            logger.error("Email delivery failed (%s)", type(exc).__name__)
+            return False
+
     @staticmethod
     async def create_verification_token(
         db: AsyncSession,

@@ -79,3 +79,7 @@ cache/
 .local-logs/
 .local-pids/
 *.log
+
+# Release artifacts are built by CI and never committed.
+/mirastros-release.tar.gz
+/mirastros-release.tar.gz.sha256

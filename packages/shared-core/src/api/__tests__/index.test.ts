@@ -45,15 +45,12 @@ describe('MirastrosAPI', () => {
 
       const result = await api.health();
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/health',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-token',
-          }),
-        })
-      );
+      expect(result).toEqual(mockResponse);
+      const [url, options] = vi.mocked(global.fetch).mock.calls[0];
+      expect(url).toBe('http://localhost:8000/health');
+      const headers = new Headers(options?.headers);
+      expect(headers.get('Content-Type')).toBe('application/json');
+      expect(headers.get('Authorization')).toBe('Bearer test-token');
     });
 
     it('should handle error response', async () => {
