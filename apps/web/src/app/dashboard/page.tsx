@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../../services/api';
 import type { User } from '../../types';
-import { PersonalHeroSection } from '../../components/PersonalHeroSection';
+import { DailyOverview } from '../../components/dashboard/DailyOverview';
 import { TarotSection } from '../../components/sections/TarotSection';
 import { AstrologySection } from '../../components/sections/AstrologySection';
 import { HoroscopeSection } from '../../components/sections/HoroscopeSection';
@@ -314,7 +314,7 @@ export default function DashboardPage() {
             id="hero"
             style={{ alignItems: 'flex-start', justifyContent: 'center' }}
           >
-            <PersonalHeroSection user={user} />
+            <DailyOverview key={user.id} user={user} />
           </section>
         )}
 

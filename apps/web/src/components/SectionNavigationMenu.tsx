@@ -70,6 +70,16 @@ export const SectionNavigationMenu: React.FC = () => {
     const updateCurrentSection = () => {
       if (!slides.length) return;
 
+      if (!document.body.classList.contains('zscroll-enabled')) {
+        let index = 0;
+        slides.forEach((slide, candidate) => {
+          if (slide.getBoundingClientRect().top <= window.innerHeight * .35) index = candidate;
+        });
+        const rect = slides[index].getBoundingClientRect();
+        setCurrentSection(index);
+        setScrollProgress(Math.max(0, Math.min(100, -rect.top / Math.max(1, rect.height) * 100)));
+        return;
+      }
       const activeSlide = document.querySelector('.mira-section.active');
       const activeIndex = activeSlide ? slides.indexOf(activeSlide as HTMLElement) : -1;
       const calculatedIndex = Math.floor(window.scrollY / scrollPerSlide);
@@ -109,6 +119,14 @@ export const SectionNavigationMenu: React.FC = () => {
   const scrollToSection = (index: number) => {
     if (typeof window === 'undefined') return;
 
+    if (!document.body.classList.contains('zscroll-enabled')) {
+      document.getElementById(sections[index]?.id)?.scrollIntoView({
+        block: 'start',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
+      setIsOpen(false);
+      return;
+    }
     const scrollPerSlide = getScrollPerSlide(window.innerHeight);
     const { start } = getSectionRange(index, scrollPerSlide, TUNNEL_OVERLAP);
     const targetScroll = start;
@@ -140,32 +158,24 @@ export const SectionNavigationMenu: React.FC = () => {
   }
 
   return (
-    <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40">
+    <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40" style={{ position: 'fixed', right: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 2000 }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-12 h-12 bg-black/80 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/90 transition-all duration-300 group"
         aria-label="Меню секций"
+        aria-expanded={isOpen}
+        aria-controls="mirastros-section-menu"
+        style={{ background: 'rgba(16, 15, 34, .92)', borderColor: 'rgba(201, 164, 92, .4)' }}
       >
-        <div className="flex flex-col gap-1.5">
-          <div
-            className={`w-5 h-0.5 bg-white transition-all duration-300 ${
-              isOpen ? 'rotate-45 translate-y-2' : ''
-            }`}
-          />
-          <div
-            className={`w-5 h-0.5 bg-white transition-all duration-300 ${
-              isOpen ? 'opacity-0' : ''
-            }`}
-          />
-          <div
-            className={`w-5 h-0.5 bg-white transition-all duration-300 ${
-              isOpen ? '-rotate-45 -translate-y-2' : ''
-            }`}
-          />
-        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8d5a3" strokeWidth="1.3" aria-hidden="true">
+          <path d={isOpen ? 'M6 6l12 12M6 18 18 6' : 'M5 7h14M5 12h14M5 17h14'} />
+        </svg>
       </button>
 
       <div
+        id="mirastros-section-menu"
+        role="navigation"
+        aria-label="Навигация по разделам"
         className={`absolute right-0 top-16 w-64 bg-black/95 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl transition-all duration-300 overflow-hidden ${
           isOpen
             ? 'opacity-100 visible translate-y-0'
