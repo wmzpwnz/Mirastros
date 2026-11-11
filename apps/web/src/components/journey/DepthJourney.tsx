@@ -126,7 +126,8 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
         normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1 });
       }
-      if (restoreScreens > 0) window.scrollTo({ top: root.offsetTop + restoreScreens * layout.height, behavior: 'instant' });
+      // Restore zero as well as later cards; retain the normalizer's 1px iOS floor.
+      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * layout.height), behavior: 'instant' });
       ScrollTrigger.update();
       draw();
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
