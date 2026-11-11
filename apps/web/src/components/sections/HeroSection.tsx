@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import styles from './HeroSection.module.css';
 
-interface HeroSectionProps { id?: string; }
+interface HeroSectionProps { id?: string; showScrollCue?: boolean; }
 
 function Corner({ className }: { className: string }) {
   return <svg className={className} viewBox="0 0 80 80" fill="none" aria-hidden="true">
@@ -24,7 +24,7 @@ function Astrolabe() {
   </svg>;
 }
 
-export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
+export const HeroSection = ({ id = 'hero', showScrollCue = true }: HeroSectionProps) => (
   <section id={id} className={`mira-section active ${styles.root}`} aria-labelledby="landing-title">
     <div className={`hero-bg-wrapper ${styles.background}`} aria-hidden="true">
       <picture>
@@ -51,6 +51,6 @@ export const HeroSection = ({ id = 'hero' }: HeroSectionProps) => (
 
     </div>
     <div className={`hero-flying-gifs ${styles.flyingPortals}`} aria-hidden="true" />
-    <div className={styles.scrollCue} aria-hidden="true"><span />Листайте — впереди ваш мир Mirastros</div>
+    {showScrollCue && <div className={styles.scrollCue} aria-hidden="true"><span />Листайте — впереди ваш мир Mirastros</div>}
   </section>
 );

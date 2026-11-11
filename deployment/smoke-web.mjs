@@ -26,10 +26,13 @@ try {
   }
   assert(ready, 'Packaged server did not start');
   const assets = new Set();
-  for (const route of ['/', '/auth/login', '/services/tarot']) {
+  for (const route of ['/', '/auth/login', '/services/tarot', '/tunnel-preview']) {
     const response = await fetch(origin + route);
     assert.equal(response.status, 200, route);
     const html = await response.text();
+    for (const match of html.matchAll(/src="(\/images\/portals\/[^"?]+)"/g)) {
+      assets.add(match[1]);
+    }
     for (const match of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"?]+)(?:\?[^"\s]*)?"/g)) {
       assets.add(match[1]);
     }
