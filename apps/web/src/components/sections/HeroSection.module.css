@@ -1,60 +1,22 @@
-/* React Bits Blur Text was reviewed for the reveal language. Native CSS
-   keeps the landing lightweight and lets the existing GSAP tunnel own scroll. */
-.root { position:relative; isolation:isolate; min-height:100svh; width:100%; display:flex; align-items:center; justify-content:center; background:#050611; color:#f5f0e8; padding:65px 35px 85px; overflow:hidden; }
-.background { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
-.background picture { display:block; width:100%; height:100%; }
-.background img { width:100%; height:100%; object-fit:cover; object-position:center 66%; }
-.overlay { position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 50% 43%,#05051515,#0304113d 85%),linear-gradient(180deg,#06061622,transparent 75%,#04051344); }
-.frame { position:absolute; inset:20px; pointer-events:none; border:1px solid #cebdd390; outline:1px solid #a997bc55; outline-offset:5px; box-shadow:inset 0 0 0 5px #0a081b55,inset 0 0 0 6px #beadd02b,inset 0 0 50px #03030e5e; }
-.frame::after { content:'◇ ───── ✧ ───── ◇'; position:absolute; bottom:-9px; left:50%; transform:translateX(-50%); color:#d5c5df; font-size:12px; letter-spacing:4px; white-space:nowrap; }
-.corner { position:absolute; width:80px; height:80px; stroke:#e0d1e5; stroke-width:.7; filter:drop-shadow(0 0 5px #cd94e155); }
-.topLeft { left:1px; top:1px; }.topRight { right:1px; top:1px; transform:rotate(90deg); }.bottomLeft { left:1px; bottom:1px; transform:rotate(-90deg); }.bottomRight { right:1px; bottom:1px; transform:rotate(180deg); }
-.frameCrest { position:absolute; top:-10px; left:50%; transform:translateX(-50%); font-size:13px; letter-spacing:4px; color:#d7c7e0; white-space:nowrap; }
-.content { position:relative; width:min(100%,800px); display:flex; flex-direction:column; align-items:center; text-align:center; z-index:1; }
-.astrolabe { width:108px; height:108px; margin:0 0 18px; stroke:#e2cee5; stroke-width:.7; filter:drop-shadow(0 0 12px #ce91f44d); }
-.logo { width:min(100%,650px); margin:0; line-height:0; }
-.logo img { display:block; width:100%; height:auto; }
-.tagline { margin:20px 0 0; font-family:Georgia,'Times New Roman',serif; text-transform:uppercase; font-size:13px; line-height:1.7; letter-spacing:.17em; color:#f0e5df; text-shadow:0 1px 10px #000; }
-.rule { width:230px; display:flex; align-items:center; gap:12px; height:26px; margin-top:5px; color:#cfbb95; opacity:.75; }
-.rule::before,.rule::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,#ccb38e); }.rule::after { transform:rotate(180deg); }.rule span { font-size:10px; }
-.invitation { margin:7px 0 0; font:400 23px/1.4 Georgia,'Times New Roman',serif; color:#e8d3b0; letter-spacing:.035em; text-wrap:balance; }
-.description { margin:12px 0 0; max-width:500px; color:#d2c6de; font-size:12px; line-height:1.9; text-shadow:0 1px 10px #03020c; }
-.actions { display:flex; align-items:center; justify-content:center; gap:17px; width:min(100%,450px); margin-top:28px; }
-.actions a { position:relative; display:flex; align-items:center; justify-content:center; gap:13px; flex:1; min-height:44px; padding:11px 24px; border:1px solid #c4a3d082; border-radius:4px 12px; color:#f6eafa; font-size:12px; letter-spacing:.04em; text-decoration:none; box-shadow:inset 0 0 0 3px #dcb8e017,inset 0 0 20px #b780d62b,0 0 18px #a961d72e; transition:background .2s,box-shadow .2s,border-color .2s; }
-.actions .login { background:linear-gradient(180deg,#653176a6,#27113ecf); }
-.actions .register { background:linear-gradient(180deg,#376d79c4,#173a4bcf); border-color:#9ac9cb85; box-shadow:inset 0 0 0 3px #b2e9df12,inset 0 0 20px #76b8bd2b,0 0 18px #4eafab26; }
-.actions a span { font-size:17px; color:#d8bfde; }.actions .register span { color:#bce3db; }
-.actions a:hover { border-color:#f2d7ed; box-shadow:inset 0 0 22px #c895e144,0 0 22px #c17cd44d; }.actions .register:hover { border-color:#d0f2e7; box-shadow:inset 0 0 22px #9cd9d62b,0 0 22px #72d0c53d; }
-.scrollCue { position:absolute; bottom:41px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; font-size:9px; color:#c2b1d1; letter-spacing:.07em; white-space:nowrap; pointer-events:none; }
-.scrollCue span { width:1px; height:22px; background:linear-gradient(180deg,#d6c2e388,transparent); }
-.root a:focus-visible { outline:2px solid #eed6f3; outline-offset:5px; }
-@media (prefers-reduced-motion:no-preference) { .content { animation:arrival 1s both; } @keyframes arrival { from { opacity:0; } to { opacity:1; } } }
-@media (min-width:1024px) and (max-height:800px) { .root { padding:42px 35px 65px; }.astrolabe { width:76px; height:76px; margin-bottom:9px; }.logo { width:510px; }.tagline { margin-top:13px; font-size:11px; }.invitation { font-size:21px; margin-top:1px; }.description { margin-top:7px; font-size:11px; }.actions { margin-top:19px; }.directions { margin-top:24px; padding-top:15px; }.scrollCue { bottom:30px; font-size:8px; gap:4px; }.scrollCue span { height:14px; } }
-@media (max-width:1023px) { .root { min-height:100svh; padding:65px 45px 95px; }.logo { width:min(100%,580px); }.astrolabe { width:108px; height:108px; }.tagline { font-size:11px; }.directions { gap:20px; }.directions small { font-size:8px; }.invitation { font-size:23px; } }
-@media (max-width:600px) { .root { padding:42px 32px 70px; }.frame { inset:13px; outline-offset:4px; }.corner { width:57px; height:57px; }.frameCrest { font-size:10px; letter-spacing:2px; top:-8px; }.frame::after { font-size:9px; letter-spacing:2px; bottom:-8px; }.background img { object-position:center bottom; }.astrolabe { width:99px; height:99px; margin-bottom:20px; }.logo { width:100%; max-width:345px; }.tagline { max-width:240px; font-size:10px; letter-spacing:.12em; line-height:1.9; margin-top:19px; }.rule { width:150px; margin-top:9px; }.invitation { font-size:23px; max-width:280px; margin-top:7px; }.description { font-size:11px; max-width:280px; margin-top:12px; line-height:1.85; }.desktopBreak { display:none; }.actions { flex-direction:column; width:100%; max-width:280px; gap:12px; margin-top:24px; }.actions a { width:100%; min-height:44px; padding:10px 20px; }.directions { display:grid; grid-template-columns:1fr; gap:13px; margin-top:25px; padding-top:20px; width:100%; max-width:245px; }.directions a { gap:13px; }.directions strong { font-size:12px; }.directions small { font-size:9px; }.directionSymbol { width:25px; height:25px; font-size:16px; }.scrollCue { font-size:8px; bottom:30px; gap:5px; }.scrollCue span { height:17px; } }
-@media (max-width:600px) and (max-height:760px) { .root { padding-top:26px; padding-bottom:35px; }.astrolabe { width:64px; height:64px; margin-bottom:13px; }.tagline { margin-top:11px; }.invitation { font-size:21px; margin-top:2px; }.description { margin-top:8px; }.actions { margin-top:17px; gap:10px; }.directions { margin-top:18px; padding-top:15px; gap:12px; }.directions small { display:none; }.scrollCue { display:none; } }
-@media (max-height:500px) and (min-width:601px) { .root { min-height:550px; }.scrollCue { display:none; } }
-:global(body.zscroll-disabled) .root.root { min-height:100svh; }
-
-/* First start-screen mockup: a single compact composition, with breathing
-   room around the logo and the visible illuminated portal below it. */
-.content { width:min(100%,680px); margin-top:-5vh; }
-.astrolabe { width:145px; height:145px; margin-bottom:24px; }
-.logo { width:min(100%,530px); }
-.tagline { margin-top:18px; font-size:13px; letter-spacing:.1em; }
-.rule { display:none; }
-.description { margin-top:22px; font-size:12px; max-width:460px; line-height:1.8; }
-.actions { margin-top:27px; max-width:445px; }
-.actions a { border-radius:4px; }
-@media (min-width:1024px) and (max-height:800px) { .astrolabe { width:115px; height:115px; margin-bottom:20px; }.logo { width:455px; }.tagline { font-size:12px; margin-top:15px; }.description { margin-top:17px; }.actions { margin-top:23px; } }
-@media (max-width:1023px) { .logo { width:min(100%,500px); }.content { margin-top:-3vh; } }
-@media (max-width:600px) {
- .root { padding:45px 35px 75px; min-height:100svh; }.content { margin-top:-4vh; }.astrolabe { width:115px; height:115px; margin-bottom:28px; }.logo { width:100%; max-width:285px; }.tagline { font-size:12px; line-height:1.8; margin-top:24px; letter-spacing:.07em; }.tagline span { display:block; }.description { display:none; }.actions { width:100%; max-width:270px; margin-top:31px; gap:13px; }.actions a { min-height:44px; }.scrollCue { display:flex; font-size:8px; bottom:35px; }.scrollCue span { height:20px; }
-}
-@media (max-width:600px) and (max-height:710px) { .root { padding:35px 32px 60px; }.content { margin-top:-2vh; }.astrolabe { width:95px; height:95px; margin-bottom:22px; }.logo { max-width:260px; }.tagline { margin-top:19px; font-size:11px; }.actions { margin-top:24px; }.scrollCue { bottom:26px; } }
-@media (max-height:500px) and (min-width:601px) { .root { padding:24px 35px 35px; min-height:var(--app-vh,100svh); }.content { margin-top:0; }.astrolabe { width:64px; height:64px; margin-bottom:8px; }.logo { width:300px; }.tagline { font-size:10px; margin-top:10px; }.description { display:none; }.actions { margin-top:18px; max-width:360px; }.scrollCue { display:none; } }
-
-
-
-/* Required by the original GSAP fly-through timeline. */
-.flyingPortals { position:absolute; inset:0; z-index:4; pointer-events:none; overflow:hidden; }
+/* Composition follows both owner-provided boards: seal, original wordmark,
+   airy serif hierarchy, framed cosmic landscape and paired jewel-like actions. */
+.root { position:relative; isolation:isolate; min-height:100svh; width:100%; display:flex; align-items:center; justify-content:center; background:#070817; color:#f5f0e8; padding:70px 38px 100px; overflow:hidden; }
+.background { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }.background picture { display:block; width:100%; height:100%; }.background img { width:100%; height:100%; object-fit:cover; object-position:center 68%; }
+.overlay { position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 50% 44%,#06051460,transparent 68%),linear-gradient(180deg,#06061615,transparent 80%,#04051333); }
+.frame { inset:25px; --ornament-color:#d1bdcfbd; --ornament-faint:#c9adc53d; box-shadow:inset 0 0 45px #07031444; }
+.content { position:relative; width:min(100%,750px); display:flex; flex-direction:column; align-items:center; text-align:center; z-index:1; padding-bottom:3vh; }
+.astrolabe { width:124px; height:124px; margin:0 0 23px; }
+.logo { width:min(100%,440px); margin:0; line-height:0; }.logo img { display:block; width:100%; height:auto; }
+.tagline { margin:18px 0 0; text-transform:uppercase; font:400 12px/1.8 var(--font-display),Georgia,serif; letter-spacing:.18em; color:#eee3dc; text-shadow:0 1px 10px #000; }
+.invitation { margin:22px 0 0; font:500 21px/1.3 var(--font-display),Georgia,serif; text-transform:uppercase; color:#e8d3b0; letter-spacing:.1em; text-wrap:balance; }
+.rule { width:205px; display:flex; align-items:center; gap:12px; height:15px; margin-top:9px; color:#c7ac81; opacity:.7; }.rule::before,.rule::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,#ccb38e); }.rule::after { transform:rotate(180deg); }.rule span { font-size:9px; }
+.description { margin:7px 0 0; max-width:480px; color:#d3c9de; font-size:11px; line-height:1.85; text-shadow:0 1px 10px #03020c; }
+.actions { display:flex; align-items:center; justify-content:center; gap:18px; width:min(100%,390px); margin-top:29px; }
+.actions a { display:flex; align-items:center; justify-content:center; gap:13px; flex:1; min-height:44px; padding:11px 20px; border:1px solid #c2a7ca8c; border-radius:4px; color:#f6eafa; font:500 14px/1.2 var(--font-display),Georgia,serif; letter-spacing:.09em; text-transform:uppercase; text-decoration:none; box-shadow:inset 0 0 0 3px #dcb8e00e,inset 0 0 18px #b780d623,0 0 16px #a961d727; transition:background .2s,border-color .2s; }
+.actions .login { background:linear-gradient(180deg,#502769b0,#201132e6); }.actions .register { background:linear-gradient(180deg,#325c6ab3,#193543e6); border-color:#9bbfc58a; box-shadow:inset 0 0 0 3px #b2e9df0d,0 0 20px #4eafab20; }.actions a span { font-size:15px; color:#d8bfde; }.actions .register span { color:#bce3db; }.actions a:hover { border-color:#f2d7ed; background:#54326c; }.actions .register:hover { border-color:#d0f2e7; background:#2c5960; }
+.scrollCue { position:absolute; bottom:47px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; font-size:9px; color:#c2b1d1; letter-spacing:.07em; white-space:nowrap; pointer-events:none; }.scrollCue span { width:1px; height:22px; background:linear-gradient(180deg,#d6c2e388,transparent); }.root a:focus-visible { outline:2px solid #eed6f3; outline-offset:5px; }
+@media(min-width:1024px) and (max-height:800px) { .root { padding:50px 35px 80px; }.content { padding-bottom:0; }.astrolabe { width:94px; height:94px; margin-bottom:17px; }.logo { width:390px; }.tagline { margin-top:14px; }.invitation { margin-top:16px; font-size:20px; }.actions { margin-top:23px; } }
+@media(max-width:600px) { .root { padding:50px 32px 90px; }.frame { inset:15px; }.content { padding-bottom:7vh; }.background img { object-position:center bottom; }.astrolabe { width:113px; height:113px; margin-bottom:26px; }.logo { width:100%; max-width:290px; }.tagline { max-width:210px; font-size:12px; letter-spacing:.13em; line-height:1.9; margin-top:23px; }.tagline span { display:block; }.invitation { max-width:260px; font-size:19px; margin-top:22px; letter-spacing:.08em; }.rule { width:150px; margin-top:10px; }.description { font-size:10px; max-width:250px; margin-top:9px; }.desktopBreak { display:none; }.actions { flex-direction:column; width:100%; max-width:265px; gap:12px; margin-top:26px; }.actions a { width:100%; min-height:45px; padding:12px 20px; }.scrollCue { bottom:42px; font-size:8px; } }
+@media(max-height:700px) and (max-width:600px) { .root { padding-top:35px; }.content { padding-bottom:0; }.astrolabe { width:80px; height:80px; margin-bottom:14px; }.tagline { margin-top:13px; font-size:10px; }.invitation { margin-top:13px; font-size:17px; }.description { font-size:9px; }.actions { margin-top:17px; gap:9px; } }
+@media(max-height:500px) and (orientation:landscape) { .root { padding:30px 35px 55px; }.content { padding:0; }.astrolabe { width:55px; height:55px; margin-bottom:7px; }.logo { width:270px; }.tagline { margin-top:7px; font-size:9px; }.invitation { margin-top:8px; font-size:16px; }.description,.rule { display:none; }.actions { margin-top:12px; }.frame { inset:15px; } }
+@media(prefers-reduced-motion:reduce) { .actions a { transition:none; } }

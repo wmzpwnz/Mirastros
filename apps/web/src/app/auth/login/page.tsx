@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../auth.css';
+import { OrnamentFrame, MirastrosSeal } from '../../../components/ornaments/OrnamentFrame';
 import {
   Button as DSButton,
   Input as DSInput,
@@ -11,7 +12,6 @@ import {
   Label as DSLabel,
 } from '@mirastros-universal/design-system';
 import Image from 'next/image';
-import { Background3D } from '../../../components/Background3D';
 import { api } from '../../../services/api';
 import { SocialLoginButtons } from '../../../components/SocialLoginButtons';
 
@@ -67,11 +67,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-shell">
-      <Background3D />
+    <div className="auth-shell auth-preset">
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/backweb.png" alt="" className="auth-bg-img desktop-only" />
-        <img src="/backmobile.png" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-cosmos.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-cosmos-mobile.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
@@ -82,6 +81,12 @@ export default function LoginPage() {
         data-page="login"
       >
         <div className="auth-card auth-portal">
+          <OrnamentFrame className="auth-preset-frame" />
+          <aside className="auth-preset-seal" aria-label="Mirastros">
+            <MirastrosSeal />
+            <p>Ваш путь. Ваша судьба.<br />Ваша вселенная.</p>
+            <Link href="/">Вернуться к Mirastros</Link>
+          </aside>
           <div className="auth-card-inner">
             <div className="flex justify-center mb-10">
               <div className="auth-logo-img" aria-hidden="true">

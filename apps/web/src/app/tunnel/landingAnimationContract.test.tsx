@@ -1,7 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
-import { HeroSection } from '../../components/sections/HeroSection';
 import { createLandingAnimations } from './landingAnimations';
 import type { TunnelAnimationContext } from '../../hooks/useZScrollTunnel';
 const m = vi.hoisted(() => ({ set: vi.fn(), create: vi.fn((_options: Record<string, unknown>) => ({ kill: vi.fn() })) }));
@@ -10,7 +9,9 @@ vi.mock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { create: m.create } }));
 beforeEach(() => { vi.clearAllMocks(); vi.stubGlobal('innerWidth', 390); vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 function initialize(reducedMotion: boolean) {
-  const { container } = render(<HeroSection />);
+  // Legacy panel engine fixture. Production landing now uses DepthJourney;
+  // keep its older video-layer contract independent of the new hero markup.
+  const { container } = render(<section id="hero" className="mira-section active"><div className="hero-logo-buttons-group" /><div className="hero-flying-gifs" /></section>);
   const hero = container.querySelector<HTMLElement>('#hero')!;
   const shop = document.createElement('section'); shop.className = 'mira-section'; shop.id = 'shop'; container.appendChild(shop);
   const context: TunnelAnimationContext = { slides: [hero, shop], totalSlides: 2, scrollPerSlide: 1000, overlap: 1.82, isMobile: true, isLiteMode: true, reducedMotion, registerTimeline: tl => tl, registerTrigger: trigger => trigger };
@@ -18,7 +19,7 @@ function initialize(reducedMotion: boolean) {
   createLandingAnimations({ mediaTrack: media })(context);
   return hero;
 }
-it('the real landing markup supports the original bounded mobile portal fly-through', () => {
+it('the legacy panel engine bounds its mobile video fly-through', () => {
   const hero = initialize(false);
   const videos = hero.querySelectorAll<HTMLVideoElement>('.hero-flying-gifs .hero-flying-gif');
   expect(videos).toHaveLength(4);
