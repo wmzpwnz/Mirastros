@@ -122,7 +122,7 @@ export function DepthJourney() {
       }, root);
       ScrollTrigger.refresh();
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
-        normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: reduce ? 0 : 1 });
+        normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1 });
       }
       if (restoreScreens > 0) window.scrollTo({ top: root.offsetTop + restoreScreens * layout.height, behavior: 'instant' });
       ScrollTrigger.update();
