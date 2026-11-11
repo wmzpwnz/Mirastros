@@ -165,7 +165,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
         if (window.location.pathname !== (authenticated ? '/dashboard' : '/')) return;
         event.preventDefault();
         if (view === 'list') { homeRequested.current = true; setView('flight'); }
-        else window.scrollTo({ top: 0, behavior: 'instant' });
+        else window.scrollTo({ top: 1, behavior: 'instant' });
       }} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
       <Link href={authenticated ? "/profile" : "/auth/login"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Вход"}</Link>
     </header>
