@@ -5,11 +5,12 @@ import './section-layouts.css';
 import { Preloader } from '../components/Preloader';
 import { LenisProvider } from '../components/LenisProvider';
 import { ToastProvider } from '../contexts/ToastContext';
-import { Cinzel, Inter, Manrope, Cormorant_Garamond } from 'next/font/google';
+import { Cinzel, Inter, Manrope } from 'next/font/google';
+import localFont from 'next/font/local';
 import { useEffect, useState, useCallback } from 'react';
 import Script from 'next/script';
 
-const display = Cormorant_Garamond({ subsets: ['latin', 'cyrillic'], weight: ['400', '500', '600'], variable: '--font-display', display: 'swap' });
+const display = localFont({ src: '../fonts/CormorantGaramond-variable.woff2', weight: '400 600', variable: '--font-display', display: 'swap' });
 
 // Configure fonts
 const cinzel = Cinzel({
