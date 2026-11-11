@@ -1559,3 +1559,31 @@
     transform: none !important;
   }
 }
+
+/* Shared composition from the owner boards; form logic and registration steps
+   are unchanged. Scoped to these two entry screens. */
+.auth-shell.auth-preset { min-height:100svh; padding:45px 25px; background:#080a19; overflow-x:hidden; }
+.auth-preset .auth-bg-img { opacity:.3; }.auth-preset .auth-bg-overlay { background:linear-gradient(110deg,#080a1a99,#0c0821b3); }.auth-preset .auth-bg-vignette { background:radial-gradient(ellipse,transparent,#04061199); }
+.auth-preset .auth-warp { width:min(100%,870px); max-width:870px; perspective:none; }
+.auth-preset .auth-card { position:relative; display:grid; grid-template-columns:.85fr 1fr; min-height:0!important; border:1px solid #b69dc447; border-radius:5px; background:linear-gradient(125deg,#111027b8,#080b19ed); box-shadow:0 20px 90px #0008; transform:none!important; }
+.auth-preset .auth-portal::before,.auth-preset .auth-portal::after,.auth-preset .auth-card-inner::before { display:none; }
+.auth-preset-frame { inset:11px; --ornament-color:#baa4c982; --ornament-faint:#b19ec62b; z-index:3; }.auth-preset-frame>svg:not(:last-child) { width:55px; }.auth-preset-frame>svg:last-child { width:100px; height:14px; top:-7px; }
+.auth-preset-seal { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:45px 22px; margin:35px 0; border-right:1px solid #bba1ce24; background:radial-gradient(ellipse,#9868bc18,transparent 65%); }
+.auth-preset-seal>svg { width:min(100%,225px); height:auto; }.auth-preset-seal p { color:#cdbdd1; font:400 15px/1.9 var(--font-display),Georgia,serif; letter-spacing:.11em; text-transform:uppercase; text-align:center; margin:28px 0 0; }.auth-preset-seal a { color:#c7b68f; font-size:10px; text-decoration:none; padding:15px; margin-top:16px; }
+.auth-preset .auth-card-inner { padding:40px 40px 35px!important; animation:none; min-width:0; }
+.auth-preset .auth-card-inner>.flex.justify-center { margin-bottom:20px; }.auth-preset .auth-logo-img { width:155px; padding:0; max-width:100%; }.auth-preset .auth-title { font:500 36px/1.1 var(--font-display),Georgia,serif; letter-spacing:.02em; color:#eee1df; margin:0 0 9px; text-shadow:none; }.auth-preset .auth-subtitle { font-size:11px; line-height:1.7; color:#b6a7c3; margin-top:0; }
+.auth-preset .auth-card-inner form { margin-top:24px; }.auth-preset .space-y-10>:not([hidden])~:not([hidden]) { margin-top:19px; }.auth-preset .auth-card-inner.space-y-10>:not([hidden])~:not([hidden]) { margin-top:20px; }
+.auth-preset .auth-field label,.auth-preset form label { color:#c5b6d2; font-size:11px; margin-bottom:8px; }.auth-preset .auth-warp form input:not([type=checkbox]),.auth-preset .auth-warp form select { min-height:44px; height:44px; padding:10px 12px; border:1px solid #a48ab54d; border-radius:3px; background:#080b19b3; color:#eee2ec; font-size:13px; box-shadow:none; }.auth-preset form input:focus { border-color:#bea0d1; outline:1px solid #bea0d14d; outline-offset:2px; }.auth-preset form input::placeholder { color:#7f738e; font-size:11px; }
+.auth-preset form button[type=submit] { min-height:44px; height:auto; padding:12px 18px; margin-top:22px; border:1px solid #b89ec27a; border-radius:3px; background:linear-gradient(#4d2a64,#211331); color:#f0e1eb; font:500 15px var(--font-display),Georgia,serif; box-shadow:inset 0 0 0 3px #d6b9e00c; letter-spacing:.05em; }.auth-preset form button[type=submit]:hover { background:#4b2e62; color:#fff1e3; }
+.auth-preset .auth-divider { margin:23px 0 18px; color:#9a88aa; font-size:10px; }.auth-preset .auth-card-inner>p { font-size:11px; padding-top:22px; }.auth-preset form>.flex.items-center { padding-top:16px; }.auth-preset form>.flex.items-center span,.auth-preset form>.flex.items-center a { font-size:10px; }
+.auth-preset a:focus-visible,.auth-preset button:focus-visible { outline:2px solid #d5b8e6; outline-offset:3px; }
+@media(max-width:650px) { .auth-shell.auth-preset { padding:27px 20px; }.auth-preset .auth-warp { max-width:420px; }.auth-preset .auth-card { display:block; }.auth-preset-seal { display:none; }.auth-preset .auth-card-inner { padding:35px 25px 30px!important; }.auth-preset .auth-title { font-size:33px; }.auth-preset-frame { inset:8px; }.auth-preset-frame>svg:not(:last-child) { width:41px; }.auth-preset .auth-logo-img { width:150px; } }
+/* Override the older auth theme's important rules only within this preset. */
+.auth-preset .auth-warp form input:not([type=checkbox]),.auth-preset .auth-warp form select { background:#090d1bbb!important; border:1px solid #a38ab44d!important; border-radius:3px!important; box-shadow:none!important; height:44px!important; font-size:13px!important; }
+.auth-preset .auth-warp form .auth-input.pl-12 { padding-left:40px!important; }
+.auth-preset .auth-warp form input:focus { border-color:#c4a4d6!important; outline:1px solid #c4a4d64d!important; outline-offset:2px; }
+.auth-preset .auth-warp form label { font-size:11px!important; }.auth-preset .auth-warp form label[for=acceptTerms] { font-size:10px!important; }
+.auth-preset .auth-warp form button[type=submit] { background:linear-gradient(#4d2a64,#211331)!important; color:#f0e1eb!important; border:1px solid #b89ec27a!important; border-radius:3px!important; box-shadow:inset 0 0 0 3px #d6b9e00c!important; font-size:15px!important; min-height:44px; }.auth-preset .auth-warp form button[type=submit]:hover { background:#4b2e62!important; }
+.auth-preset .auth-social-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }.auth-preset .auth-social-btn { min-height:42px; height:42px; padding:7px 3px; border:1px solid #a38ab43d; border-radius:3px; background:#111022; font-size:10px; color:#d4c5df; }.auth-preset .auth-social-btn svg { width:14px; height:14px; }.auth-preset .auth-social-btn:hover:not(:disabled) { background:#261b36; }
+.auth-preset .text-mirastros-gold { color:#d1b996!important; }.auth-preset .bg-mirastros-gold { background:#bfa1ce!important; }.auth-preset .auth-title { font-family:var(--font-display),Georgia,serif!important; font-weight:500!important; }.auth-preset .auth-field svg { color:#b6a0c3; }
+@media(max-width:650px) { .auth-preset .auth-title { font-size:33px!important; }.auth-preset .auth-social-btn { font-size:9px; } }

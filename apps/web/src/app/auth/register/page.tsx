@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../auth.css';
+import { OrnamentFrame, MirastrosSeal } from '../../../components/ornaments/OrnamentFrame';
 import {
   Button as DSButton,
   Input as DSInput,
@@ -20,7 +21,6 @@ const Checkbox = DSCheckbox as any;
 const Label = DSLabel as any;
 const DatePicker = DSDatePicker as any;
 const Select = DSSelect as any;
-import { Background3D } from '../../../components/Background3D';
 import { api } from '../../../services/api';
 
 interface LocationSuggestion {
@@ -278,11 +278,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-shell">
-      <Background3D />
+    <div className="auth-shell auth-preset">
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/backweb.png" alt="" className="auth-bg-img desktop-only" />
-        <img src="/backmobile.png" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-cosmos.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-cosmos-mobile.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
@@ -294,6 +293,12 @@ export default function RegisterPage() {
         data-page="register"
       >
         <div className="auth-card auth-portal">
+          <OrnamentFrame className="auth-preset-frame" />
+          <aside className="auth-preset-seal" aria-label="Mirastros">
+            <MirastrosSeal />
+            <p>Ваш путь. Ваша судьба.<br />Ваша вселенная.</p>
+            <Link href="/">Вернуться к Mirastros</Link>
+          </aside>
           <div className="auth-card-inner space-y-10">
         {/* Logo */}
         <div className="flex justify-center mb-8">

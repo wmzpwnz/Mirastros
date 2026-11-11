@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { User } from '../../types';
 import { cleanText, dayInZone, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
+import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import styles from './DailyOverview.module.css';
 
 function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
@@ -106,7 +107,7 @@ export function DailyOverview({ user }: { user: User }) {
         <img className="hero-bg-img" src="/images/mirastros-cosmos.webp" alt="" />
       </div>
       <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
-      <div className={styles.screenFrame} aria-hidden="true" />
+      <OrnamentFrame className={styles.screenFrame} />
       <div className={styles.shell}>
         <Ornament className={`${styles.corner} ${styles.topLeft}`} />
         <Ornament className={`${styles.corner} ${styles.topRight}`} />
@@ -114,15 +115,29 @@ export function DailyOverview({ user }: { user: User }) {
         <Ornament className={`${styles.corner} ${styles.bottomRight}`} />
 
         <header className={styles.header}>
-          <Link href="/dashboard" className={styles.brand} aria-label="Mirastros — личный кабинет"><span className={styles.brandSeal} aria-hidden="true"><b>M</b></span> MIRASTROS</Link>
+          <Link href="/dashboard" className={styles.brand} aria-label="Mirastros — личный кабинет"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
           <div className={styles.account}>
             <Link href="/subscription" className={styles.tier}>{tier}</Link>
             <Link href="/profile" className={styles.profile} aria-label="Открыть профиль">{name.slice(0, 1).toUpperCase()}</Link>
           </div>
         </header>
 
+        <div className={styles.accountLayout}>
+        <nav className={styles.sidebar} aria-label="Личный кабинет">
+          <span className={styles.navCaption}>Ваше пространство</span>
+          {[
+            ['/dashboard', 'Сводка дня', 'M3 11 12 3l9 8M5 10v11h5v-7h4v7h5V10'],
+            ['/services', 'Направления', 'm12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z'],
+            ['/services/lunar', 'Календарь', 'M5 5h14v16H5V5Zm3-3v6m8-6v6M5 10h14'],
+            ['/history', 'Моя история', 'M5 4h14v17H5V4Zm3 5h8m-8 4h8m-8 4h5'],
+            ['/profile', 'Мой профиль', 'M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0ZM3 22v-2a9 9 0 0 1 18 0v2'],
+            ['/subscription', 'Подписка', 'm3 6 5 5 4-8 4 8 5-5-3 13H6L3 6Zm3 10h12'],
+          ].map(([href, label, path]) => <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true"><path d={path} /></svg>{label}</Link>)}
+          <span className={styles.sidebarFoot}>Ваша личная<br />вселенная знаний</span>
+        </nav>
+        <div className={styles.workspace}>
         <div className={styles.intro}>
-          <div><p className={styles.eyebrow}>Личный кабинет · сводка на сегодня</p><h1 id="daily-overview-title">Ваш сегодняшний космос, <em>{name}</em></h1></div>
+          <div><p className={styles.eyebrow}>Личный кабинет · сводка на сегодня</p><h1 id="daily-overview-title">Добро пожаловать, <em>{name}</em></h1></div>
           <div className={styles.date}><time dateTime={today}>{dateLabel}</time><span>{zodiac?.[1].name || 'Знак не указан'} <i aria-hidden="true">·</i> {zoneLabel}</span></div>
         </div>
         <div className={styles.divider} aria-hidden="true"><span>✧</span></div>
@@ -191,6 +206,8 @@ export function DailyOverview({ user }: { user: User }) {
           <div className={styles.freshness} role="status"><span className={partial ? styles.warningDot : loading ? styles.loadingDot : styles.readyDot} />{loading ? 'Обновляем сводку…' : partial ? 'Часть данных недоступна' : updatedLabel ? `Проверено в ${updatedLabel}` : 'Сводка на сегодня'}<button type="button" onClick={refresh} disabled={loading} aria-label="Обновить сводку" className={styles.refresh}>↻</button></div>
           <Link className={styles.catalogLink} href="/services">Дальше — ваш мир Mirastros <span aria-hidden="true">↓</span></Link>
         </footer>
+        </div>
+        </div>
       </div>
     </section>
   );

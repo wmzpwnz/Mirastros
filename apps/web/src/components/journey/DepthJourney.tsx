@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { HeroSection } from '../sections/HeroSection';
 import { journeyModules } from './catalog';
 import { activePortal, endingOpacity, heroOpacity, portalFrame, sceneMetrics, INTRO_SCREENS } from './depthModel';
@@ -16,7 +17,7 @@ const totalScreens = count + 1.8;
 /** Original Mirastros implementation of a perspective gallery. Reference:
  * sageeast.com's continuous camera travel, rather than its code or photographs.
  * Each card occupies its own Z plane; the camera moves them as one scene. */
-export function DepthJourney() {
+export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNode; authenticated?: boolean }) {
   const rootRef = useRef<HTMLElement>(null);
   const cameraRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
@@ -26,6 +27,7 @@ export function DepthJourney() {
   const activeRef = useRef(0);
   const unitsRef = useRef(0);
   const layoutRef = useRef({ height: 1, start: 0 });
+  const homeRequested = useRef(false);
   const previousView = useRef<View>('flight');
   const flags = useRef({ exploring: false, ending: false });
   const [view, setView] = useState<View>('flight');
@@ -129,7 +131,8 @@ export function DepthJourney() {
       draw();
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
     };
-    initialize(fromList ? activeRef.current + INTRO_SCREENS : 0);
+    initialize(homeRequested.current ? 0 : fromList ? activeRef.current + INTRO_SCREENS : 0);
+    homeRequested.current = false;
     const onResize = () => {
       root.style.setProperty('--journey-vh', `${window.innerHeight}px`);
       if (Math.abs(window.innerWidth - layout.width) < 2 && Math.abs(window.innerHeight - layout.height) < layout.height * .25) return;
@@ -148,40 +151,65 @@ export function DepthJourney() {
   }, [view]);
 
   const navigate = (direction: number) => {
-    const target = ending ? count - 1 + INTRO_SCREENS : direction > 0 && active === count - 1 ? count + 1.6 : Math.max(0, active + direction) + INTRO_SCREENS;
+    const target = !exploring ? INTRO_SCREENS : ending ? count - 1 + INTRO_SCREENS : direction > 0 && active === count - 1 ? count + 1.6 : Math.max(0, active + direction) + INTRO_SCREENS;
     window.scrollTo({ top: layoutRef.current.start + target * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
+  const enter = () => window.scrollTo({ top: layoutRef.current.start + INTRO_SCREENS * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   const headerVisible = view === 'list' || exploring;
 
-  return <main ref={rootRef} className={styles.root} data-view={view} style={{ '--journey-screens': totalScreens, '--journey-accent': journeyModules[active].accent } as CSSProperties}>
+  return <main ref={rootRef} className={styles.root} data-view={view} data-account={authenticated} data-exploring={exploring} style={{ '--journey-screens': totalScreens, '--journey-accent': journeyModules[active].accent } as CSSProperties}>
     <header ref={headerRef} className={styles.header} aria-hidden={!headerVisible}>
       <Link href="/services" tabIndex={headerVisible ? 0 : -1}>Направления</Link>
-      <Link href="/" className={styles.brand} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
-      <Link href="/auth/login" tabIndex={headerVisible ? 0 : -1}>Вход</Link>
+      <Link href={authenticated ? "/dashboard" : "/"} className={styles.brand} onClick={event => {
+        if (window.location.pathname !== (authenticated ? '/dashboard' : '/')) return;
+        event.preventDefault();
+        if (view === 'list') { homeRequested.current = true; setView('flight'); }
+        else window.scrollTo({ top: 0, behavior: 'instant' });
+      }} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
+      <Link href={authenticated ? "/profile" : "/auth/login"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Вход"}</Link>
     </header>
     <div className={styles.viewport}>
       <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-cosmos.webp" alt="" /><span /></div>
       {view === 'list' && <h1 className={styles.listTitle}>Ваш мир Mirastros</h1>}
+      <OrnamentFrame className={styles.stageFrame} />
       <div ref={cameraRef} className={styles.camera} aria-label="Направления Mirastros">
         {journeyModules.map((item, i) => <article key={item.id} className={styles.card} data-portal={item.id} style={{ '--card-accent': item.accent } as CSSProperties}>
           <Link href={item.href} aria-label={`Открыть: ${item.title}`}>
-            <div className={styles.caption}><span>{String(i + 1).padStart(2, '0')}</span><h2>{item.title}</h2></div>
+            <OrnamentFrame className={styles.cardFrame} />
+            <span className={styles.cardNumber}>{String(i + 1).padStart(2, '0')} <span aria-hidden="true">✧</span> MIRASTROS</span>
             <div className={styles.art}><img src={`/images/portals/${item.id}.webp`} alt="" width="640" height="640" loading={i < 5 ? 'eager' : 'lazy'} /></div>
-            <div className={styles.cardBottom}><p>{item.subtitle}</p><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M5 19 19 5M5 5h14v14" /></svg></div>
+            <div className={styles.caption}><h2>{item.title}</h2><p>{item.subtitle}</p></div>
+            <span className={styles.cardArrow} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span>
           </Link>
         </article>)}
       </div>
       {view === 'flight' && <>
-        <div ref={introRef} className={styles.intro}><HeroSection showScrollCue={false} /></div>
+        <div ref={introRef} className={styles.intro}>
+          {intro ? <><div className={styles.accountScroll} data-lenis-prevent>{intro}</div><button className={styles.enterJourney} onClick={enter}>Открыть порталы направлений <span aria-hidden="true">↓</span></button></> : <HeroSection showScrollCue={false} />}
+        </div>
         <div ref={endingRef} className={styles.ending} aria-hidden={!ending}>
           <p className={styles.kicker}>Весь мир Mirastros — в одном аккаунте</p>
-          <h2>Продолжить свой путь</h2>
+          <h2>{authenticated ? "Ваш мир всегда рядом" : "Продолжить свой путь"}</h2>
           <p>Сохранённые результаты, личные открытия<br />и ваши избранные направления.</p>
-          <Link href="/auth/register" tabIndex={ending ? 0 : -1}>Создать аккаунт <span aria-hidden="true">✧</span></Link>
+          <Link href={authenticated ? "/history" : "/auth/register"} tabIndex={ending ? 0 : -1}>{authenticated ? "Моя история" : "Создать аккаунт"} <span aria-hidden="true">✧</span></Link>
           <Link href="/services" className={styles.catalog} tabIndex={ending ? 0 : -1}>Посмотреть все направления</Link>
+          <Link href="/shop" className={styles.catalog} tabIndex={ending ? 0 : -1}>Магазин Mirastros</Link>
         </div>
       </>}
     </div>
+    {authenticated && view === 'flight' && !exploring && <nav className={styles.accountNavigation} aria-label="Быстрая навигация кабинета">
+      <OrnamentFrame />
+      {[
+        ['/dashboard', 'Главная', 'M3 11 12 3l9 8M5 10v11h5v-7h4v7h5V10'],
+        ['#directions', 'Направления', 'm12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z'],
+        ['/services/lunar', 'Календарь', 'M5 5h14v16H5V5Zm3-3v6m8-6v6M5 10h14'],
+        ['/history', 'История', 'M5 4h14v17H5V4Zm3 5h8m-8 4h8m-8 4h5'],
+        ['/profile', 'Профиль', 'M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0ZM3 22v-2a9 9 0 0 1 18 0v2'],
+      ].map(([href, label, path]) => {
+        const content = <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true"><path d={path} /></svg><span>{label}</span></>;
+        return href === '#directions' ? <button key={href} onClick={enter}>{content}</button> : <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}>{content}</Link>;
+      })}
+    </nav>}
     <footer className={styles.footer}>
       <div className={styles.position}>{view === 'list' ? `${count} направлений` : <><span>{exploring ? String(active + 1).padStart(2, '0') : '✧'}</span><span className={styles.separator}>/</span><span>{exploring ? String(count).padStart(2, '0') : 'Ваш путь'}</span></>}</div>
       <nav className={styles.viewSwitch} aria-label="Режим просмотра">
