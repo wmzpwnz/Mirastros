@@ -126,7 +126,8 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
         normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1 });
       }
-      if (restoreScreens > 0) window.scrollTo({ top: root.offsetTop + restoreScreens * layout.height, behavior: 'instant' });
+      // Restore zero as well as later cards; retain the normalizer's 1px iOS floor.
+      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * layout.height), behavior: 'instant' });
       ScrollTrigger.update();
       draw();
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
@@ -164,7 +165,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
         if (window.location.pathname !== (authenticated ? '/dashboard' : '/')) return;
         event.preventDefault();
         if (view === 'list') { homeRequested.current = true; setView('flight'); }
-        else window.scrollTo({ top: 0, behavior: 'instant' });
+        else window.scrollTo({ top: 1, behavior: 'instant' });
       }} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
       <Link href={authenticated ? "/profile" : "/auth/login"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Вход"}</Link>
     </header>
