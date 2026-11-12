@@ -14,8 +14,8 @@ import styles from './DepthJourney.module.css';
 type View = 'flight' | 'list';
 const count = journeyModules.length;
 const totalScreens = count + 1.8;
-// Advance 15% farther per swipe/wheel distance, without changing the depth geometry.
-const SCROLL_SPEED = 1.15;
+// Responsive travel with a softer settling tail; depth geometry stays unchanged.
+const SCROLL_SPEED = 1.22;
 
 /** Original Mirastros implementation of a perspective gallery. Reference:
  * sageeast.com's continuous camera travel, rather than its code or photographs.
@@ -124,11 +124,11 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       state.screens = 0;
       context = gsap.context(() => {
         gsap.set(cards, { xPercent: -50, yPercent: -50, force3D: true });
-        gsap.to(state, { screens: totalScreens, ease: 'none', onUpdate: draw, scrollTrigger: { trigger: root, start: 'top top', end: () => `+=${totalScreens * scrollUnit}`, scrub: reduce ? true : .16, invalidateOnRefresh: true } });
+        gsap.to(state, { screens: totalScreens, ease: 'none', onUpdate: draw, scrollTrigger: { trigger: root, start: 'top top', end: () => `+=${totalScreens * scrollUnit}`, scrub: reduce ? true : .28, invalidateOnRefresh: true } });
       }, root);
       ScrollTrigger.refresh();
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
-        normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1 });
+        normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1.1 });
       }
       // Restore zero as well as later cards; retain the normalizer's 1px iOS floor.
       window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * scrollUnit), behavior: 'instant' });
@@ -182,7 +182,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
           <Link href={item.href} aria-label={`Открыть: ${item.title}`}>
             <OrnamentFrame className={styles.cardFrame} />
             <span className={styles.cardNumber} aria-hidden="true">✧ <span>{String(i + 1).padStart(2, '0')}</span> ✧</span>
-            <div className={styles.art}><PortalArtwork id={item.id} eager={i < 5} /></div>
+            <div className={styles.art}><PortalArtwork id={item.id} media={item.media} eager={i < 5} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} /></div>
             <div className={styles.caption}><h2>{item.title}</h2><p>{item.subtitle}</p></div>
             <span className={styles.cardArrow} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span>
           </Link>
