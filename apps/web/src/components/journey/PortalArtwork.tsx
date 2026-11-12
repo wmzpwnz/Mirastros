@@ -20,14 +20,33 @@ export function PortalArtwork({ id, media, eager, active }: {
     sync();
     reduce.addEventListener('change', sync);
     document.addEventListener('visibilitychange', sync);
-    const observer = new IntersectionObserver(entries => setInView(entries[0].isIntersecting), { rootMargin: '80px' });
-    if (posterRef.current) observer.observe(posterRef.current);
     return () => {
-      observer.disconnect();
       reduce.removeEventListener('change', sync);
       document.removeEventListener('visibilitychange', sync);
     };
   }, []);
+
+  const listMode = active === undefined;
+  useEffect(() => {
+    setInView(false);
+    if (!listMode) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const bounds = posterRef.current?.getBoundingClientRect();
+      setInView(Boolean(bounds && bounds.bottom > -80 && bounds.top < innerHeight + 80 && bounds.right > 0 && bounds.left < innerWidth));
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+    // Explicit bounds also avoid stale 3D intersection reports when returning to list mode.
+    schedule();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [listMode]);
 
   const animate = motionAllowed && !failed && (active ?? inView);
   useEffect(() => {
