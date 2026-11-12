@@ -3,13 +3,13 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import '../auth.css';
+import '../gold-auth.css';
+import { OrnamentFrame } from '../../../components/ornaments/OrnamentFrame';
 import {
   Button as DSButton,
   Input as DSInput,
   Label as DSLabel,
 } from '@mirastros-universal/design-system';
-import { Background3D } from '../../../components/Background3D';
 import { api } from '../../../services/api';
 
 const Button = DSButton as any;
@@ -80,20 +80,21 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="auth-shell">
-      <Background3D />
+    <div className="auth-shell auth-preset">
+      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/backweb.png" alt="" className="auth-bg-img desktop-only" />
-        <img src="/backmobile.png" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
       <div
-        className="auth-warp"
+        className="auth-warp" data-page="reset-password"
         data-loading={loading ? 'true' : 'false'}
         data-error={tokenStatus === 'invalid' ? 'true' : 'false'}
       >
         <div className="auth-card auth-portal">
+          <OrnamentFrame className="auth-preset-frame" />
           <div className="auth-card-inner space-y-6">
             <div className="text-center">
               <h1 className="auth-title font-cinzel text-3xl font-bold text-white mb-2">Новый пароль</h1>
@@ -148,7 +149,7 @@ function ResetPasswordContent() {
                   type="submit"
                   disabled={loading}
                   loading={loading}
-                  className="w-full h-14 text-lg font-sans font-normal justify-center shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:shadow-[0_0_50px_rgba(212,175,55,0.4)] transition-all duration-500 bg-mirastros-gold text-black hover:bg-white border-none uppercase tracking-wider"
+                  className="mira-action mira-action-primary w-full"
                 >
                   {loading ? 'Сохраняем…' : 'Сохранить пароль'}
                 </Button>
@@ -171,10 +172,11 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="auth-shell">
-          <Background3D />
-          <div className="auth-warp">
+        <div className="auth-shell auth-preset">
+      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
+              <div className="auth-warp" data-page="reset-password">
             <div className="auth-card auth-portal">
+          <OrnamentFrame className="auth-preset-frame" />
               <div className="auth-card-inner text-center text-gray-300">Проверяем ссылку...</div>
             </div>
           </div>

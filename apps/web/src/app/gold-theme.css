@@ -1,0 +1,33 @@
+/* The selected gold/violet Mirastros board. Shared semantic web tokens. */
+:root {
+  --mira-canvas:#080b1a;
+  --mira-surface:#1a123d;
+  --mira-raised:#2b1848;
+  --mira-violet:#6e3bae;
+  --mira-luminous:#b66cff;
+  --mira-ivory:#f0e6ff;
+  --mira-muted:#b8abc5;
+  --mira-gold:#ffd9a6;
+  --mira-metal:#c7a575;
+  --mira-line:#c7a57560;
+  --mira-line-faint:#c7a57524;
+  --mira-focus:#d8b8ff;
+}
+.mira-action.mira-action-primary,.mira-action.mira-action-secondary {
+  position:relative; display:inline-flex; align-items:center; justify-content:center;
+  min-height:46px; padding:12px 28px; gap:13px; border:1px solid var(--mira-metal);
+  border-radius:4px 14px; color:var(--mira-gold); text-decoration:none;
+  font:500 16px/1.15 var(--font-display),Georgia,serif; letter-spacing:.065em;
+  text-transform:uppercase; cursor:pointer; isolation:isolate;
+  transition:background .18s,border-color .18s,box-shadow .18s;
+  box-shadow:inset 0 0 0 3px #080b1a88,inset 0 0 0 4px #c7a57526,0 0 22px #8a45c32b;
+}
+.mira-action.mira-action-primary { background:radial-gradient(ellipse at 50% 110%,#aa66d854,transparent 72%),linear-gradient(180deg,#3d205d,#170e2d); }
+.mira-action.mira-action-secondary { background:linear-gradient(180deg,#15102a,#090c1c); border-color:#b79a6c9c; box-shadow:inset 0 0 0 3px #080b1a88,inset 0 0 0 4px #c7a57520; }
+.mira-action::before,.mira-action::after { content:''; position:absolute; width:7px; height:7px; top:calc(50% - 4px); border:1px solid #d6b785; background:#171025; transform:rotate(45deg); pointer-events:none; }
+.mira-action::before { left:-4px; }.mira-action::after { right:-4px; }
+.mira-action.mira-action-primary:hover { background:radial-gradient(ellipse at center,#8553b95e,transparent 75%),#321848; border-color:#ffe3b9; box-shadow:inset 0 0 0 3px #080b1a88,inset 0 0 0 4px #c7a57545,0 0 24px #9156c744; }
+.mira-action.mira-action-secondary:hover { background:#251938; border-color:#ffe3b9; }
+.mira-action:focus-visible { outline:2px solid var(--mira-focus); outline-offset:5px; }
+.mira-action:disabled { cursor:not-allowed; opacity:.45; box-shadow:none; }.mira-action[aria-busy=true] { cursor:wait; }
+@media(prefers-reduced-motion:reduce) { .mira-action { transition:none!important; } }

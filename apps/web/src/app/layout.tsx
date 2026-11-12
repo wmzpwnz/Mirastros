@@ -1,6 +1,7 @@
 'use client';
 
 import './global.css';
+import './gold-theme.css';
 import './section-layouts.css';
 import { Preloader } from '../components/Preloader';
 import { LenisProvider } from '../components/LenisProvider';

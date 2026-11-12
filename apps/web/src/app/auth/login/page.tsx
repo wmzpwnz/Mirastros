@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import '../auth.css';
-import { OrnamentFrame, MirastrosSeal } from '../../../components/ornaments/OrnamentFrame';
+import '../gold-auth.css';
+import { PasswordVisibilityButton } from '../../../components/ornaments/PasswordVisibilityButton';
+import { OrnamentFrame } from '../../../components/ornaments/OrnamentFrame';
 import {
   Button as DSButton,
   Input as DSInput,
-  Checkbox as DSCheckbox,
   Label as DSLabel,
 } from '@mirastros-universal/design-system';
 import Image from 'next/image';
@@ -17,11 +17,11 @@ import { SocialLoginButtons } from '../../../components/SocialLoginButtons';
 
 const Button = DSButton as any;
 const Input = DSInput as any;
-const Checkbox = DSCheckbox as any;
 const Label = DSLabel as any;
 
 export default function LoginPage() {
   const router = useRouter();
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,9 +68,10 @@ export default function LoginPage() {
 
   return (
     <div className="auth-shell auth-preset">
+      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><Image src="/logo.png" alt="Mirastros" width={800} height={205} priority /></Link>
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/images/mirastros-cosmos.webp" alt="" className="auth-bg-img desktop-only" />
-        <img src="/images/mirastros-cosmos-mobile.webp" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
@@ -82,17 +83,8 @@ export default function LoginPage() {
       >
         <div className="auth-card auth-portal">
           <OrnamentFrame className="auth-preset-frame" />
-          <aside className="auth-preset-seal" aria-label="Mirastros">
-            <MirastrosSeal />
-            <p>Ваш путь. Ваша судьба.<br />Ваша вселенная.</p>
-            <Link href="/">Вернуться к Mirastros</Link>
-          </aside>
           <div className="auth-card-inner">
-            <div className="flex justify-center mb-10">
-              <div className="auth-logo-img" aria-hidden="true">
-                <Image src="/logo.png" alt="Mirastros" width={180} height={64} priority />
-              </div>
-            </div>
+
 
             <div className="text-center">
               <h1 className="auth-title text-4xl font-bold text-white mb-3">Вход</h1>
@@ -130,26 +122,18 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={passwordVisible ? 'text' : 'password'}
                     required
                     value={formData.password}
                     onChange={(val: any) => handleValueChange('password', val)}
                     placeholder="••••••••"
                     className="login-input h-14 text-lg"
                   />
+                <PasswordVisibilityButton controlId="password" visible={passwordVisible} onToggle={() => setPasswordVisible(value => !value)} />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-6 pb-2">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <Checkbox
-                    id="remember"
-                    name="remember"
-                    className="!w-5 !h-5 rounded border-2 border-white/30 bg-black/30 text-mirastros-gold"
-                  />
-                  <span className="text-sm text-gray-300/80">Запомнить меня</span>
-                </label>
-
+              <div className="flex items-center justify-end pt-4 pb-2">
                 <Link
                   href="/auth/forgot-password"
                   className="text-sm text-mirastros-gold hover:text-mirastros-gold/80 transition font-medium"
@@ -162,7 +146,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 loading={loading}
-                className="mt-6 w-full h-16 text-lg font-sans font-normal justify-center shadow-[0_0_30px_rgba(212,175,55,0.20)] hover:shadow-[0_0_50px_rgba(212,175,55,0.35)] transition-all duration-500 bg-mirastros-gold text-black hover:bg-white border-none uppercase tracking-wider"
+                className="mira-action mira-action-primary w-full"
               >
                 {loading ? 'Вход…' : 'Войти'}
               </Button>
