@@ -14,6 +14,8 @@ import styles from './DepthJourney.module.css';
 type View = 'flight' | 'list';
 const count = journeyModules.length;
 const totalScreens = count + 1.8;
+// Advance 15% farther per swipe/wheel distance, without changing the depth geometry.
+const SCROLL_SPEED = 1.15;
 
 /** Original Mirastros implementation of a perspective gallery. Reference:
  * sageeast.com's continuous camera travel, rather than its code or photographs.
@@ -114,21 +116,22 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       context?.revert();
       drawing = true;
       layout = { width: window.innerWidth, height: window.innerHeight };
-      layoutRef.current = { height: layout.height, start: root.offsetTop };
-      root.style.height = `${(totalScreens + 1) * layout.height}px`;
+      const scrollUnit = layout.height / SCROLL_SPEED;
+      layoutRef.current = { height: scrollUnit, start: root.offsetTop };
+      root.style.height = `${totalScreens * scrollUnit + layout.height}px`;
       root.style.setProperty('--journey-vh', `${layout.height}px`);
       cameraElement.style.perspective = `${sceneMetrics(layout.width).perspective}px`;
       state.screens = 0;
       context = gsap.context(() => {
         gsap.set(cards, { xPercent: -50, yPercent: -50, force3D: true });
-        gsap.to(state, { screens: totalScreens, ease: 'none', onUpdate: draw, scrollTrigger: { trigger: root, start: 'top top', end: () => `+=${totalScreens * layout.height}`, scrub: reduce ? true : .16, invalidateOnRefresh: true } });
+        gsap.to(state, { screens: totalScreens, ease: 'none', onUpdate: draw, scrollTrigger: { trigger: root, start: 'top top', end: () => `+=${totalScreens * scrollUnit}`, scrub: reduce ? true : .16, invalidateOnRefresh: true } });
       }, root);
       ScrollTrigger.refresh();
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
         normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1 });
       }
       // Restore zero as well as later cards; retain the normalizer's 1px iOS floor.
-      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * layout.height), behavior: 'instant' });
+      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * scrollUnit), behavior: 'instant' });
       ScrollTrigger.update();
       draw();
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
