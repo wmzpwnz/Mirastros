@@ -43,6 +43,9 @@ describe('continuous depth gallery', () => {
       const route = resolve(directory, `../../app${item.href}/page.tsx`);
       expect(existsSync(route), route).toBe(true);
       expect(existsSync(resolve(directory, `../../../public/images/portals/${item.id}.webp`))).toBe(true);
+      for (const extension of ['webm', 'mp4']) {
+        expect(existsSync(resolve(directory, `../../../public/${item.media}.${extension}`))).toBe(true);
+      }
     }
   });
 });
