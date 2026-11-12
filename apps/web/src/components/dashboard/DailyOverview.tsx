@@ -99,12 +99,12 @@ export function DailyOverview({ user }: { user: User }) {
   const name = user.fullName?.trim().split(/\s+/)[0] || 'Искатель';
   const tier = user.subscriptionTier === 'platinum' ? 'Platinum' : user.subscriptionTier === 'premium' ? 'Premium' : 'Базовый доступ';
 
-  const panelOrnaments = <span className={styles.panelTrim} aria-hidden="true"><Ornament /><Ornament /><Ornament /><Ornament /></span>;
+  const panelOrnaments = <OrnamentFrame className={styles.panelTrim} />;
 
   return (
     <section className={`personal-hero-root ${styles.root}`} aria-labelledby="daily-overview-title">
       <div className={`personal-hero-bg ${styles.background}`} aria-hidden="true">
-        <img className="hero-bg-img" src="/images/mirastros-cosmos.webp" alt="" />
+        <img className="hero-bg-img" src="/images/mirastros-sanctuary.webp" alt="" />
       </div>
       <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
       <OrnamentFrame className={styles.screenFrame} />
@@ -164,7 +164,7 @@ export function DailyOverview({ user }: { user: User }) {
               ? 'Добавьте данные рождения в профиль, чтобы здесь появился ваш прогноз.'
               : forecastState === 'error' ? 'Прогноз не загрузился. Лунная сводка доступна независимо — вернуться к прогнозу можно позже.'
               : forecast ? forecast.is_personalized ? 'Главное из вашего персонального прогноза на сегодня.' : `Главное из общего прогноза для знака ${zodiac?.[1].name || ''}.` : 'Обращаемся к прогнозу на текущую дату.'}</p>
-            <Link className={styles.primaryAction} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
+            <Link className={`mira-action mira-action-primary ${styles.primaryAction}`} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
           </article>
 
           <article className={`${styles.panel} ${styles.forecastPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>

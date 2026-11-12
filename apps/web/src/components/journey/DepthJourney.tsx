@@ -6,6 +6,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { HeroSection } from '../sections/HeroSection';
+import { PortalArtwork } from './PortalArtwork';
 import { journeyModules } from './catalog';
 import { activePortal, endingOpacity, heroOpacity, portalFrame, sceneMetrics, INTRO_SCREENS } from './depthModel';
 import styles from './DepthJourney.module.css';
@@ -170,15 +171,15 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       <Link href={authenticated ? "/profile" : "/auth/login"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Вход"}</Link>
     </header>
     <div className={styles.viewport}>
-      <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-cosmos.webp" alt="" /><span /></div>
+      <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-sanctuary.webp" alt="" /><span /></div>
       {view === 'list' && <h1 className={styles.listTitle}>Ваш мир Mirastros</h1>}
       <OrnamentFrame className={styles.stageFrame} />
       <div ref={cameraRef} className={styles.camera} aria-label="Направления Mirastros">
         {journeyModules.map((item, i) => <article key={item.id} className={styles.card} data-portal={item.id} style={{ '--card-accent': item.accent } as CSSProperties}>
           <Link href={item.href} aria-label={`Открыть: ${item.title}`}>
             <OrnamentFrame className={styles.cardFrame} />
-            <span className={styles.cardNumber}>{String(i + 1).padStart(2, '0')} <span aria-hidden="true">✧</span> MIRASTROS</span>
-            <div className={styles.art}><img src={`/images/portals/${item.id}.webp`} alt="" width="640" height="640" loading={i < 5 ? 'eager' : 'lazy'} /></div>
+            <span className={styles.cardNumber} aria-hidden="true">✧ <span>{String(i + 1).padStart(2, '0')}</span> ✧</span>
+            <div className={styles.art}><PortalArtwork id={item.id} eager={i < 5} /></div>
             <div className={styles.caption}><h2>{item.title}</h2><p>{item.subtitle}</p></div>
             <span className={styles.cardArrow} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span>
           </Link>
@@ -186,13 +187,13 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       </div>
       {view === 'flight' && <>
         <div ref={introRef} className={styles.intro}>
-          {intro ? <><div className={styles.accountScroll} data-lenis-prevent>{intro}</div><button className={styles.enterJourney} onClick={enter}>Открыть порталы направлений <span aria-hidden="true">↓</span></button></> : <HeroSection showScrollCue={false} />}
+          {intro ? <><div className={styles.accountScroll} data-lenis-prevent>{intro}</div><button className={`mira-action mira-action-primary ${styles.enterJourney}`} onClick={enter}>Открыть порталы направлений <span aria-hidden="true">↓</span></button></> : <HeroSection showScrollCue={false} />}
         </div>
         <div ref={endingRef} className={styles.ending} aria-hidden={!ending}>
           <p className={styles.kicker}>Весь мир Mirastros — в одном аккаунте</p>
           <h2>{authenticated ? "Ваш мир всегда рядом" : "Продолжить свой путь"}</h2>
           <p>Сохранённые результаты, личные открытия<br />и ваши избранные направления.</p>
-          <Link href={authenticated ? "/history" : "/auth/register"} tabIndex={ending ? 0 : -1}>{authenticated ? "Моя история" : "Создать аккаунт"} <span aria-hidden="true">✧</span></Link>
+          <Link className="mira-action mira-action-primary" href={authenticated ? "/history" : "/auth/register"} tabIndex={ending ? 0 : -1}>{authenticated ? "Моя история" : "Создать аккаунт"} <span aria-hidden="true">✧</span></Link>
           <Link href="/services" className={styles.catalog} tabIndex={ending ? 0 : -1}>Посмотреть все направления</Link>
           <Link href="/shop" className={styles.catalog} tabIndex={ending ? 0 : -1}>Магазин Mirastros</Link>
         </div>

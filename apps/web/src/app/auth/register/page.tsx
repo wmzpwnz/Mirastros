@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import '../auth.css';
-import { OrnamentFrame, MirastrosSeal } from '../../../components/ornaments/OrnamentFrame';
+import '../gold-auth.css';
+import { PasswordVisibilityButton } from '../../../components/ornaments/PasswordVisibilityButton';
+import { OrnamentFrame } from '../../../components/ornaments/OrnamentFrame';
 import {
   Button as DSButton,
   Input as DSInput,
@@ -35,6 +36,8 @@ interface LocationSuggestion {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState({
     // Step 1
@@ -279,9 +282,10 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-shell auth-preset">
+      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><Image src="/logo.png" alt="Mirastros" width={800} height={205} priority /></Link>
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/images/mirastros-cosmos.webp" alt="" className="auth-bg-img desktop-only" />
-        <img src="/images/mirastros-cosmos-mobile.webp" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
@@ -294,18 +298,9 @@ export default function RegisterPage() {
       >
         <div className="auth-card auth-portal">
           <OrnamentFrame className="auth-preset-frame" />
-          <aside className="auth-preset-seal" aria-label="Mirastros">
-            <MirastrosSeal />
-            <p>Ваш путь. Ваша судьба.<br />Ваша вселенная.</p>
-            <Link href="/">Вернуться к Mirastros</Link>
-          </aside>
           <div className="auth-card-inner space-y-10">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="auth-logo-img" aria-hidden="true">
-            <Image src="/logo.png" alt="Mirastros" width={180} height={64} priority />
-          </div>
-        </div>
+
 
         {/* Header */}
         <div className="text-center">
@@ -392,13 +387,14 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={passwordVisible ? 'text' : 'password'}
                   required
                   value={formData.password}
                   onChange={(val: any) => handleValueChange('password', val)}
                   placeholder="••••••••"
                   className="auth-input h-14 pl-12 text-lg"
                 />
+                <PasswordVisibilityButton controlId="password" visible={passwordVisible} onToggle={() => setPasswordVisible(value => !value)} />
               </div>
               <p className="mt-2 text-xs text-gray-500">
                 Минимум 8 символов
@@ -416,13 +412,14 @@ export default function RegisterPage() {
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
+                  type={confirmationVisible ? 'text' : 'password'}
                   required
                   value={formData.confirmPassword}
                   onChange={(val: any) => handleValueChange('confirmPassword', val)}
                   placeholder="••••••••"
                   className="auth-input h-14 pl-12 text-lg"
                 />
+                <PasswordVisibilityButton controlId="confirmPassword" visible={confirmationVisible} onToggle={() => setConfirmationVisible(value => !value)} confirmation />
               </div>
             </div>
 
@@ -488,7 +485,7 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               loading={loading}
-              className="w-full h-14 text-xl font-sans font-normal justify-center text-center shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:shadow-[0_0_50px_rgba(212,175,55,0.4)] transition-all duration-500 bg-mirastros-gold text-black hover:bg-white border-none transform hover:-translate-y-1 active:translate-y-0 uppercase tracking-wider"
+              className="mira-action mira-action-primary w-full"
             >
               {loading ? 'Регистрация...' : 'Продолжить'}
             </Button>
@@ -741,7 +738,7 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               loading={loading}
-              className="h-14 font-sans font-normal shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.5)] transition-all duration-300 bg-mirastros-gold text-black border-none uppercase tracking-wider text-base font-medium"
+              className="mira-action mira-action-primary w-full"
             >
               {loading ? 'Сохранение...' : 'Завершить'}
             </Button>

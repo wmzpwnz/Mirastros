@@ -1,7 +1,7 @@
-.frame { position:absolute; inset:0; display:block; border:1px solid var(--ornament-color,#c3afce8c); outline:1px solid var(--ornament-faint,#b7a0ca35); outline-offset:5px; pointer-events:none; color:var(--ornament-color,#c3afce); }
-.frame::before { content:''; position:absolute; inset:5px; border:1px solid var(--ornament-faint,#b7a0ca35); }
+.frame { position:absolute; inset:0; display:block; border:1px solid var(--ornament-color,#c7a57580); outline:1px solid var(--ornament-faint,#c7a57526); outline-offset:5px; pointer-events:none; color:var(--ornament-color,#d7b783); }
+.frame::before { content:''; position:absolute; inset:5px; border:1px solid var(--ornament-faint,#c7a57526); }
 .corner { position:absolute; width:clamp(42px,7vw,88px); height:auto; stroke:currentColor; stroke-width:.65; }
 .corner:nth-child(1) { top:0; left:0; }.corner:nth-child(2) { top:0; right:0; transform:rotate(90deg); }.corner:nth-child(3) { bottom:0; right:0; transform:rotate(180deg); }.corner:nth-child(4) { bottom:0; left:0; transform:rotate(270deg); }
 .crest { position:absolute; width:150px; height:20px; left:50%; top:-10px; transform:translateX(-50%); stroke:currentColor; stroke-width:.7; }
-.seal { stroke:currentColor; stroke-width:.7; color:#dcc9dd; filter:drop-shadow(0 0 12px #b67be84d); }
-.seal text { font:500 29px var(--font-display),Georgia,serif; fill:#f2e7db; stroke:none; }
+.seal { stroke:currentColor; stroke-width:.7; color:#d7b783; filter:drop-shadow(0 0 12px #a96edc33); }
+.seal text { font:500 29px var(--font-display),Georgia,serif; fill:#ffe0ad; stroke:none; }
