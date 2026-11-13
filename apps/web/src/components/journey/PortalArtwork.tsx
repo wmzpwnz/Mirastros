@@ -12,6 +12,7 @@ export function PortalArtwork({ id, media, eager, active }: {
   const [inView, setInView] = useState(false);
   const [motionAllowed, setMotionAllowed] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -51,18 +52,40 @@ export function PortalArtwork({ id, media, eager, active }: {
   const animate = motionAllowed && !failed && (active ?? inView);
   useEffect(() => {
     setPlaying(false);
+    setBlocked(false);
     const video = videoRef.current;
     if (!animate || !video) return;
-    video.muted = true;
-    void video.play().catch(() => { /* Low-power/autoplay restrictions keep the full poster. */ });
-    return () => { video.pause(); };
+    let disposed = false;
+    const stopRetry = () => {
+      window.removeEventListener('pointerdown', retry);
+      window.removeEventListener('touchend', retry);
+      window.removeEventListener('keydown', retry);
+    };
+    const play = () => {
+      video.muted = true;
+      void video.play().then(() => {
+        if (disposed) return;
+        setBlocked(false);
+        stopRetry();
+      }).catch(error => {
+        if (disposed || error?.name === 'AbortError') return;
+        setBlocked(true);
+        // iOS low-power/autoplay policies may require a fresh user gesture.
+        window.addEventListener('pointerdown', retry, { passive: true });
+        window.addEventListener('touchend', retry, { passive: true });
+        window.addEventListener('keydown', retry);
+      });
+    };
+    function retry() { if (!document.hidden) play(); }
+    play();
+    return () => { disposed = true; stopRetry(); video.pause(); };
   }, [animate]);
 
   return <>
     <img ref={posterRef} src={`/images/portals/${id}.webp`} alt="" width="640" height="640" loading={eager ? 'eager' : 'lazy'} />
-    {animate && <video ref={videoRef} autoPlay loop muted playsInline preload="metadata" poster={`/images/portals/${id}.webp`} aria-hidden="true" data-playing={playing} onPlaying={() => setPlaying(true)} onError={() => setFailed(true)}>
-      <source src={`/${media}.webm`} type="video/webm" />
+    {animate && <video ref={videoRef} autoPlay loop muted playsInline preload="metadata" poster={`/images/portals/${id}.webp`} aria-hidden="true" data-playing={playing} data-playback={playing ? 'playing' : blocked ? 'blocked' : 'loading'} onPlaying={() => setPlaying(true)} onError={event => { if (event.target === event.currentTarget && event.currentTarget.error) setFailed(true); }}>
       <source src={`/${media}.mp4`} type="video/mp4" />
+      <source src={`/${media}.webm`} type="video/webm" />
     </video>}
   </>;
 }
