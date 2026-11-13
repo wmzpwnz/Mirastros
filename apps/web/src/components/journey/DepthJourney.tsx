@@ -179,13 +179,14 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       <OrnamentFrame className={styles.stageFrame} />
       <div ref={cameraRef} className={styles.camera} aria-label="Направления Mirastros">
         {journeyModules.map((item, i) => <article key={item.id} className={styles.card} data-portal={item.id} style={{ '--card-accent': item.accent } as CSSProperties}>
-          <Link href={item.href} aria-label={`Открыть: ${item.title}`}>
+          <div className={styles.cardSurface}>
+            <Link className={styles.cardLink} href={item.href} aria-label={`Открыть: ${item.title}`} />
             <OrnamentFrame className={styles.cardFrame} />
             <span className={styles.cardNumber} aria-hidden="true">✧ <span>{String(i + 1).padStart(2, '0')}</span> ✧</span>
-            <div className={styles.art}><PortalArtwork id={item.id} media={item.media} eager={i < 5} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} /></div>
+            <div className={styles.art}><PortalArtwork id={item.id} media={item.media} eager={i < 5} interactive={view === 'list' || exploring && !ending && active === i} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} /></div>
             <div className={styles.caption}><h2>{item.title}</h2><p>{item.subtitle}</p></div>
             <span className={styles.cardArrow} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span>
-          </Link>
+          </div>
         </article>)}
       </div>
       {view === 'flight' && <>
