@@ -86,8 +86,3 @@
 @media(max-width:600px) { .root[data-account=true] .enterJourney { bottom:98px; width:calc(100% - 64px); max-width:360px; font-size:13px; line-height:1.25; padding:12px 15px; } }
 
 .cardLink { position:absolute; inset:0; z-index:1; border-radius:4px; }
-.art :global(.portal-playback) { position:absolute; z-index:3; inset:auto 3px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; }
-.art :global(.portal-playback button),.art :global(.portal-playback a) { min-height:44px; padding:8px 12px; border:1px solid #c7a575b3; border-radius:6px; color:#ffe2b6; background:#110c22eb; font:500 12px/1.2 var(--font-inter),sans-serif; cursor:pointer; text-decoration:none; text-align:center; }
-.art :global(.portal-playback button span) { font-size:18px; vertical-align:middle; margin-right:5px; }
-.art :global(.portal-playback[data-interactive=false]) { visibility:hidden; pointer-events:none; }
-.art :global(.portal-playback button:focus-visible),.art :global(.portal-playback a:focus-visible) { outline:2px solid var(--mira-focus); outline-offset:3px; }

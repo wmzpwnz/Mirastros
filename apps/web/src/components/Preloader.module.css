@@ -1,0 +1,16 @@
+.root { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:44px 24px; overflow:hidden; color:#e4c999; background:radial-gradient(ellipse at 50% 44%,#231337 0%,#100c20 35%,#080b19 75%); opacity:1; transition:opacity .4s ease; }
+.root::before { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 18% 24%,#e8d3a940 0 1px,transparent 2px),radial-gradient(circle at 81% 29%,#d3baef44 0 1px,transparent 2px),radial-gradient(circle at 72% 76%,#e8d3a933 0 1px,transparent 2px); }
+.root[data-leaving=true] { opacity:0; pointer-events:none; }
+.root > .frame { inset:22px; --ornament-color:#c7a57565; --ornament-faint:#c7a57520; }
+.content { position:relative; display:flex; flex-direction:column; align-items:center; width:min(100%,460px); text-align:center; }
+.eyebrow { margin:0 0 14px; color:#bba888; font:400 13px/1.5 var(--font-display),Georgia,serif; text-transform:uppercase; letter-spacing:.22em; }
+.circle { mix-blend-mode:screen; position:relative; width:clamp(200px,30vw,310px); aspect-ratio:1; margin:0 auto 20px; }
+.circle img,.circle video { display:block; width:100%; height:100%; object-fit:contain; }.circle video { position:absolute; inset:0; }
+.brand { display:block; width:clamp(180px,22vw,250px); height:auto; }
+.status { margin-top:30px; width:min(240px,75vw); }.status p { margin:14px 0 0; color:#c0b1c8; font:12px/1.6 var(--font-inter),sans-serif; letter-spacing:.03em; }
+.line { position:relative; display:block; height:1px; overflow:hidden; background:#c7a57535; }.line::after { content:''; position:absolute; inset:0; width:45%; background:linear-gradient(90deg,transparent,#f1d4a1,transparent); animation:journey 1.8s ease-in-out infinite; }
+.signature { position:absolute; bottom:max(40px,env(safe-area-inset-bottom)); margin:0; color:#8f809c; font:11px/1.5 var(--font-display),Georgia,serif; letter-spacing:.12em; }
+@keyframes journey { from { transform:translateX(-110%); } to { transform:translateX(330%); } }
+@media(max-width:600px) { .root > .frame { inset:14px; }.circle { width:min(65vw,260px); }.eyebrow { font-size:11px; letter-spacing:.14em; }.brand { width:210px; }.signature { bottom:32px; font-size:10px; }.status { margin-top:25px; } }
+@media(max-height:520px) { .eyebrow,.signature { display:none; }.circle { width:155px; margin-bottom:8px; }.brand { width:160px; }.status { margin-top:15px; }.status p { margin-top:9px; } }
+@media(prefers-reduced-motion:reduce) { .root { transition:opacity .12s; }.line::after { animation:none; width:100%; opacity:.5; } }

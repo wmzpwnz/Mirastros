@@ -1,0 +1,247 @@
+{
+  "quality": 90,
+  "fallback_fps": 10,
+  "resize": false,
+  "sources": [
+    {
+      "media": "taro",
+      "source_sha256": "28442ae86a25a4d0bb9a255f00b0986738c796877d596ac1a220b84e4d7ee6f8",
+      "bytes": 5277858,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "matrix_destiny",
+      "source_sha256": "8354594f654c07d42dbdde17a0494898426739c820ec61028434bd6951d05218",
+      "bytes": 3180250,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "30/1",
+        "nb_frames": "182"
+      },
+      "duration": "6.066667"
+    },
+    {
+      "media": "horo",
+      "source_sha256": "46203056acd510ce4abea2416ab21aedf2ec15251bc2bc13783aeaa0ffa7964e",
+      "bytes": 5794264,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "natal",
+      "source_sha256": "c91522b07a88f8b0f92ea10a09543c256120ed64c6ca0c4f4b33b17dd1092e71",
+      "bytes": 4700100,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "runes",
+      "source_sha256": "6c40462cfcba81acfef181131ed43df3ba14485d87972a08f181e9b3aa69e575",
+      "bytes": 2731552,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "numer",
+      "source_sha256": "c13da8e4651d9b098fd35901b5925a1ccc046387a32bbd295b6ff7617ae7b773",
+      "bytes": 5454044,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "sonnik",
+      "source_sha256": "ca9d46e50b1674d066416356bdf74d36b8988483ecb0d94f7971183431c4c749",
+      "bytes": 4202672,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    },
+    {
+      "media": "moon",
+      "source_sha256": "341fc9056d97b9132c474c033b992a148d93c021e0f228680dea8462a6ae2aca",
+      "bytes": 4692784,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "sinastr",
+      "source_sha256": "a144f61213e93eb7e0f89b3bab4305aa3a246dd3081ef35075d751574ccaabea",
+      "bytes": 5606770,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "planet",
+      "source_sha256": "5b06cc22413d8ca93f10578f61fec7f47c8048a3b5b760a93c18d704534f5c66",
+      "bytes": 6545890,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "lenorman",
+      "source_sha256": "d24c928feeff23f6941fbad9af080f156277402899d3af4b06f40c0c0da98143",
+      "bytes": 4963032,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "ci",
+      "source_sha256": "fb2196633fe21b507f4a10128eb016ca7ca83266a9f1d7200185771a8d5b703f",
+      "bytes": 5752646,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "chakras",
+      "source_sha256": "10fd29fbb4de0e15cc7e060878b66947d36145d25b4b8c1a8c6d24117b9eb667",
+      "bytes": 5293684,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "143/6",
+        "nb_frames": "121"
+      },
+      "duration": "5.076923"
+    },
+    {
+      "media": "crystal",
+      "source_sha256": "aac379810e3438e90e88b0ff711f4dd39274175b15931f94aed2ca60d2acfc7a",
+      "bytes": 6644662,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "ritual",
+      "source_sha256": "2cc48ab683358141721f4d68f78417058675eb344935e68dfacdebc4c3104643",
+      "bytes": 5309944,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "horar",
+      "source_sha256": "7b3836724acd3d3b011b767a0e8f4532bdeb7ff13aef7c59df73e90bb4b30c78",
+      "bytes": 6716844,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "solar",
+      "source_sha256": "1bcaca7cd5b0beb7bf51571ca6165da0f72e753e38ecd08b90762da0c18d97a6",
+      "bytes": 6521654,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "karma",
+      "source_sha256": "adeeedece0427372d728a82262823dd69af9e2785f70d233e6260e49513e8d7d",
+      "bytes": 6375138,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "mandala",
+      "source_sha256": "d77a834ad77f9ba238490982e26dc23ec63e85562f051860cee00838f7c60cde",
+      "bytes": 5654116,
+      "stream": {
+        "width": 560,
+        "height": 560,
+        "avg_frame_rate": "24/1",
+        "nb_frames": "145"
+      },
+      "duration": "6.041667"
+    },
+    {
+      "media": "circle",
+      "source_sha256": "e6ea9f98fba299da984f75ac0ffa653da30181f7ee1b4b7b1a8c004476638711",
+      "bytes": 4130268,
+      "stream": {
+        "width": 518,
+        "height": 518,
+        "avg_frame_rate": "10/1",
+        "nb_frames": "60"
+      },
+      "duration": "6.000000"
+    }
+  ]
+}

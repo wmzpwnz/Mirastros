@@ -5,57 +5,44 @@ import { PortalArtwork } from './PortalArtwork';
 
 let play: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-  play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new DOMException('Gesture required', 'NotAllowedError'));
+  play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-it('retries a blocked autoplay on a user gesture and removes retry listeners after success', async () => {
+it('automatically switches blocked autoplay to an animated image without a play button', async () => {
+  play.mockRejectedValue(new DOMException('Gesture required', 'NotAllowedError'));
   const { container } = render(<PortalArtwork id="tarot" media="taro" eager active />);
-  await waitFor(() => expect(container.querySelector('video')?.dataset.playback).toBe('blocked'));
-  play.mockResolvedValue(undefined);
-  fireEvent.pointerDown(window);
-  await waitFor(() => expect(container.querySelector('video')?.dataset.playback).toBe('loading'));
-  expect(play).toHaveBeenCalledTimes(2);
-  fireEvent.pointerDown(window);
-  fireEvent.touchEnd(window);
-  expect(play).toHaveBeenCalledTimes(2);
-});
-
-it('removes blocked retry listeners when a card leaves the active range', async () => {
-  const { container, rerender } = render(<PortalArtwork id="tarot" media="taro" eager active />);
-  await waitFor(() => expect(container.querySelector('video')?.dataset.playback).toBe('blocked'));
-  rerender(<PortalArtwork id="tarot" media="taro" eager active={false} />);
-  fireEvent.pointerDown(window);
-  fireEvent.touchEnd(window);
-  fireEvent.keyDown(window, { key: 'ArrowDown' });
-  expect(play).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(container.querySelector('img')?.getAttribute('src')).toBe('/animations/taro.webp'));
   expect(container.querySelector('video')).toBeNull();
-  expect(container.querySelector('img')).not.toBeNull();
+  expect(container.querySelector('button')).toBeNull();
 });
 
+it('retains the browser source fallback until both formats fail', async () => {
+  const { container } = render(<PortalArtwork id="tarot" media="taro" eager active />);
+  await waitFor(() => expect(play).toHaveBeenCalled());
+  const sources = container.querySelectorAll('source');
+  fireEvent.error(sources[0]);
+  expect(container.querySelector('video')).not.toBeNull();
+  fireEvent.error(sources[1]);
+  await waitFor(() => expect(container.querySelector('img')?.dataset.animation).toBe('image'));
+});
 
-it('offers explicit playback with reduced motion without starting automatically', async () => {
+it('starts the requested artwork automatically even when reduced camera motion is preferred', async () => {
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-  play.mockResolvedValue(undefined);
-  const { container, getByRole } = render(<PortalArtwork id="tarot" media="taro" eager active />);
-  expect(play).not.toHaveBeenCalled();
-  expect(container.querySelector('video')?.autoplay).toBe(false);
-  fireEvent.click(getByRole('button', { name: 'Воспроизвести анимацию' }));
-  await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+  const { container } = render(<PortalArtwork id="tarot" media="taro" eager active />);
+  await waitFor(() => expect(play).toHaveBeenCalled());
+  expect(container.querySelector('video')?.autoplay).toBe(true);
+  expect(container.querySelector('video')?.controls).toBe(false);
 });
 
-it('keeps a direct video link and lets the user retry a terminal loading error', async () => {
-  const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
-  const { container, getByRole } = render(<PortalArtwork id="tarot" media="taro" eager active />);
-  await waitFor(() => expect(container.querySelector('video')?.dataset.playback).toBe('blocked'));
-  const video = container.querySelector('video')!;
-  Object.defineProperty(video, 'error', { configurable: true, value: { code: 2, message: 'Fixture network failure' } });
-  fireEvent.error(video);
-  expect(getByRole('link', { name: /Открыть видео отдельно/ }).getAttribute('href')).toBe('/taro.mp4');
-  play.mockResolvedValue(undefined);
-  fireEvent.click(getByRole('button', { name: 'Повторить загрузку анимации' }));
-  expect(load).toHaveBeenCalledTimes(1);
-  await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
+it('only loads a focused image fallback and returns to the poster outside the active range', async () => {
+  play.mockRejectedValue(new DOMException('Gesture required', 'NotAllowedError'));
+  const { container, rerender } = render(<PortalArtwork id="tarot" media="taro" eager active focused={false} />);
+  await waitFor(() => expect(container.querySelector('video')).toBeNull());
+  expect(container.querySelector('img')?.getAttribute('src')).toBe('/images/portals/tarot.webp');
+  rerender(<PortalArtwork id="tarot" media="taro" eager active focused />);
+  expect(container.querySelector('img')?.dataset.animation).toBe('image');
+  rerender(<PortalArtwork id="tarot" media="taro" eager active={false} />);
+  expect(container.querySelector('img')?.dataset.animation).toBe('poster');
 });
