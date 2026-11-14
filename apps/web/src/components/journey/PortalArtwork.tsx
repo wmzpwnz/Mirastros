@@ -2,6 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+/** Keep a partially downloaded animated image from painting an empty opaque
+ * surface over the poster (notably in WebKit). Cached loads are handled too. */
+function AnimatedLoop({ src, onError }: { src: string; onError: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  return <img src={src} alt="" width="640" height="640" loading="eager" data-animation="image" data-loaded={loaded}
+    ref={node => { if (node?.complete && node.naturalWidth > 0 && !loaded) setLoaded(true); }}
+    style={{ position: 'absolute', inset: 0, opacity: loaded ? 1 : 0 }}
+    onLoad={() => setLoaded(true)} onError={onError} />;
+}
+
 /** Original silent clips, with an automatic animated-image fallback for autoplay
  * restrictions. Artwork stays animated independently of reduced camera motion. */
 export function PortalArtwork({ id, media, eager, active, focused = true, posterSrc }: {
@@ -74,7 +84,7 @@ export function PortalArtwork({ id, media, eager, active, focused = true, poster
   const imageAnimation = animate && focused && fallback && !imageFailed;
   return <>
     <img ref={posterRef} src={poster} alt="" width="640" height="640" loading={eager ? 'eager' : 'lazy'} fetchPriority={id === 'circle' ? 'high' : undefined} data-animation="poster" />
-    {imageAnimation && <img src={`/animations/${media}.webp`} alt="" width="640" height="640" loading="eager" data-animation="image" style={{ position: 'absolute', inset: 0 }} onError={() => setImageFailed(true)} />}
+    {imageAnimation && <AnimatedLoop src={`/animations/${media}.webp`} onError={() => setImageFailed(true)} />}
     {animate && !fallback && <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={poster} aria-hidden="true" tabIndex={-1} onError={event => { if (event.target === event.currentTarget && event.currentTarget.error) setFallback(true); }}>
       <source src={`/${media}.mp4`} type="video/mp4" onError={() => sourceFailed('mp4')} />
       <source src={`/${media}.webm`} type="video/webm" onError={() => sourceFailed('webm')} />
