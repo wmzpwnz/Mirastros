@@ -73,7 +73,8 @@ export function PortalArtwork({ id, media, eager, active, focused = true, poster
   // already limits resources using the viewport bounds above.
   const imageAnimation = animate && focused && fallback && !imageFailed;
   return <>
-    <img ref={posterRef} src={imageAnimation ? `/animations/${media}.webp` : poster} alt="" width="640" height="640" loading={eager || imageAnimation ? 'eager' : 'lazy'} data-animation={imageAnimation ? 'image' : 'poster'} onError={() => { if (imageAnimation) setImageFailed(true); }} />
+    <img ref={posterRef} src={poster} alt="" width="640" height="640" loading={eager ? 'eager' : 'lazy'} fetchPriority={id === 'circle' ? 'high' : undefined} data-animation="poster" />
+    {imageAnimation && <img src={`/animations/${media}.webp`} alt="" width="640" height="640" loading="eager" data-animation="image" style={{ position: 'absolute', inset: 0 }} onError={() => setImageFailed(true)} />}
     {animate && !fallback && <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={poster} aria-hidden="true" tabIndex={-1} onError={event => { if (event.target === event.currentTarget && event.currentTarget.error) setFallback(true); }}>
       <source src={`/${media}.mp4`} type="video/mp4" onError={() => sourceFailed('mp4')} />
       <source src={`/${media}.webm`} type="video/webm" onError={() => sourceFailed('webm')} />
