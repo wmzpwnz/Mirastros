@@ -17,6 +17,11 @@ export function PortalArtwork({ id, media, eager, active, focused = true, poster
   const poster = posterSrc ?? `/images/portals/${id}.webp`;
 
   useEffect(() => {
+    // On iPhone/iPad use the image loop directly: it has no media autoplay
+    // permission and does not depend on video compositing inside a 3D card.
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (ios) setFallback(true);
     const sync = () => setVisible(!document.hidden);
     sync();
     document.addEventListener('visibilitychange', sync);

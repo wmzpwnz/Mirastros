@@ -8,7 +8,9 @@ Fallbacks preserve full frame dimensions and duration, with 10 fps and WebP
 quality 90. They are an autoplay-independent fallback, not lossless copies.
 `fallback-manifest.json` records source hashes, source timing and output sizes.
 
-The browser normally uses the original videos. If playback is refused, fails,
+iPhone/iPad use the image loop directly, avoiding video autoplay permissions
+and 3D video compositing. Other browsers normally use the original videos.
+If playback is refused, fails,
 or remains stopped, PortalArtwork automatically uses the image animation.
 Only the focused flight card fetches its larger image fallback; list mode uses
 viewport culling. No play/reload buttons or native video controls are exposed.

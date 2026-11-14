@@ -46,3 +46,13 @@ it('only loads a focused image fallback and returns to the poster outside the ac
   rerender(<PortalArtwork id="tarot" media="taro" eager active={false} />);
   expect(container.querySelector('img')?.dataset.animation).toBe('poster');
 });
+
+
+it('uses an automatic image loop on iPhone without requesting video playback', async () => {
+  vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15');
+  const { container } = render(<PortalArtwork id="tarot" media="taro" eager active />);
+  await waitFor(() => expect(container.querySelector('img')?.dataset.animation).toBe('image'));
+  expect(play).not.toHaveBeenCalled();
+  expect(container.querySelector('video')).toBeNull();
+  expect(container.querySelector('button')).toBeNull();
+});
