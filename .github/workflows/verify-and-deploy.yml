@@ -74,6 +74,7 @@ jobs:
       - run: bash deployment/package-release.sh
       - run: node deployment/smoke-web.mjs
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy
         with:
           name: mirastros-release
           path: |
