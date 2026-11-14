@@ -41,14 +41,15 @@ export default function RootLayout({
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
-    const hasVisited = sessionStorage.getItem('mirastros_visited');
+    let hasVisited = false;
+    try { hasVisited = Boolean(sessionStorage.getItem('mirastros_visited')); } catch { /* Storage restrictions must not block entry. */ }
 
     if (hasVisited) {
       document.body.classList.remove('preloader-active');
       setShowPreloader(false);
       setIsFirstLoad(false);
     } else {
-      sessionStorage.setItem('mirastros_visited', 'true');
+      try { sessionStorage.setItem('mirastros_visited', 'true'); } catch { /* Continue without visit persistence. */ }
       document.body.classList.add('preloader-active');
     }
     return () => document.body.classList.remove('preloader-active');

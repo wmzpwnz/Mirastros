@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   verify:
+    outputs:
+      release_sha256: ${{ steps.release_hash.outputs.sha256 }}
     runs-on: ubuntu-22.04
     services:
       postgres:
@@ -73,13 +75,18 @@ jobs:
           NEXT_PUBLIC_ENABLE_ZSCROLL: 'true'
       - run: bash deployment/package-release.sh
       - run: node deployment/smoke-web.mjs
-      - uses: actions/upload-artifact@v4
+      - name: Record checked release digest
+        id: release_hash
+        shell: bash
+        run: printf 'sha256=%s\n' "$(sha256sum mirastros-release.tar.gz | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Hand off this run's verified package
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.actor == github.repository_owner
+        uses: actions/cache/save@v4
         with:
-          name: mirastros-release
+          key: mirastros-release-${{ github.run_id }}-${{ github.sha }}
           path: |
             mirastros-release.tar.gz
             mirastros-release.tar.gz.sha256
-          retention-days: 7
 
   deploy:
     if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.actor == github.repository_owner
@@ -87,18 +94,25 @@ jobs:
     runs-on: ubuntu-22.04
     environment: production
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/cache/restore@v4
         with:
-          name: mirastros-release
+          key: mirastros-release-${{ github.run_id }}-${{ github.sha }}
+          fail-on-cache-miss: true
+          path: |
+            mirastros-release.tar.gz
+            mirastros-release.tar.gz.sha256
       - name: Deploy verified artifact over SSH
         env:
           SSH_KEY: ${{ secrets.MIRASTROS_DEPLOY_SSH_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.MIRASTROS_SSH_KNOWN_HOSTS }}
           SERVER: '84.200.80.125'
           RELEASE: ${{ github.sha }}
+          EXPECTED_RELEASE_SHA256: ${{ needs.verify.outputs.release_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
+          [[ "$EXPECTED_RELEASE_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          printf '%s  mirastros-release.tar.gz\n' "$EXPECTED_RELEASE_SHA256" | sha256sum -c -
           sha256sum -c mirastros-release.tar.gz.sha256
           install -d -m 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/mirastros
