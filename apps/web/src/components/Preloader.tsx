@@ -31,6 +31,7 @@ export const Preloader = ({ onComplete }: { onComplete?: () => void }) => {
     const minimum = new Promise<void>(resolve => { minimumTimer = setTimeout(resolve, 1600); });
     const assets = Promise.allSettled([
       image('/logo.png'),
+      image('/images/preloader-circle.webp'),
       image('/images/mirastros-sanctuary.webp'),
       document.fonts?.ready ?? Promise.resolve(),
     ]);
@@ -46,7 +47,7 @@ export const Preloader = ({ onComplete }: { onComplete?: () => void }) => {
       <div className={styles.circle}>
         <PortalArtwork id="circle" media="circle" posterSrc="/images/preloader-circle.webp" eager active />
       </div>
-      <img className={styles.brand} src="/logo.png" alt="Mirastros" width="800" height="205" />
+      <img className={styles.brand} src="/logo.png" alt="Mirastros" fetchPriority="high" width="800" height="205" />
       <div className={styles.status} role="status" aria-live="polite">
         <span className={styles.line} aria-hidden="true" />
         <p>{leaving ? 'Добро пожаловать' : 'Открываем ваше пространство'}</p>
