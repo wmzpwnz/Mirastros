@@ -57,3 +57,14 @@ it('uses an automatic image loop on iPhone without requesting video playback', a
   expect(container.querySelector('video')).toBeNull();
   expect(container.querySelector('button')).toBeNull();
 });
+
+it('keeps a partially loaded animation transparent until its load event', async () => {
+  play.mockRejectedValue(new DOMException('Gesture required', 'NotAllowedError'));
+  const { container } = render(<PortalArtwork id="tarot" media="taro" eager active />);
+  await waitFor(() => expect(container.querySelector('[data-animation=image]')).not.toBeNull());
+  const animation = container.querySelector('[data-animation=image]') as HTMLImageElement;
+  expect(animation.style.opacity).toBe('0');
+  expect(container.querySelector('[data-animation=poster]')).not.toBeNull();
+  fireEvent.load(animation);
+  expect(animation.style.opacity).toBe('1');
+});
