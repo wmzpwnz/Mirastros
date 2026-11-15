@@ -63,6 +63,10 @@ body{margin:0;background:#080b1a;color:#f0e6ff;font:16px/1.65 -apple-system,Blin
     if (result.code === 200 && /\.js$/.test(path) && (!/javascript|ecmascript/.test(result.type) || /^\s*</.test(result.text))) text += ' · ОШИБКА: вместо JavaScript получен другой формат (' + result.type + ')';
     if (result.code === 200 && /\.css$/.test(path) && !/text\/css/.test(result.type)) text += ' · ОШИБКА формата CSS: ' + result.type;
     add(text);
+    if (result.code === 200 && /\.js$/.test(path) && /javascript|ecmascript/.test(result.type) && !/^\s*</.test(result.text)) {
+      try { new Function(result.text); }
+      catch (error) { add((error.name === 'SyntaxError' ? 'ОШИБКА синтаксиса JS в этом браузере: ' : 'Проверка синтаксиса ограничена браузером: ') + path + ' · ' + String(error.message || error).slice(0, 160)); }
+    }
   }
   function checkAssets(list, done) {
     var next = 0, active = 0, stopped = false;
@@ -126,14 +130,15 @@ body{margin:0;background:#080b1a;color:#f0e6ff;font:16px/1.65 -apple-system,Blin
       read('/?mira-check=' + new Date().getTime(), function (fresh) {
         note('/ (запрос без старого кэша)', fresh);
         if (fresh.code !== 200) { skipAssets('Не удалось загрузить HTML главной страницы.'); return; }
-        if (!fresh.text || fresh.text.indexOf('_next/static') < 0) { skipAssets('ОШИБКА: сервер вернул не страницу приложения Next.js.'); return; }
+        if (!/text\/html/.test(fresh.type) || !fresh.text || fresh.text.indexOf('_next/static') < 0) { skipAssets('ОШИБКА: сервер вернул не страницу приложения Next.js.'); return; }
         try {
           var regular = paths(cached.text || ''), assets = paths(fresh.text);
           add('Версии файлов обычной и свежей страницы: ' + (regular.join('|') === assets.join('|') ? 'совпадают' : 'РАЗЛИЧАЮТСЯ'));
           var all = [];
           for (var i = 0; i < regular.length; i++) if (assets.indexOf(regular[i]) < 0) all.push(regular[i]);
           all = all.concat(assets);
-          add('Найдено JS/CSS файлов: ' + all.length);
+          add('Найдено JS/CSS файлов: ' + all.length + ' (проверяем до 16)');
+          if (!all.length) { skipAssets('ОШИБКА: в ответе отсутствуют файлы приложения.'); return; }
           checkAssets(all, function () { assetsFinished = true; maybeFinish(); });
         } catch (error) { skipAssets('Не удалось разобрать страницу: ' + String(error.message || error)); }
       });
