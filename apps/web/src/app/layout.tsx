@@ -66,7 +66,7 @@ export default function RootLayout({
         {/* Splitting.js CSS */}
         <link
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.min.css"
+          href="/vendor/splitting/splitting.css"
         />
       </head>
       <body className={`font-sans antialiased ${cinzel.variable} ${inter.variable} ${manrope.variable} ${display.variable}`} suppressHydrationWarning>
@@ -85,7 +85,7 @@ export default function RootLayout({
 
         {/* Splitting.js Script */}
         <Script
-          src="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.min.js"
+          src="/vendor/splitting/splitting.min.js"
           strategy="afterInteractive"
         />
       </body>
