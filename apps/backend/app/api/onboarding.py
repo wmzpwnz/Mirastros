@@ -390,7 +390,9 @@ async def _welcome_event(user: User, db: AsyncSession, kind: str, step: int = 0)
         AnalyticsEvent.user_id == user.id, AnalyticsEvent.event_type == kind,
     ).limit(1))).scalar_one_or_none()
     if kind == "welcome_step" or exists is None:
-        db.add(AnalyticsEvent(user_id=user.id, event_type=kind, platform="web", event_metadata={"version": 1, "step": step}))
+        # Existing analytics_events.timestamp is TIMESTAMP WITHOUT TIME ZONE.
+        # Store UTC as a naive value; asyncpg rejects an aware datetime here.
+        db.add(AnalyticsEvent(user_id=user.id, event_type=kind, platform="web", timestamp=datetime.now(timezone.utc).replace(tzinfo=None), event_metadata={"version": 1, "step": step}))
     await db.commit()
 
 

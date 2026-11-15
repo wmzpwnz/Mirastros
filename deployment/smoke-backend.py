@@ -42,7 +42,8 @@ with tempfile.TemporaryFile() as log:
             headers = {'Authorization': f'Bearer {token}'}
             response = client.get('/auth/onboarding/state', headers=headers)
             assert response.status_code == 200 and not response.json()['started']
-            assert client.post('/auth/onboarding/start', headers=headers).status_code == 200
+            response = client.post('/auth/onboarding/start', headers=headers)
+            assert response.status_code == 200, f'Welcome start: {response.status_code} {response.text}'
             response = client.post('/auth/onboarding/step', headers=headers, json={'step': 'name', 'full_name': 'Александр'})
             assert response.status_code == 200 and response.json()['portrait']['name']['verified']
             response = client.post('/auth/onboarding/step', headers=headers, json={'step': 'birth', 'birth_date': '1990-01-01'})
