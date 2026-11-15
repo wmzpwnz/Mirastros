@@ -2,14 +2,16 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import '../gold-auth.css';
 import { api } from '../../../services/api';
-import { OrnamentFrame } from '../../../components/ornaments/OrnamentFrame';
 import { PasswordVisibilityButton } from '../../../components/ornaments/PasswordVisibilityButton';
 import { SocialLoginButtons } from '../../../components/SocialLoginButtons';
+import { AuthShell } from '../../../components/auth/AuthShell';
+import { AuthField, AuthNotice } from '../../../components/auth/AuthField';
+import { authError } from '../../../components/auth/authError';
 
+type Field = 'fullName' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -21,49 +23,49 @@ export default function RegisterPage() {
   const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
+  const clear = (field: Field) => { setErrors(previous => ({ ...previous, [field]: undefined })); setError(''); };
 
-  async function register(event: FormEvent) {
+  async function register(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (loading) return;
-    if (!name.trim()) { setError('Укажите, как к вам обращаться.'); return; }
-    if (password.length < 8) { setError('Пароль должен содержать минимум 8 символов.'); return; }
-    if (password !== confirmation) { setError('Пароли не совпадают.'); return; }
-    if (!terms) { setError('Примите условия использования и политику конфиденциальности.'); return; }
-    setLoading(true); setError('');
+    const form = event.currentTarget;
+    const issues: Partial<Record<Field, string>> = {};
+    if (!name.trim()) issues.fullName = 'Укажите, как к вам обращаться.';
+    const emailInput = form.elements.namedItem('email') as HTMLInputElement;
+    if (!email.trim() || emailInput.validity.typeMismatch) issues.email = 'Укажите корректный email.';
+    if (password.length < 8 || password.length > 100) issues.password = 'Используйте от 8 до 100 символов.';
+    if (!confirmation || password !== confirmation) issues.confirmPassword = 'Пароли не совпадают.';
+    if (!terms) issues.acceptTerms = 'Для регистрации нужно принять условия.';
+    setErrors(issues); setError('');
+    const first = Object.keys(issues)[0] as Field | undefined;
+    if (first) { (form.elements.namedItem(first) as HTMLElement)?.focus(); return; }
+    setLoading(true);
     try {
       let timezone = 'UTC';
       try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { /* Keep the default. */ }
       await api.register({ email: email.trim(), password, full_name: name.trim(), preferredLanguage: 'ru', timezone });
       router.push('/auth/onboarding?start=1');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Не удалось создать аккаунт. Попробуйте ещё раз.');
+      setError(authError(cause, 'Не удалось создать аккаунт. Проверьте данные и попробуйте ещё раз.'));
     } finally { setLoading(false); }
   }
 
-  return <div className="auth-shell auth-preset">
-    <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><Image src="/logo.png" alt="Mirastros" width={800} height={205} priority /></Link>
-    <div className="auth-bg-wrapper" aria-hidden="true"><img src="/images/mirastros-reference-desktop.webp" alt="" className="auth-bg-img" /><div className="auth-bg-overlay" /><div className="auth-bg-vignette" /></div>
-    <main className="auth-warp" data-page="register" data-loading={loading}>
-      <div className="auth-card auth-portal"><OrnamentFrame className="auth-preset-frame" />
-        <div className="auth-card-inner">
-          <h1 className="auth-title">Регистрация</h1>
-          <p className="auth-subtitle">Один аккаунт для всех направлений Mirastros.<br />Впереди — три шага знакомства с собой.</p>
-          <form onSubmit={register}>
-            <div className="space-y-5">
-              <div><label className="auth-field-label" htmlFor="fullName">Как к вам обращаться</label><input id="fullName" name="name" autoComplete="given-name" value={name} onChange={e => setName(e.target.value)} required maxLength={255} placeholder="Имя" /></div>
-              <div><label className="auth-field-label" htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Email" /></div>
-              <div><label className="auth-field-label" htmlFor="password">Пароль · от 8 символов</label><div className="auth-field"><input id="password" placeholder="Пароль" name="password" type={visible ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={100} value={password} onChange={e => setPassword(e.target.value)} required /><PasswordVisibilityButton controlId="password" visible={visible} onToggle={() => setVisible(v => !v)} /></div></div>
-              <div><label className="auth-field-label" htmlFor="confirmPassword">Повторите пароль</label><div className="auth-field"><input id="confirmPassword" placeholder="Повторите пароль" name="confirmPassword" type={confirmationVisible ? 'text' : 'password'} autoComplete="new-password" value={confirmation} onChange={e => setConfirmation(e.target.value)} required /><PasswordVisibilityButton controlId="confirmPassword" visible={confirmationVisible} onToggle={() => setConfirmationVisible(v => !v)} confirmation /></div></div>
-            </div>
-            <label htmlFor="acceptTerms"><span><input id="acceptTerms" type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} required /></span><span>Я принимаю <Link href="/terms" target="_blank" rel="noopener">условия использования</Link> и <Link href="/privacy" target="_blank" rel="noopener">политику конфиденциальности</Link></span></label>
-            {error && <p role="alert" style={{ color: '#f3a7b3', fontSize: 13, lineHeight: 1.6 }}>{error}</p>}
-            <button className="mira-action mira-action-primary" type="submit" disabled={loading}>{loading ? 'Создаём ваше пространство…' : 'Начать свой путь'} <span aria-hidden="true">✧</span></button>
-          </form>
-          <div className="auth-divider"><span>или</span></div>
-          <SocialLoginButtons onSuccess={() => router.push('/auth/onboarding?start=1')} onError={cause => setError(cause instanceof Error ? cause.message : 'Не удалось войти. Попробуйте ещё раз.')} />
-          <p>Уже есть аккаунт? <Link href="/auth/login" className="text-mirastros-gold">Войти</Link></p>
-        </div>
+  return <AuthShell title="Регистрация" page="register" loading={loading} footer={<>Уже есть аккаунт? <Link href="/auth/login">Войти</Link></>}>
+    <form onSubmit={register} className="auth-form" noValidate aria-busy={loading}>
+      <div className="auth-fields">
+        <AuthField id="fullName" name="fullName" label="Как к вам обращаться" autoComplete="given-name" value={name} onChange={e => { setName(e.target.value); clear('fullName'); }} required maxLength={255} placeholder="Имя" error={errors.fullName} disabled={loading} />
+        <AuthField id="email" name="email" type="email" label="Email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={email} onChange={e => { setEmail(e.target.value); clear('email'); }} required placeholder="Email" error={errors.email} disabled={loading} />
+        <AuthField id="password" name="password" label="Пароль · от 8 символов" placeholder="Пароль" type={visible ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={100} value={password} onChange={e => { setPassword(e.target.value); clear('password'); clear('confirmPassword'); }} required hint="От 8 до 100 символов" error={errors.password} disabled={loading} action={<PasswordVisibilityButton controlId="password" visible={visible} onToggle={() => setVisible(v => !v)} />} />
+        <AuthField id="confirmPassword" name="confirmPassword" label="Повторите пароль" placeholder="Повторите пароль" type={confirmationVisible ? 'text' : 'password'} autoComplete="new-password" maxLength={100} value={confirmation} onChange={e => { setConfirmation(e.target.value); clear('confirmPassword'); }} required error={errors.confirmPassword} disabled={loading} action={<PasswordVisibilityButton controlId="confirmPassword" visible={confirmationVisible} onToggle={() => setConfirmationVisible(v => !v)} confirmation />} />
       </div>
-    </main>
-  </div>;
+      <div>
+        <label className="auth-terms" htmlFor="acceptTerms"><span className="auth-terms-control"><input id="acceptTerms" name="acceptTerms" type="checkbox" checked={terms} onChange={e => { setTerms(e.target.checked); clear('acceptTerms'); }} required disabled={loading} aria-invalid={Boolean(errors.acceptTerms)} aria-describedby={errors.acceptTerms ? 'acceptTerms-error' : undefined} /></span><span>Я принимаю <Link href="/terms" target="_blank" rel="noopener">условия использования</Link> и <Link href="/privacy" target="_blank" rel="noopener">политику конфиденциальности</Link></span></label>
+        {errors.acceptTerms && <p className="auth-field-error" id="acceptTerms-error">{errors.acceptTerms}</p>}
+      </div>
+      {error && <AuthNotice>{error}</AuthNotice>}
+      <button className="mira-action mira-action-primary auth-submit" type="submit" disabled={loading}>{loading ? 'Создаём аккаунт…' : 'Начать свой путь'} <span aria-hidden="true">✧</span></button>
+    </form>
+    <SocialLoginButtons onSuccess={() => router.push('/auth/onboarding?start=1')} onError={cause => setError(authError(cause, 'Не удалось войти. Попробуйте ещё раз.'))} />
+  </AuthShell>;
 }

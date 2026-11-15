@@ -1,189 +1,59 @@
 'use client';
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import '../gold-auth.css';
-import { OrnamentFrame } from '../../../components/ornaments/OrnamentFrame';
-import {
-  Button as DSButton,
-  Input as DSInput,
-  Label as DSLabel,
-} from '@mirastros-universal/design-system';
 import { api } from '../../../services/api';
-
-const Button = DSButton as any;
-const Input = DSInput as any;
-const Label = DSLabel as any;
+import { AuthShell } from '../../../components/auth/AuthShell';
+import { AuthField, AuthNotice } from '../../../components/auth/AuthField';
+import { authError } from '../../../components/auth/authError';
+import { PasswordVisibilityButton } from '../../../components/ornaments/PasswordVisibilityButton';
 
 function ResetPasswordContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
-
-  const [tokenStatus, setTokenStatus] = useState('checking'); // checking | valid | invalid
-  const [email, setEmail] = useState('');
+  const token = useSearchParams().get('token') || '';
+  const [status, setStatus] = useState<'checking' | 'valid' | 'invalid' | 'success'>('checking');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [visible, setVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
   const [message, setMessage] = useState('');
+  const [fields, setFields] = useState<{ password?: string; confirm?: string }>({});
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
-    const run = async () => {
-      if (!token) {
-        setTokenStatus('invalid');
-        setMessage('Не указан токен сброса пароля.');
-        return;
-      }
-      try {
-        const res = await api.verifyPasswordResetToken(token);
-        if (cancelled) return;
-        setTokenStatus('valid');
-        setEmail(res.email);
-      } catch (err: any) {
-        if (cancelled) return;
-        setTokenStatus('invalid');
-        setMessage(err?.message || 'Токен недействителен или истёк.');
-      }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
+    setStatus('checking'); setMessage('');
+    if (!token) { setStatus('invalid'); return; }
+    void api.verifyPasswordResetToken(token).then(result => {
+      if (!cancelled) setStatus(result.valid ? 'valid' : 'invalid');
+    }).catch(() => { if (!cancelled) setStatus('invalid'); });
+    return () => { cancelled = true; };
   }, [token]);
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    setMessage('');
-
-    if (!password || password.length < 8) {
-      setMessage('Пароль должен содержать минимум 8 символов.');
-      return;
-    }
-    if (password !== confirm) {
-      setMessage('Пароли не совпадают.');
-      return;
-    }
-
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (loading) return;
+    const issues = { password: password.length < 8 || password.length > 100 ? 'Используйте от 8 до 100 символов.' : undefined, confirm: password !== confirm || !confirm ? 'Пароли не совпадают.' : undefined };
+    setFields(issues); setMessage('');
+    const first = issues.password ? 'password' : issues.confirm ? 'confirm' : null;
+    if (first) { (event.currentTarget.elements.namedItem(first) as HTMLElement)?.focus(); return; }
     setLoading(true);
-    try {
-      const res = await api.confirmPasswordReset(token, password);
-      setMessage(res?.message || 'Пароль изменён. Теперь можно войти.');
-      setTimeout(() => router.push('/auth/login'), 800);
-    } catch (err: any) {
-      setMessage(err?.message || 'Ошибка. Попробуйте позже.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="auth-shell auth-preset">
-      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
-      <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img desktop-only" />
-        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img mobile-only" />
-        <div className="auth-bg-overlay" />
-        <div className="auth-bg-vignette" />
+    try { await api.confirmPasswordReset(token, password); setStatus('success'); setPassword(''); setConfirm(''); }
+    catch (cause) { setMessage(authError(cause, 'Не удалось сохранить пароль. Попробуйте ещё раз.')); }
+    finally { setLoading(false); }
+  }
+  return <AuthShell title={status === 'success' ? 'Пароль изменён' : 'Новый пароль'} description={status === 'valid' ? 'Создайте новый пароль для вашего аккаунта.' : undefined} page="reset-password" loading={loading} footer={status !== 'success' ? <Link href="/auth/login">Вернуться ко входу</Link> : undefined}>
+    {status === 'checking' && <p className="auth-description" role="status">Проверяем ссылку…</p>}
+    {status === 'invalid' && <><AuthNotice>Ссылка недействительна или устарела. Запросите новую ссылку для сброса пароля.</AuthNotice><p className="auth-footer"><Link href="/auth/forgot-password">Запросить новую ссылку</Link></p></>}
+    {status === 'success' && <><p className="auth-description" role="status">Теперь можно войти с новым паролем.</p><p className="auth-footer"><Link className="mira-action mira-action-primary auth-submit" href="/auth/login">Войти</Link></p></>}
+    {status === 'valid' && <form onSubmit={submit} className="auth-form" noValidate aria-busy={loading}>
+      <div className="auth-fields">
+        <AuthField id="password" name="password" label="Новый пароль" placeholder="Новый пароль" type={visible ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={100} required disabled={loading} value={password} onChange={e => { setPassword(e.target.value); setFields({}); setMessage(''); }} hint="От 8 до 100 символов" error={fields.password} action={<PasswordVisibilityButton controlId="password" visible={visible} onToggle={() => setVisible(v => !v)} />} />
+        <AuthField id="confirm" name="confirm" label="Повторите пароль" placeholder="Повторите пароль" type={confirmVisible ? 'text' : 'password'} autoComplete="new-password" maxLength={100} required disabled={loading} value={confirm} onChange={e => { setConfirm(e.target.value); setFields(previous => ({ ...previous, confirm: undefined })); setMessage(''); }} error={fields.confirm} action={<PasswordVisibilityButton controlId="confirm" visible={confirmVisible} onToggle={() => setConfirmVisible(v => !v)} confirmation />} />
       </div>
-      <div
-        className="auth-warp" data-page="reset-password"
-        data-loading={loading ? 'true' : 'false'}
-        data-error={tokenStatus === 'invalid' ? 'true' : 'false'}
-      >
-        <div className="auth-card auth-portal">
-          <OrnamentFrame className="auth-preset-frame" />
-          <div className="auth-card-inner space-y-6">
-            <div className="text-center">
-              <h1 className="auth-title font-cinzel text-3xl font-bold text-white mb-2">Новый пароль</h1>
-              <p className="auth-subtitle text-gray-400">
-                {tokenStatus === 'checking' && 'Проверяем ссылку…'}
-                {tokenStatus === 'valid' && `Аккаунт: ${email}`}
-                {tokenStatus === 'invalid' && 'Ссылка недействительна'}
-              </p>
-            </div>
-
-            {message && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-gray-200 text-sm">
-                {message}
-              </div>
-            )}
-
-            {tokenStatus === 'valid' && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="auth-field">
-                  <Label htmlFor="password" className="text-base font-medium text-white mb-2 block">
-                    Новый пароль
-                  </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(val: any) => setPassword(val)}
-                    placeholder="••••••••"
-                    className="auth-input h-14 text-lg"
-                  />
-                </div>
-
-                <div className="auth-field">
-                  <Label htmlFor="confirm" className="text-base font-medium text-white mb-2 block">
-                    Повторите пароль
-                  </Label>
-                  <Input
-                    id="confirm"
-                    name="confirm"
-                    type="password"
-                    required
-                    value={confirm}
-                    onChange={(val: any) => setConfirm(val)}
-                    placeholder="••••••••"
-                    className="auth-input h-14 text-lg"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  loading={loading}
-                  className="mira-action mira-action-primary w-full"
-                >
-                  {loading ? 'Сохраняем…' : 'Сохранить пароль'}
-                </Button>
-              </form>
-            )}
-
-            <div className="text-center text-sm">
-              <Link href="/auth/login" className="text-mirastros-gold hover:text-mirastros-gold/80 transition font-medium">
-                Вернуться ко входу
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+      {message && <AuthNotice>{message}</AuthNotice>}
+      <button type="submit" disabled={loading} className="mira-action mira-action-primary auth-submit">{loading ? 'Сохраняем…' : 'Сохранить пароль'}</button>
+    </form>}
+  </AuthShell>;
 }
-
 export default function ResetPasswordPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="auth-shell auth-preset">
-      <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
-              <div className="auth-warp" data-page="reset-password">
-            <div className="auth-card auth-portal">
-          <OrnamentFrame className="auth-preset-frame" />
-              <div className="auth-card-inner text-center text-gray-300">Проверяем ссылку...</div>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <ResetPasswordContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<AuthShell title="Новый пароль" page="reset-password"><p className="auth-description" role="status">Проверяем ссылку…</p></AuthShell>}><ResetPasswordContent /></Suspense>;
 }
