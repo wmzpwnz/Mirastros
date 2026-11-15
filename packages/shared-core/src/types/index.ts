@@ -153,3 +153,5 @@ export interface Subscription {
 
 // Chat
 export * from './chat';
+
+export * from './welcome';

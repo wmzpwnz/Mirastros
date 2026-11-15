@@ -25,7 +25,7 @@ export const HeroSection = ({ id = 'hero', showScrollCue = true }: HeroSectionPr
       <p className={styles.description}>Астрология, нумерология, Таро и древние знания<br className={styles.desktopBreak} /> для осознанного знакомства с собой.</p>
       <nav className={styles.actions} aria-label="Вход в Mirastros">
         <Link href="/auth/login" className={`mira-action mira-action-primary ${styles.login}`}><span aria-hidden="true">✧</span> Вход</Link>
-        <Link href="/auth/register" className={`mira-action mira-action-secondary ${styles.register}`}><span aria-hidden="true">✦</span> Регистрация</Link>
+        <Link href="/auth/register" className={`mira-action mira-action-secondary ${styles.register}`}><span aria-hidden="true">✦</span> Начать свой путь</Link>
       </nav>
 
     </div>

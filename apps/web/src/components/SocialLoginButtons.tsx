@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 interface SocialLoginButtonsProps {
-  onSuccess?: (user: any) => void;
+  onSuccess?: (user: any) => void | Promise<void>;
   onError?: (error: any) => void;
 }
 
@@ -24,8 +24,8 @@ export function GoogleLoginButton({ onSuccess, onError }: SocialLoginButtonsProp
         localStorage.setItem('user', JSON.stringify(result.user));
       }
 
-      onSuccess?.(result.user);
-      router.push('/dashboard');
+      if (onSuccess) await onSuccess(result.user);
+      else router.push('/dashboard');
     } catch (error) {
       console.error('Google login error:', error);
       onError?.(error);
@@ -99,8 +99,8 @@ export function TelegramLoginButton({ onSuccess, onError }: SocialLoginButtonsPr
           if (typeof window !== 'undefined') {
             localStorage.setItem('user', JSON.stringify(result.user));
           }
-          onSuccess?.(result.user);
-          router.push('/dashboard');
+          if (onSuccess) await onSuccess(result.user);
+          else router.push('/dashboard');
         } catch (error) {
           console.error('Telegram login error:', error);
           onError?.(error);

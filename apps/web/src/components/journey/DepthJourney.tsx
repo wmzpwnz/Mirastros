@@ -171,7 +171,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
         if (view === 'list') { homeRequested.current = true; setView('flight'); }
         else window.scrollTo({ top: 1, behavior: 'instant' });
       }} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
-      <Link href={authenticated ? "/profile" : "/auth/login"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Вход"}</Link>
+      <Link href={authenticated ? "/profile" : "/auth/register"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Начать путь"}</Link>
     </header>
     <div className={styles.viewport}>
       <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-sanctuary.webp" alt="" /><span /></div>
@@ -197,7 +197,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
           <p className={styles.kicker}>Весь мир Mirastros — в одном аккаунте</p>
           <h2>{authenticated ? "Ваш мир всегда рядом" : "Продолжить свой путь"}</h2>
           <p>Сохранённые результаты, личные открытия<br />и ваши избранные направления.</p>
-          <Link className="mira-action mira-action-primary" href={authenticated ? "/history" : "/auth/register"} tabIndex={ending ? 0 : -1}>{authenticated ? "Моя история" : "Создать аккаунт"} <span aria-hidden="true">✧</span></Link>
+          <Link className="mira-action mira-action-primary" href={authenticated ? "/history" : "/auth/register"} tabIndex={ending ? 0 : -1}>{authenticated ? "Моя история" : "Начать свой путь"} <span aria-hidden="true">✧</span></Link>
           <Link href="/services" className={styles.catalog} tabIndex={ending ? 0 : -1}>Посмотреть все направления</Link>
           <Link href="/shop" className={styles.catalog} tabIndex={ending ? 0 : -1}>Магазин Mirastros</Link>
         </div>

@@ -39,7 +39,26 @@ with tempfile.TemporaryFile() as log:
             response = client.get('/auth/me', headers={'Authorization': f'Bearer {token}'})
             assert response.status_code == 200
             assert response.json()['email'] == email
-            print('Database/API readiness, registration, login and profile passed')
+            headers = {'Authorization': f'Bearer {token}'}
+            response = client.get('/auth/onboarding/state', headers=headers)
+            assert response.status_code == 200 and not response.json()['started']
+            response = client.post('/auth/onboarding/start', headers=headers)
+            assert response.status_code == 200, f'Welcome start: {response.status_code} {response.text}'
+            response = client.post('/auth/onboarding/step', headers=headers, json={'step': 'name', 'full_name': 'Александр'})
+            assert response.status_code == 200 and response.json()['portrait']['name']['verified']
+            response = client.post('/auth/onboarding/step', headers=headers, json={'step': 'birth', 'birth_date': '1990-01-01'})
+            assert response.status_code == 200 and response.json()['portrait']['number']['value'] == 3
+            response = client.post('/auth/onboarding/step', headers=headers, json={
+                'step': 'sky', 'birth_time': None,
+                'birth_location': {'city': 'Москва', 'country': 'Россия', 'latitude': 55.75, 'longitude': 37.62},
+            })
+            assert response.status_code == 200, response.text
+            assert response.json()['portrait']['sky']['ascendant'] is None
+            assert client.post('/auth/onboarding/complete', headers=headers).status_code == 200
+            assert client.get('/auth/onboarding/state', headers=headers).json()['completed']
+            assert client.get('/auth/me', headers=headers).json()['birth_date'] == '1990-01-01'
+            assert client.get('/auth/onboarding/state').status_code in (401, 403)
+            print('Database/API readiness, registration, login, shared profile and welcome flow passed')
     finally:
         process.terminate()
         try:
