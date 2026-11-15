@@ -1,0 +1,1 @@
+Splitting 1.0.6, MIT, https://github.com/shshaw/Splitting. Files copied unchanged from the installed locked npm dependency. Self-hosted to prevent third-party stylesheet outages from blocking first render and hydration.
