@@ -26,7 +26,7 @@ try {
   }
   assert(ready, 'Packaged server did not start');
   const assets = new Set();
-  for (const route of ['/', '/auth/login', '/services/tarot', '/tunnel-preview']) {
+  for (const route of ['/', '/auth/login', '/services/tarot', '/tunnel-preview', '/diagnostics.html']) {
     const response = await fetch(origin + route);
     assert.equal(response.status, 200, route);
     const html = await response.text();
