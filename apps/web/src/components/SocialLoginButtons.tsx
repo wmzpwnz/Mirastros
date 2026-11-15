@@ -10,7 +10,10 @@ interface SocialLoginButtonsProps {
   onError?: (error: unknown) => void;
 }
 function telegramData(): string {
-  return typeof window !== 'undefined' ? (window as any).Telegram?.WebApp?.initData || '' : '';
+  if (typeof window === 'undefined') return '';
+  // Telegram may open this Web shell without its SDK. The server still verifies
+  // the signed launch payload; its mere presence never grants authentication.
+  return (window as any).Telegram?.WebApp?.initData || new URLSearchParams(window.location.hash.slice(1)).get('tgWebAppData') || '';
 }
 export function GoogleLoginButton({ onSuccess, onError }: SocialLoginButtonsProps) {
   const router = useRouter();
