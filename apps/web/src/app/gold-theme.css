@@ -1,18 +1,6 @@
 /* The selected gold/violet Mirastros board. Shared semantic web tokens. */
-:root {
-  --mira-canvas:#080b1a;
-  --mira-surface:#1a123d;
-  --mira-raised:#2b1848;
-  --mira-violet:#6e3bae;
-  --mira-luminous:#b66cff;
-  --mira-ivory:#f0e6ff;
-  --mira-muted:#b8abc5;
-  --mira-gold:#ffd9a6;
-  --mira-metal:#c7a575;
-  --mira-line:#c7a57560;
-  --mira-line-faint:#c7a57524;
-  --mira-focus:#d8b8ff;
-}
+/* Semantic --mira-* properties come from shared design-system/tokens/brand.ts
+   and are applied by RootLayout in the server-rendered HTML. */
 .mira-action.mira-action-primary,.mira-action.mira-action-secondary {
   position:relative; display:inline-flex; align-items:center; justify-content:center;
   min-height:46px; padding:12px 28px; gap:13px; border:1px solid var(--mira-metal);

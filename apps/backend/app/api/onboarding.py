@@ -303,3 +303,182 @@ async def generate_onboarding_insight(
         )
     except Exception:
         return fallback
+
+# Short, deterministic welcome flow. Kept separate from the legacy AI insight
+# contract so older clients continue to work without changing their response shape.
+import asyncio
+import time as clock
+from datetime import datetime, timezone
+from enum import Enum
+
+import httpx
+from fastapi import HTTPException, Query
+from pydantic import field_validator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
+
+from app.core.database import get_db
+from app.models.analytics_event import AnalyticsEvent
+from app.services.welcome import build_portrait
+
+
+class WelcomeLocation(BaseModel):
+    city: str = Field(min_length=1, max_length=120)
+    country: str = Field(default="", max_length=120)
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+
+
+class WelcomeStep(str, Enum):
+    NAME = "name"
+    BIRTH = "birth"
+    SKY = "sky"
+
+
+class WelcomeStepRequest(BaseModel):
+    step: WelcomeStep
+    full_name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    birth_date: Optional[date] = None
+    birth_time: Optional[time] = None
+    birth_location: Optional[WelcomeLocation] = None
+
+    @field_validator("full_name")
+    @classmethod
+    def name_not_blank(cls, value):
+        if value is not None:
+            value = " ".join(value.split())
+            if not value:
+                raise ValueError("Укажите имя")
+        return value
+
+    @field_validator("birth_time")
+    @classmethod
+    def local_birth_time(cls, value):
+        if value is not None and value.tzinfo is not None:
+            raise ValueError("Укажите местное время рождения без смещения часового пояса")
+        return value
+
+    @field_validator("birth_date")
+    @classmethod
+    def valid_birth_date(cls, value):
+        if value and not date(1900, 1, 1) <= value <= date.today():
+            raise ValueError("Укажите дату рождения от 1900 года до сегодняшнего дня")
+        return value
+
+
+async def _welcome_state(user: User, db: AsyncSession) -> dict:
+    events = (await db.execute(select(AnalyticsEvent).where(
+        AnalyticsEvent.user_id == user.id,
+        AnalyticsEvent.event_type.in_(["welcome_started", "welcome_step", "welcome_completed"]),
+    ))).scalars().all()
+    completed = any(event.event_type == "welcome_completed" for event in events)
+    progress = max([int((event.event_metadata or {}).get("step", 0)) for event in events] or [0])
+    portrait = await run_in_threadpool(build_portrait, user.full_name, user.birth_date, user.birth_time, user.birth_location)
+    return {
+        "started": bool(events), "completed": completed, "next_step": min(progress + 1, 4),
+        "profile": {"full_name": user.full_name, "birth_date": user.birth_date,
+                    "birth_time": user.birth_time, "birth_location": user.birth_location, "zodiac_sign": user.zodiac_sign},
+        "portrait": portrait,
+    }
+
+
+async def _welcome_event(user: User, db: AsyncSession, kind: str, step: int = 0):
+    # Serialize duplicate submissions for one account, including multiple devices.
+    await db.execute(select(User.id).where(User.id == user.id).with_for_update())
+    exists = (await db.execute(select(AnalyticsEvent.id).where(
+        AnalyticsEvent.user_id == user.id, AnalyticsEvent.event_type == kind,
+    ).limit(1))).scalar_one_or_none()
+    if kind == "welcome_step" or exists is None:
+        db.add(AnalyticsEvent(user_id=user.id, event_type=kind, platform="web", event_metadata={"version": 1, "step": step}))
+    await db.commit()
+
+
+@router.get("/state")
+async def get_welcome_state(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    """Profile-backed progress works across devices; no personal data in event logs."""
+    return await _welcome_state(current_user, db)
+
+
+@router.post("/start")
+async def start_welcome(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    await _welcome_event(current_user, db, "welcome_started")
+    return await _welcome_state(current_user, db)
+
+
+@router.post("/step")
+async def save_welcome_step(data: WelcomeStepRequest, current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    if data.step == WelcomeStep.NAME:
+        if data.full_name is None:
+            raise HTTPException(422, "Укажите имя")
+        current_user.full_name = data.full_name
+        index = 1
+    elif data.step == WelcomeStep.BIRTH:
+        current_user.birth_date = data.birth_date
+        # Avoid leaving a stale calendar zodiac when the date is changed/removed.
+        current_user.zodiac_sign = _zodiac_from_date(data.birth_date)
+        index = 2
+    else:
+        current_user.birth_time = data.birth_time
+        current_user.birth_location = data.birth_location.model_dump() if data.birth_location else None
+        index = 3
+    if data.step == WelcomeStep.SKY:
+        from app.services.welcome import sky_reading
+        sky = await run_in_threadpool(sky_reading, current_user.birth_date, current_user.birth_time, current_user.birth_location)
+        if sky and sky.get("available"):
+            current_user.zodiac_sign = next((key for key, name in ZODIAC_RU.items() if sky["sun"] == [name]), None)
+    await _welcome_event(current_user, db, "welcome_step", index)
+    return await _welcome_state(current_user, db)
+
+
+@router.post("/complete")
+async def complete_welcome(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    await _welcome_event(current_user, db, "welcome_completed", 3)
+    return await _welcome_state(current_user, db)
+
+
+_location_cache: dict[str, tuple[float, list]] = {}
+_location_lock = asyncio.Lock()
+_location_last_request = 0.0
+
+
+@router.get("/places")
+async def search_welcome_places(q: str = Query(min_length=3, max_length=120), current_user: User = Depends(get_current_active_user)):
+    """Explicit search only (no autocomplete), cached and limited to 1 request/s.
+
+    Nominatim attribution is displayed by the client beside search results.
+    Birth date/name are never sent to the geocoder.
+    """
+    global _location_last_request
+    query = " ".join(q.split())
+    if len(query) < 3:
+        raise HTTPException(422, "Введите не менее трёх символов")
+    key = query.casefold()
+    cached = _location_cache.get(key)
+    if cached and clock.monotonic() - cached[0] < 3600:
+        return cached[1]
+    if _location_lock.locked() or clock.monotonic() - _location_last_request < 1:
+        raise HTTPException(429, "Подождите секунду и повторите поиск", headers={"Retry-After": "1"})
+    async with _location_lock:
+        _location_last_request = clock.monotonic()
+        try:
+            async with httpx.AsyncClient(timeout=7) as client:
+                response = await client.get("https://nominatim.openstreetmap.org/search", params={
+                    "q": query, "format": "jsonv2", "limit": 5, "addressdetails": 1,
+                    "accept-language": "ru",
+                }, headers={"User-Agent": "Mirastros/1.0 (https://vertigostra.ru; explicit birthplace search)"})
+                response.raise_for_status()
+                results = []
+                for item in response.json():
+                    address = item.get("address", {})
+                    city = address.get("city") or address.get("town") or address.get("village") or item.get("name")
+                    if not city:
+                        continue
+                    place = WelcomeLocation(city=city, country=address.get("country", ""), latitude=float(item["lat"]), longitude=float(item["lon"]))
+                    results.append({**place.model_dump(), "label": item["display_name"]})
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            raise HTTPException(503, "Поиск городов временно недоступен. Попробуйте ещё раз или добавьте место позже.")
+        if len(_location_cache) >= 128:
+            _location_cache.pop(next(iter(_location_cache)))
+        _location_cache[key] = (clock.monotonic(), results)
+        return results

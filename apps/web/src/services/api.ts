@@ -4,6 +4,7 @@
  */
 
 import config from '../config';
+import type { WelcomeState, WelcomeStep, WelcomePlace } from './welcomeTypes';
 import type {
   User,
   LoginCredentials,
@@ -402,6 +403,42 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ token, new_password: newPassword }),
     });
+  }
+
+  async getWelcomeState(): Promise<WelcomeState> {
+    return this.request('/auth/onboarding/state', { cache: 'no-store' });
+  }
+
+  async startWelcome(): Promise<WelcomeState> {
+    return this.request('/auth/onboarding/start', { method: 'POST' });
+  }
+
+  async saveWelcomeStep(data: WelcomeStep): Promise<WelcomeState> {
+    const state = await this.request<WelcomeState>('/auth/onboarding/step', { method: 'POST', body: JSON.stringify(data) });
+    // Other browser modules still read the account cache. Keep it in sync with
+    // the shared server profile without making storage failures undo a save.
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        user.fullName = state.profile.full_name;
+        user.birthDate = state.profile.birth_date ?? undefined;
+        user.birthTime = state.profile.birth_time ?? undefined;
+        user.birthLocation = state.profile.birth_location ?? undefined;
+        if (state.profile.zodiac_sign !== undefined) user.zodiacSign = state.profile.zodiac_sign ?? undefined;
+        for (const field of ['full_name', 'birth_date', 'birth_time', 'birth_location', 'zodiac_sign']) delete user[field];
+        this.setUser(user);
+      }
+    } catch { /* The server profile is already saved. */ }
+    return state;
+  }
+
+  async completeWelcome(): Promise<WelcomeState> {
+    return this.request('/auth/onboarding/complete', { method: 'POST' });
+  }
+
+  async searchBirthplaces(query: string): Promise<WelcomePlace[]> {
+    return this.request(`/auth/onboarding/places?q=${encodeURIComponent(query)}`);
   }
 
   async generateOnboardingInsight(data: OnboardingInsightRequest): Promise<OnboardingInsight> {

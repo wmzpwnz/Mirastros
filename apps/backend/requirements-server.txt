@@ -47,3 +47,6 @@ aiosmtplib==3.0.2
 sendgrid==6.11.0
 # Compatible with passlib 1.7.4
 bcrypt==4.0.1
+
+# Offline coordinate-to-IANA timezone lookup for personal welcome charts
+tzfpy==2.1.2

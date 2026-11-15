@@ -31,6 +31,13 @@ export default function LoginPage() {
     setError('');
   };
 
+  const continueAfterLogin = async () => {
+    try {
+      const welcome = await api.getWelcomeState();
+      router.push(welcome.started && !welcome.completed ? '/auth/onboarding' : '/dashboard');
+    } catch { router.push('/dashboard'); }
+  };
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError('');
@@ -38,7 +45,7 @@ export default function LoginPage() {
 
     try {
       await api.login(formData.email, formData.password);
-      router.push('/dashboard');
+      await continueAfterLogin();
     } catch (err: any) {
       const msg = err?.message || 'Ошибка входа. Проверьте email и пароль.';
       const isBackendUnreachable =
@@ -57,9 +64,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSocialSuccess = (user: any) => {
-    router.push('/dashboard');
-  };
+  const handleSocialSuccess = async () => { await continueAfterLogin(); };
 
   const handleSocialError = (error: any) => {
     const msg = error?.message || 'Ошибка входа. Попробуйте позже.';

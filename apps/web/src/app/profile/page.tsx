@@ -136,6 +136,11 @@ export default function ProfilePage() {
           <p className="text-gray-400">Управление вашим аккаунтом</p>
         </div>
 
+        <div className="mb-8 flex flex-wrap gap-4 text-mirastros-gold">
+          <Link href="/auth/onboarding?view=portrait">✧ Мой личный портрет</Link>
+          <Link href="/auth/onboarding?edit=1">Уточнить данные рождения →</Link>
+        </div>
+
         {/* Subscription Status */}
         <div className="mb-8 bg-white/5 border border-white/10 rounded-lg p-6">
           <div className="flex items-center justify-between">

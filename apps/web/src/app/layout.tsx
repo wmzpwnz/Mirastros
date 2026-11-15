@@ -10,6 +10,9 @@ import { Cinzel, Inter, Manrope } from 'next/font/google';
 import localFont from 'next/font/local';
 import { useEffect, useState, useCallback } from 'react';
 import Script from 'next/script';
+import { mirastrosBrand } from '../../../../packages/design-system/src/tokens/brand';
+
+const brandVariables = Object.fromEntries(Object.entries(mirastrosBrand).map(([key, value]) => [`--mira-${key}`, value])) as React.CSSProperties;
 
 const display = localFont({ src: '../fonts/CormorantGaramond-variable.woff2', weight: '400 600', variable: '--font-display', display: 'swap' });
 
@@ -61,7 +64,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="ru" className={`${cinzel.variable} ${inter.variable} ${manrope.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang="ru" style={brandVariables} className={`${cinzel.variable} ${inter.variable} ${manrope.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         {/* Splitting.js CSS */}
         <link
