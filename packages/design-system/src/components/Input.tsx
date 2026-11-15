@@ -30,7 +30,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
-    const baseStyles = 'w-full px-4 py-2 rounded border transition-colors focus:outline-none focus:ring-2 focus:ring-gold-500 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed';
+    const baseStyles = 'mira-input w-full px-4 py-2 rounded border transition-colors focus:outline-none focus:ring-2 focus:ring-gold-500 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed';
 
     const borderStyles = error
       ? 'border-error focus:border-error'

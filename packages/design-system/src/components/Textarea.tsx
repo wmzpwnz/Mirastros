@@ -50,7 +50,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ? 'border-error focus:border-error'
       : 'border-gray-600 focus:border-gold-500';
 
-    const combinedClassName = `${baseStyles} ${borderStyles} ${className || ''}`.trim();
+    const combinedClassName = `mira-textarea ${baseStyles} ${borderStyles} ${className || ''}`.trim();
 
     const charCount = String(value).length;
     const charCountPercentage = maxLength ? (charCount / maxLength) * 100 : 0;

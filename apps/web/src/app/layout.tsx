@@ -72,7 +72,7 @@ export default function RootLayout({
           href="/vendor/splitting/splitting.css"
         />
       </head>
-      <body className={`font-sans antialiased ${cinzel.variable} ${inter.variable} ${manrope.variable} ${display.variable}`} suppressHydrationWarning>
+      <body data-mira-theme="reference" className={`font-sans antialiased ${cinzel.variable} ${inter.variable} ${manrope.variable} ${display.variable}`} suppressHydrationWarning>
         {/* Preloader - показывается только при первом визите */}
         {isFirstLoad && showPreloader && (
           <Preloader onComplete={handlePreloaderComplete} />

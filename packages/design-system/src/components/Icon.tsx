@@ -69,7 +69,7 @@ export const Icon = forwardRef<SVGSVGElement, IconProps>(
     }
 
     const baseStyles = interactive ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
-    const combinedClassName = `${baseStyles} ${className || ''}`.trim();
+    const combinedClassName = `mira-icon ${baseStyles} ${className || ''}`.trim();
 
     return (
       <svg

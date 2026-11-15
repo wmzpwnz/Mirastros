@@ -82,3 +82,6 @@ export type { ChatInterfaceProps } from './ChatInterface';
 
 export { ClarifyButton } from './ClarifyButton';
 export type { ClarifyButtonProps } from './ClarifyButton';
+
+export * from './OrnamentFrame';
+export * from './PortalCover';

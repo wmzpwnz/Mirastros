@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { journeyModules } from '../../components/journey/catalog';
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { User } from '../../types';
@@ -12,6 +13,8 @@ export default function ServicesLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const accent = journeyModules.find(item => item.href === pathname)?.accent;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +60,7 @@ export default function ServicesLayout({
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 bg-black">
+    <div className="mira-module-page min-h-screen py-12 px-4" style={{ '--mira-module-accent': accent || '#9d78d4' } as React.CSSProperties}>
       {children}
     </div>
   );

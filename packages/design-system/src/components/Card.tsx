@@ -4,6 +4,7 @@
  */
 
 import React, { forwardRef } from 'react';
+import { OrnamentFrame } from './OrnamentFrame';
 import type { CardProps } from '../types';
 
 const variantStyles = {
@@ -39,7 +40,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     const paddingClass = paddingStyles[padding];
     const interactiveClass = interactive ? 'hover:border-gold-500 hover:shadow-lg cursor-pointer' : '';
 
-    const combinedClassName = `${baseStyles} ${variantClass} ${paddingClass} ${interactiveClass} ${className || ''}`.trim();
+    const combinedClassName = `mira-panel ${baseStyles} ${variantClass} ${paddingClass} ${interactiveClass} ${className || ''}`.trim();
 
     return (
       <div
@@ -62,6 +63,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
             : undefined
         }
       >
+        <OrnamentFrame className="mira-panel-frame" />
         {children}
       </div>
     );

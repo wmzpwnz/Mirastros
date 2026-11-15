@@ -10,6 +10,7 @@ import { PortalArtwork } from './PortalArtwork';
 import { journeyModules } from './catalog';
 import { activePortal, endingOpacity, heroOpacity, portalFrame, sceneMetrics, INTRO_SCREENS } from './depthModel';
 import styles from './DepthJourney.module.css';
+import { PortalCover } from '../../../../../packages/design-system/src/components/PortalCover';
 
 type View = 'flight' | 'list';
 const count = journeyModules.length;
@@ -65,7 +66,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
     const setters = cards.map(card => ({ z: gsap.quickSetter(card, 'z', 'px'), x: gsap.quickSetter(card, 'x', 'px'), opacity: gsap.quickSetter(card, 'opacity'), visible: false }));
 
     const draw = () => {
-      if (!drawing) return;
+      if (!drawing || !root.isConnected || !headerRef.current) return;
       const screens = state.screens;
       unitsRef.current = screens;
       const intro = heroOpacity(screens);
@@ -174,18 +175,16 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       <Link href={authenticated ? "/profile" : "/auth/register"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Начать путь"}</Link>
     </header>
     <div className={styles.viewport}>
-      <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-sanctuary.webp" alt="" /><span /></div>
+      <div className={styles.backdrop} aria-hidden="true"><img src="/images/mirastros-reference-desktop.webp" alt="" /><span /></div>
       {view === 'list' && <h1 className={styles.listTitle}>Ваш мир Mirastros</h1>}
       <OrnamentFrame className={styles.stageFrame} />
       <div ref={cameraRef} className={styles.camera} aria-label="Направления Mirastros">
         {journeyModules.map((item, i) => <article key={item.id} className={styles.card} data-portal={item.id} style={{ '--card-accent': item.accent } as CSSProperties}>
-          <div className={styles.cardSurface}>
-            <Link className={styles.cardLink} href={item.href} aria-label={`Открыть: ${item.title}`} />
-            <OrnamentFrame className={styles.cardFrame} />
-            <span className={styles.cardNumber} aria-hidden="true">✧ <span>{String(i + 1).padStart(2, '0')}</span> ✧</span>
-            <div className={styles.art}><PortalArtwork id={item.id} media={item.media} eager={i < 5} focused={view === 'list' || exploring && !ending && active === i} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} /></div>
-            <div className={styles.caption}><h2>{item.title}</h2><p>{item.subtitle}</p></div>
-            <span className={styles.cardArrow} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span>
+          <div className={styles.cardBody}>
+          <Link className={styles.cardLink} href={item.href} aria-label={`Открыть: ${item.title}`} />
+          <PortalCover title={item.title} description={item.subtitle} accent={item.accent} featured={view === 'flight'} artwork={
+            <PortalArtwork id={item.id} media={item.media} eager={i < 5} focused={view === 'list' || exploring && !ending && active === i} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} />
+          } />
           </div>
         </article>)}
       </div>

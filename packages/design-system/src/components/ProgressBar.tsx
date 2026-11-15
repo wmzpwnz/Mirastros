@@ -43,7 +43,7 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     const percentage = ((clampedValue - min) / (max - min)) * 100;
 
     const baseStyles = 'w-full bg-gray-800 rounded-full overflow-hidden';
-    const containerClassName = `${baseStyles} ${sizeStyles[size]} ${className || ''}`.trim();
+    const containerClassName = `mira-progress ${baseStyles} ${sizeStyles[size]} ${className || ''}`.trim();
 
     const progressStyles = `${variantStyles[variant]} ${
       animated ? 'transition-all duration-300' : ''

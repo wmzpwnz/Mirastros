@@ -58,7 +58,7 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
     if (!isVisible) return null;
 
     const baseStyles = 'flex items-center gap-3 p-4 rounded border transition-opacity';
-    const combinedClassName = `${baseStyles} ${typeStyles[type]} ${className || ''}`.trim();
+    const combinedClassName = `mira-toast ${baseStyles} ${typeStyles[type]} ${className || ''}`.trim();
 
     return (
       <div
@@ -66,6 +66,7 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
         className={combinedClassName}
         style={style}
         data-testid={testId}
+        data-tone={type}
         aria-label={ariaLabel || message}
         aria-describedby={ariaDescribedBy}
         role="alert"

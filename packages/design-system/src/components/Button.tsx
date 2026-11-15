@@ -42,7 +42,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const baseStyles = 'rounded font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-cosmic disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-2';
 
-    const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className || ''}`.trim();
+    const combinedClassName = `mira-action mira-button mira-action-${variant} ${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className || ''}`.trim();
 
     return (
       <button
@@ -53,6 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={combinedClassName}
         style={style}
         data-testid={testId}
+        data-size={size}
         aria-label={ariaLabel}
         aria-describedby={ariaDescribedBy}
         aria-busy={loading}

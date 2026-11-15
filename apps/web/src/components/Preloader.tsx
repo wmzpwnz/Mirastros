@@ -32,7 +32,7 @@ export const Preloader = ({ onComplete }: { onComplete?: () => void }) => {
     const assets = Promise.allSettled([
       image('/logo.png'),
       image('/images/preloader-circle.webp'),
-      image('/images/mirastros-sanctuary.webp'),
+      image(typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px), (max-width: 1024px) and (orientation: portrait)').matches ? '/images/mirastros-reference-mobile.webp' : '/images/mirastros-reference-desktop.webp'),
       document.fonts?.ready ?? Promise.resolve(),
     ]);
     void Promise.all([minimum, assets]).then(finish);
