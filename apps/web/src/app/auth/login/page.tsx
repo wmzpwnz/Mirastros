@@ -75,8 +75,8 @@ export default function LoginPage() {
     <div className="auth-shell auth-preset">
       <Link href="/" className="auth-brand-return" aria-label="На главную Mirastros"><Image src="/logo.png" alt="Mirastros" width={800} height={205} priority /></Link>
       <div className="auth-bg-wrapper" aria-hidden="true">
-        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img desktop-only" />
-        <img src="/images/mirastros-sanctuary.webp" alt="" className="auth-bg-img mobile-only" />
+        <img src="/images/mirastros-reference-desktop.webp" alt="" className="auth-bg-img desktop-only" />
+        <img src="/images/mirastros-reference-desktop.webp" alt="" className="auth-bg-img mobile-only" />
         <div className="auth-bg-overlay" />
         <div className="auth-bg-vignette" />
       </div>
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="mt-12">
               <div className="space-y-10">
                 <div className="auth-field">
-                  <Label htmlFor="email" className="text-base font-medium text-white mb-4 block">
+                  <Label htmlFor="email" className="auth-field-label text-base font-medium text-white mb-4 block">
                     Email
                   </Label>
                   <Input
@@ -115,13 +115,13 @@ export default function LoginPage() {
                     required
                     value={formData.email}
                     onChange={(val: any) => handleValueChange('email', val)}
-                    placeholder="your@email.com"
+                    placeholder="Email"
                     className="login-input h-14 text-lg"
                   />
                 </div>
 
                 <div className="auth-field">
-                  <Label htmlFor="password" className="text-base font-medium text-white mb-4 block">
+                  <Label htmlFor="password" className="auth-field-label text-base font-medium text-white mb-4 block">
                     Пароль
                   </Label>
                   <Input
@@ -131,7 +131,7 @@ export default function LoginPage() {
                     required
                     value={formData.password}
                     onChange={(val: any) => handleValueChange('password', val)}
-                    placeholder="••••••••"
+                    placeholder="Пароль"
                     className="login-input h-14 text-lg"
                   />
                 <PasswordVisibilityButton controlId="password" visible={passwordVisible} onToggle={() => setPasswordVisible(value => !value)} />

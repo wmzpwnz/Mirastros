@@ -10,8 +10,8 @@ export const HeroSection = ({ id = 'hero', showScrollCue = true }: HeroSectionPr
   <section id={id} className={`mira-section active ${styles.root}`} aria-labelledby="landing-title">
     <div className={`hero-bg-wrapper ${styles.background}`} aria-hidden="true">
       <picture>
-        <source media="(max-width: 600px)" srcSet="/images/mirastros-sanctuary.webp" />
-        <img className="hero-bg-img" src="/images/mirastros-sanctuary.webp" alt="" fetchPriority="high" decoding="async" />
+        <source media="(max-width: 600px), (max-width: 1024px) and (orientation: portrait)" srcSet="/images/mirastros-reference-mobile.webp" />
+        <img className="hero-bg-img" src="/images/mirastros-reference-desktop.webp" alt="" fetchPriority="high" decoding="async" />
       </picture>
     </div>
     <div className={`hero-overlay ${styles.overlay}`} aria-hidden="true" />

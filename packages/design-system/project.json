@@ -3,18 +3,33 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/design-system/src",
   "projectType": "library",
-  "tags": ["type:lib", "scope:shared"],
+  "tags": [
+    "type:lib",
+    "scope:shared"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/design-system",
         "main": "packages/design-system/src/index.ts",
         "tsConfig": "packages/design-system/tsconfig.lib.json",
         "assets": [
           "packages/design-system/*.md",
-          "packages/design-system/tailwind.preset.js"
+          "packages/design-system/tailwind.preset.js",
+          {
+            "glob": "**/*",
+            "input": "packages/design-system/src/styles",
+            "output": "src/styles"
+          },
+          {
+            "glob": "**/*",
+            "input": "packages/design-system/src/assets",
+            "output": "src/assets"
+          }
         ]
       }
     },

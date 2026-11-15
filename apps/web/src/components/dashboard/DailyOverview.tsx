@@ -104,7 +104,7 @@ export function DailyOverview({ user }: { user: User }) {
   return (
     <section className={`personal-hero-root ${styles.root}`} aria-labelledby="daily-overview-title">
       <div className={`personal-hero-bg ${styles.background}`} aria-hidden="true">
-        <img className="hero-bg-img" src="/images/mirastros-sanctuary.webp" alt="" />
+        <img className="hero-bg-img" src="/images/mirastros-reference-desktop.webp" alt="" />
       </div>
       <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
       <OrnamentFrame className={styles.screenFrame} />

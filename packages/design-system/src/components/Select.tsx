@@ -125,7 +125,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
       ? 'border-error focus:border-error'
       : 'border-gray-600 focus:border-gold-500';
 
-    const combinedClassName = `${baseStyles} ${borderStyles} ${className || ''}`.trim();
+    const combinedClassName = `mira-select ${baseStyles} ${borderStyles} ${className || ''}`.trim();
 
     return (
       <div
@@ -171,6 +171,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
             ref={containerRef}
             className="absolute top-full left-0 right-0 mt-1 bg-gray-800/95 backdrop-blur-md border border-gray-600 rounded shadow-lg z-50"
             role="listbox"
+              data-mira-select-menu
             aria-label={ariaLabel}
           >
             {searchable && (

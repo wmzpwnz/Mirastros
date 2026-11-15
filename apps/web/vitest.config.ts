@@ -13,6 +13,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@mirastros-universal/design-system': path.resolve(__dirname, '../../packages/design-system/src/index.ts'),
+      '@mirastros-universal/shared-core': path.resolve(__dirname, '../../packages/shared-core/src/index.ts'),
     },
   },
 });

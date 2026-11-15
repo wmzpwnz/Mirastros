@@ -35,7 +35,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const widthMatch = className?.match(/w-\d+|!w-\d+/);
     const heightMatch = className?.match(/h-\d+|!h-\d+/);
     const sizeClass = widthMatch || heightMatch ? '' : 'w-5 h-5';
-    const combinedClassName = `${baseStyles} ${borderStyles} ${className || ''}`.trim();
+    const combinedClassName = `mira-checkbox ${baseStyles} ${borderStyles} ${className || ''}`.trim();
 
     return (
       <div className="flex items-center gap-2" style={style}>

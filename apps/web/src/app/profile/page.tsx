@@ -120,7 +120,7 @@ export default function ProfilePage() {
     : undefined;
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="mira-profile-page min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-12">

@@ -9,7 +9,8 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts"
     },
-    "./tailwind": "./tailwind.preset.js"
+    "./tailwind": "./tailwind.preset.js",
+    "./styles/mirastros.css": "./src/styles/mirastros.css"
   },
   "scripts": {
     "storybook": "storybook dev -p 6006",
