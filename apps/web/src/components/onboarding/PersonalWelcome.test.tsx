@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { PersonalWelcome } from './PersonalWelcome';
 import type { WelcomeState } from '../../services/welcomeTypes';
@@ -84,7 +84,7 @@ it('keeps input and offers retry if saving fails', async () => {
   const input = await screen.findByLabelText('Ваше имя');
   fireEvent.change(input, { target: { value: 'Александр' } });
   fireEvent.click(screen.getByRole('button', { name: /Узнать значение/ }));
-  expect(await screen.findByRole('alert')).toHaveTextContent('Сеть недоступна');
+  expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось сохранить данные');
   expect(input).toHaveValue('Александр');
   expect(screen.getByRole('button', { name: /Узнать значение/ })).toBeEnabled();
 });
@@ -94,4 +94,47 @@ it('sends an unauthenticated visitor to login instead of leaving a loading scree
   mocks.state.mockRejectedValueOnce(new Error('Not authenticated'));
   render(<PersonalWelcome />);
   await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/auth/login'));
+});
+
+
+it('ignores an old city response without unlocking a newer search', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 3 });
+  let oldResult!: (value: unknown) => void;
+  let newResult!: (value: unknown) => void;
+  mocks.places.mockImplementationOnce(() => new Promise(resolve => { oldResult = resolve; }))
+    .mockImplementationOnce(() => new Promise(resolve => { newResult = resolve; }));
+  render(<PersonalWelcome />);
+  const input = await screen.findByLabelText('Город рождения');
+  fireEvent.change(input, { target: { value: 'Москва' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Найти' }));
+  fireEvent.change(input, { target: { value: 'Санкт-Петербург' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Найти' }));
+  await act(async () => oldResult([{ city: 'Москва', country: 'Россия', label: 'Москва, Россия', latitude: 55.75, longitude: 37.62 }]));
+  expect(screen.queryByRole('button', { name: 'Москва, Россия' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Ищем…' })).toBeDisabled();
+  await act(async () => newResult([{ city: 'Санкт-Петербург', country: 'Россия', label: 'Санкт-Петербург, Россия', latitude: 59.9, longitude: 30.3 }]));
+  expect(screen.getByRole('button', { name: 'Санкт-Петербург, Россия' })).toBeEnabled();
+  expect(screen.queryByRole('button', { name: 'Москва, Россия' })).toBeNull();
+});
+
+it('shows the saved birth data and marks unknown time explicitly in the portrait', async () => {
+  window.history.replaceState(null, '', '/auth/onboarding?view=portrait');
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, completed: true,
+    profile: { ...initial.profile, birth_date: '1990-07-01', birth_time: null, birth_location: { city: 'Москва', country: 'Россия', latitude: 55.75, longitude: 37.62 } } });
+  render(<PersonalWelcome />);
+  const review = await screen.findByRole('region', { name: 'Данные вашей карты' });
+  expect(review).toHaveTextContent('1 июля 1990');
+  expect(review).toHaveTextContent('Москва, Россия');
+  expect(review).toHaveTextContent('Неизвестно');
+});
+
+it('focuses the city field when the user has not selected a search result', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 3 });
+  render(<PersonalWelcome />);
+  const city = await screen.findByLabelText('Город рождения');
+  fireEvent.change(city, { target: { value: 'Москва' } });
+  fireEvent.click(screen.getByRole('button', { name: /Раскрыть моё небо/ }));
+  expect(city).toHaveFocus();
+  expect(city).toHaveAttribute('aria-invalid', 'true');
+  expect(city).toHaveAccessibleDescription('Нажмите «Найти» и выберите город из результатов или добавьте его позже.');
 });

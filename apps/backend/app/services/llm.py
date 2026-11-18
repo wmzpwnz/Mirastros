@@ -8,11 +8,15 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+class AIProviderUnavailable(RuntimeError):
+    """A server-side provider has not been configured; no request was sent."""
+
+
 class UnifiedLLMService:
     """Unified LLM Service using DeepSeek API with optimized streaming"""
     
     def __init__(self):
-        self.api_key = settings.DEEPSEEK_API_KEY
+        self.api_key = settings.DEEPSEEK_API_KEY.strip()
         self.api_url = settings.DEEPSEEK_API_URL
         self.model_name = settings.DEEPSEEK_MODEL
         self.is_loaded = bool(self.api_key)
@@ -40,6 +44,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         if not self.api_key:
             self.is_loaded = False
             return
+        self.is_loaded = False
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 # Test API with a simple request
@@ -59,7 +64,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
                     self.is_loaded = True
                     print(f"✅ DeepSeek API is available (model: {self.model_name})")
                 else:
-                    print(f"⚠️  DeepSeek API returned status {response.status_code}: {response.text}")
+                    print(f"⚠️  DeepSeek API returned status {response.status_code}")
         except Exception as e:
             print(f"⚠️  Could not connect to DeepSeek API: {e}")
             print(f"⚠️  Check your API key and network connection")
@@ -73,7 +78,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         stream: bool = False,
         fast_start: bool = False
     ) -> AsyncGenerator[str, None] | str:
-        """Generate response from Ollama with optimized streaming
+        """Generate a response through the configured server-side DeepSeek provider
         
         Args:
             prompt: User prompt
@@ -83,6 +88,9 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
             stream: Whether to stream the response
             fast_start: Enable fast-start mode for simple queries (30-40% speedup)
         """
+        if not self.api_key:
+            raise AIProviderUnavailable("AI provider is not configured")
+
         # Build full prompt with context
         full_prompt = ""
         if context:
@@ -123,8 +131,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
                     result = response.json()
                     return result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
                 else:
-                    error_text = response.text
-                    raise Exception(f"DeepSeek API error: {response.status_code} - {error_text}")
+                    raise RuntimeError(f"DeepSeek API returned HTTP {response.status_code}")
     
     async def _stream_generate_optimized(
         self,
@@ -178,8 +185,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
                         }
                     ) as response:
                         if response.status_code != 200:
-                            error_text = await response.aread()
-                            raise Exception(f"DeepSeek API error: {response.status_code} - {error_text.decode()}")
+                            raise RuntimeError(f"DeepSeek API returned HTTP {response.status_code}")
                         
                         async for line in response.aiter_lines():
                             if line:

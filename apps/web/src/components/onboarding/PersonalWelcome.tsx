@@ -7,8 +7,20 @@ import { api } from '../../services/api';
 import type { WelcomeLocation, WelcomePlace, WelcomePortrait, WelcomeState, WelcomeStep } from '../../services/welcomeTypes';
 import { MirastrosSeal, OrnamentFrame } from '../ornaments/OrnamentFrame';
 import styles from './PersonalWelcome.module.css';
+import { authError } from '../auth/authError';
 
 function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+function bringIntoView(element: HTMLElement | null) {
+  if (!element) return;
+  element.focus({ preventScroll: true });
+  const box = element.getBoundingClientRect();
+  if (box.height > 0 && (box.top < 24 || box.top > window.innerHeight * .65)) element.scrollIntoView({ block: 'start', behavior: 'auto' });
+}
+
+function displayBirthDate(value: string | null) {
+  return value ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${value}T12:00:00`)) : 'Можно добавить позже';
+}
 
 const steps = ['Ваше имя', 'Дата рождения', 'Место и время'];
 const headings = ['Как вас зовут?', 'Когда началась ваша история?', 'Где зажглась ваша звезда?'];
@@ -38,6 +50,7 @@ export function PersonalWelcome() {
   const [searchError, setSearchError] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [invalidField, setInvalidField] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const busy = useRef(false);
   const searchVersion = useRef(0);
@@ -49,6 +62,7 @@ export function PersonalWelcome() {
     async function load() {
       try {
         let value = await api.getWelcomeState();
+        if (!mounted) return;
         const params = new URLSearchParams(window.location.search);
         const portrait = params.get('view') === 'portrait';
         const editing = params.get('edit') === '1';
@@ -72,11 +86,11 @@ export function PersonalWelcome() {
       }
     }
     void load();
-    return () => { mounted = false; };
+    return () => { mounted = false; searchVersion.current++; };
   }, [router, attempt]);
 
-  useEffect(() => { if (state) heading.current?.focus({ preventScroll: true }); }, [step, !!state]);
-  useEffect(() => { if (revealed) reading.current?.focus({ preventScroll: true }); }, [revealed]);
+  useEffect(() => { if (state) bringIntoView(heading.current); }, [step, !!state]);
+  useEffect(() => { if (revealed) bringIntoView(reading.current); }, [revealed]);
 
   async function search() {
     if (searching) return;
@@ -88,44 +102,54 @@ export function PersonalWelcome() {
       const result = await api.searchBirthplaces(query);
       if (version === searchVersion.current) { setPlaces(result); setSearched(true); }
     } catch (cause) {
-      if (version === searchVersion.current) setSearchError(cause instanceof Error ? cause.message : 'Не удалось найти город. Попробуйте ещё раз.');
-    } finally { setSearching(false); }
+      if (version === searchVersion.current) setSearchError(authError(cause, 'Не удалось найти город. Попробуйте ещё раз.'));
+    } finally { if (version === searchVersion.current) setSearching(false); }
   }
+
+  function invalidateSearch() { searchVersion.current++; setSearching(false); setPlaces([]); setSearched(false); setSearchError(''); }
+  function validation(message: string, id: string) { setError(message); setInvalidField(id); document.getElementById(id)?.focus(); }
 
   async function save(skip = false) {
     if (busy.current || !state) return;
     let payload: WelcomeStep;
     if (step === 1) {
-      if (!name.trim()) { setError('Укажите, как к вам обращаться.'); return; }
+      if (!name.trim()) { validation('Укажите, как к вам обращаться.', 'welcome-name'); return; }
       payload = { step: 'name', full_name: name.trim() };
     } else if (step === 2) {
-      if (!skip && (!birthDate || birthDate < '1900-01-01' || birthDate > todayISO())) { setError('Укажите дату рождения от 1900 года до сегодняшнего дня.'); return; }
+      if (!skip && (!birthDate || birthDate < '1900-01-01' || birthDate > todayISO())) { validation('Укажите дату рождения от 1900 года до сегодняшнего дня.', 'welcome-date'); return; }
       payload = { step: 'birth', birth_date: skip ? state.profile.birth_date : birthDate };
     } else {
-      if (!skip && city.trim() && !location) { setError('Нажмите «Найти» и выберите город из результатов или добавьте его позже.'); return; }
-      if (!skip && !unknownTime && !/^\d{2}:\d{2}$/.test(birthTime)) { setError('Укажите время рождения или выберите «Не знаю время».'); return; }
+      if (!skip && city.trim() && !location) { validation('Нажмите «Найти» и выберите город из результатов или добавьте его позже.', 'welcome-city'); return; }
+      if (!skip && !unknownTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(birthTime)) { validation('Укажите время рождения или выберите «Не знаю время».', 'welcome-time'); return; }
       payload = { step: 'sky', birth_time: skip ? state.profile.birth_time : unknownTime ? null : birthTime, birth_location: skip ? state.profile.birth_location : location };
     }
-    busy.current = true; setSaving(true); setError('');
+    busy.current = true; setSaving(true); setError(''); setInvalidField(null);
     try {
       const result = await api.saveWelcomeStep(payload);
       setState(result);
+      setName(result.profile.full_name);
+      setBirthDate(result.profile.birth_date || '');
+      setBirthTime(result.profile.birth_time?.slice(0, 5) || '');
+      setUnknownTime(!result.profile.birth_time);
+      setLocation(result.profile.birth_location);
+      setCity(result.profile.birth_location?.city || '');
+      invalidateSearch();
       if (skip) { setStep(s => s + 1); setRevealed(false); }
       else { setRevealed(true); if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); }
-    } catch (cause) { const message = cause instanceof Error ? cause.message : 'Не удалось сохранить. Попробуйте ещё раз.'; if (/401|403|not authenticated|требуется авторизация/i.test(message)) router.replace('/auth/login'); else setError(message); }
+    } catch (cause) { const message = cause instanceof Error ? cause.message : 'Не удалось сохранить. Попробуйте ещё раз.'; if (/401|403|not authenticated|требуется авторизация/i.test(message)) router.replace('/auth/login'); else setError(authError(cause, 'Не удалось сохранить данные. Они остались в форме — попробуйте ещё раз.')); }
     finally { busy.current = false; setSaving(false); }
   }
 
   async function enter() {
     if (busy.current) return;
-    busy.current = true; setSaving(true); setError('');
+    busy.current = true; setSaving(true); setError(''); setInvalidField(null);
     try { await api.completeWelcome(); router.push('/dashboard'); }
     catch { setError('Не удалось завершить знакомство. Ваши данные сохранены — попробуйте ещё раз.'); }
     finally { busy.current = false; setSaving(false); }
   }
 
-  function next() { setRevealed(false); setError(''); setStep(s => s + 1); }
-  function back() { setRevealed(false); setError(''); setStep(s => Math.max(1, s - 1)); }
+  function next() { invalidateSearch(); setInvalidField(null); setRevealed(false); setError(''); setStep(s => s + 1); }
+  function back() { invalidateSearch(); setInvalidField(null); setRevealed(false); setError(''); setStep(s => Math.max(1, s - 1)); }
   function submit(event: FormEvent) { event.preventDefault(); void save(); }
 
   return <main className={styles.root} data-welcome data-step={step} data-lenis-prevent>
@@ -150,20 +174,20 @@ export function PersonalWelcome() {
             <section className={styles.reading} ref={reading} tabIndex={-1} aria-label="Послание Mirastros"><Reading portrait={state.portrait} step={step} /></section>
             <button className={`mira-action mira-action-primary ${styles.primary}`} onClick={next}>{step === 1 ? 'К дате рождения' : step === 2 ? 'К месту рождения' : 'Открыть мой портрет'} <span aria-hidden="true">→</span></button>
             <button className={styles.secondary} onClick={() => setRevealed(false)}>Изменить ответ</button>
-          </> : <form onSubmit={submit} aria-busy={saving}>
-            {step === 1 && <div className={styles.field}><label htmlFor="welcome-name">Ваше имя</label><input id="welcome-name" autoComplete="given-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} required maxLength={255} disabled={saving} placeholder="Как к вам обращаться" /><p className={styles.note}>Мы уже подставили имя из аккаунта. Его можно изменить.</p></div>}
-            {step === 2 && <div className={styles.field}><label htmlFor="welcome-date">Дата рождения</label><input id="welcome-date" type="date" disabled={saving} min="1900-01-01" max={todayISO()} value={birthDate} onChange={e => { setBirthDate(e.target.value); setError(''); }} required /><p className={styles.note}>Одна дата для нумерологии, матрицы судьбы и астрологии.</p></div>}
+          </> : <form onSubmit={submit} noValidate aria-busy={saving}>
+            {step === 1 && <div className={styles.field}><label htmlFor="welcome-name">Ваше имя</label><input id="welcome-name" aria-invalid={Boolean(error) && invalidField === "welcome-name"} aria-describedby={error && invalidField === "welcome-name" ? "welcome-error" : undefined} autoComplete="given-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} required maxLength={255} disabled={saving} placeholder="Как к вам обращаться" /><p className={styles.note}>Мы уже подставили имя из аккаунта. Его можно изменить.</p></div>}
+            {step === 2 && <div className={styles.field}><label htmlFor="welcome-date">Дата рождения</label><input id="welcome-date" aria-invalid={Boolean(error) && invalidField === "welcome-date"} aria-describedby={error && invalidField === "welcome-date" ? "welcome-error" : undefined} type="date" disabled={saving} min="1900-01-01" max={todayISO()} value={birthDate} onChange={e => { setBirthDate(e.target.value); setError(''); }} required /><p className={styles.note}>Одна дата для нумерологии, матрицы судьбы и астрологии.</p></div>}
             {step === 3 && <>
-              <div className={styles.field}><label htmlFor="welcome-city">Город рождения</label><div className={styles.search}><input id="welcome-city" disabled={saving} autoComplete="off" value={city} maxLength={120} placeholder="Город и страна" onChange={e => { setCity(e.target.value); setLocation(null); setPlaces([]); setSearched(false); setSearchError(''); setError(''); searchVersion.current++; }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void search(); } }} /><button type="button" onClick={() => void search()} disabled={searching || saving}>{searching ? 'Ищем…' : 'Найти'}</button></div>
+              <div className={styles.field}><label htmlFor="welcome-city">Город рождения</label><div className={styles.search}><input id="welcome-city" aria-invalid={Boolean(error) && invalidField === "welcome-city"} aria-describedby={error && invalidField === "welcome-city" ? "welcome-error" : undefined} disabled={saving} autoComplete="off" value={city} maxLength={120} placeholder="Город и страна" aria-controls={places.length ? "welcome-places" : undefined} onChange={e => { setCity(e.target.value); setLocation(null); invalidateSearch(); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void search(); } }} /><button type="button" onClick={() => void search()} disabled={searching || saving}>{searching ? 'Ищем…' : 'Найти'}</button></div>
                 {location && <p className={styles.selected}>✧ {location.city}{location.country ? `, ${location.country}` : ''}</p>}
-                {places.length > 0 && <ul className={styles.places} aria-label="Найденные места">{places.map((place, i) => <li key={`${place.latitude}-${place.longitude}-${i}`}><button type="button" onClick={() => { setLocation({ city: place.city, country: place.country, latitude: place.latitude, longitude: place.longitude }); setCity(place.city); setPlaces([]); setSearched(false); setError(''); }}>{place.label}</button></li>)}</ul>}
+                {places.length > 0 && <ul id="welcome-places" className={styles.places} aria-label="Найденные места">{places.map((place, i) => <li key={`${place.latitude}-${place.longitude}-${i}`}><button type="button" disabled={saving} onClick={() => { invalidateSearch(); setLocation({ city: place.city, country: place.country, latitude: place.latitude, longitude: place.longitude }); setCity(place.city); setPlaces([]); setSearched(false); setError(''); }}>{place.label}</button></li>)}</ul>}
                 {searched && !places.length && !location && <p role="status" className={styles.note}>Город не найден. Добавьте страну к запросу или заполните позже.</p>}
                 {searchError && <p role="alert" className={styles.error}>{searchError}</p>}
                 <p className={styles.attribution}>Поиск: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a></p>
               </div>
-              <div className={styles.field}><span className={styles.fieldLabel}>Время рождения</span><label className={styles.check}><input type="checkbox" disabled={saving} checked={unknownTime} onChange={e => { setUnknownTime(e.target.checked); setError(''); }} />Не знаю время</label>{!unknownTime && <input id="welcome-time" aria-label="Точное время рождения" type="time" disabled={saving} value={birthTime} onChange={e => { setBirthTime(e.target.value); setError(''); }} required />}<p className={styles.note}>Точное время нужно для асцендента. Его можно добавить позже.</p></div>
+              <div className={styles.field}><span className={styles.fieldLabel}>Время рождения</span><label className={styles.check}><input type="checkbox" disabled={saving} checked={unknownTime} onChange={e => { setUnknownTime(e.target.checked); setError(''); }} />Не знаю время</label>{!unknownTime && <input id="welcome-time" aria-invalid={Boolean(error) && invalidField === "welcome-time"} aria-describedby={error && invalidField === "welcome-time" ? "welcome-error" : undefined} aria-label="Точное время рождения" type="time" disabled={saving} value={birthTime} onChange={e => { setBirthTime(e.target.value); setError(''); }} required />}<p className={styles.note}>Точное время нужно для асцендента. Его можно добавить позже.</p></div>
             </>}
-            {error && <p role="alert" className={styles.error}>{error}</p>}
+            {error && <p id="welcome-error" role="alert" className={styles.error}>{error}</p>}
             <button className={`mira-action mira-action-primary ${styles.primary}`} type="submit" disabled={saving || searching}>{saving ? 'Открываем ваш знак…' : step === 1 ? 'Узнать значение имени' : step === 2 ? 'Открыть моё число' : 'Раскрыть моё небо'} <span aria-hidden="true">✧</span></button>
             {step > 1 && <button type="button" className={styles.secondary} disabled={saving} onClick={() => void save(true)}>Добавлю позже</button>}
           </form>}
@@ -172,15 +196,21 @@ export function PersonalWelcome() {
           <span className={styles.eyebrow}>Ваш личный портрет</span>
           <h1 ref={heading} tabIndex={-1}>{state.portrait.name.name},<br />ваша карта открыта</h1>
           <p className={styles.summary}>{state.portrait.summary}</p>
+          <section className={styles.profileReview} aria-label="Данные вашей карты">
+            <h2>Данные вашей карты</h2>
+            <dl><div><dt>Дата рождения</dt><dd>{displayBirthDate(state.profile.birth_date)}</dd></div>
+            <div><dt>Место рождения</dt><dd>{state.profile.birth_location ? [state.profile.birth_location.city, state.profile.birth_location.country].filter(Boolean).join(', ') : 'Можно добавить позже'}</dd></div>
+            <div><dt>Время рождения</dt><dd>{state.profile.birth_time?.slice(0, 5) || 'Неизвестно'}</dd></div></dl>
+          </section>
           <div className={styles.portrait}>
             <article><span className={styles.readingLabel}>✧ Ваше имя</span><h2>{state.portrait.name.name}</h2><p>{state.portrait.name.origin}</p></article>
             {state.portrait.number && <article><span className={styles.readingLabel}>✦ Число жизненного пути</span><h2>{state.portrait.number.value} · {state.portrait.number.title}</h2></article>}
             {state.portrait.sky?.available && <article><span className={styles.readingLabel}>☽ Ваше небо</span><p>Солнце: {state.portrait.sky.sun?.join(' / ')} · Луна: {state.portrait.sky.moon?.join(' / ')}{state.portrait.sky.ascendant ? ` · Асцендент: ${state.portrait.sky.ascendant}` : ''}</p>{!state.portrait.sky.time_known && <p className={styles.note}>{state.portrait.sky.note}</p>}</article>}
           </div>
           <p className={styles.note}>Символический портрет для личных наблюдений. Данные сохранены в вашем профиле.</p>
-          {error && <p role="alert" className={styles.error}>{error}</p>}
+          {error && <p id="welcome-error" role="alert" className={styles.error}>{error}</p>}
           <button className={`mira-action mira-action-primary ${styles.primary}`} onClick={() => void enter()} disabled={saving}>{saving ? 'Открываем ваш день…' : 'Открыть мой день'} <span aria-hidden="true">↗</span></button>
-          <Link className={styles.secondary} href="/auth/onboarding?edit=1" onClick={e => { e.preventDefault(); window.history.replaceState(null, '', '/auth/onboarding?edit=1'); setRevealed(false); setStep(1); }}>Уточнить мои данные</Link>
+          <Link className={styles.secondary} href="/auth/onboarding?edit=1" onClick={e => { e.preventDefault(); window.history.replaceState(null, '', '/auth/onboarding?edit=1'); invalidateSearch(); setError(''); setInvalidField(null); setRevealed(false); setStep(1); }}>Уточнить мои данные</Link>
         </>}
       </div>
     </div>
