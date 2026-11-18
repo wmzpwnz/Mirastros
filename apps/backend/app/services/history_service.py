@@ -213,11 +213,22 @@ async def delete_consultation(
     except (ValueError, TypeError):
         return False
     stmt = delete(model).where(
-        and_(model.id == uid, model.user_id == user_id)
+        and_(model.id == uid, model.user_id == UUID(str(user_id)))
     )
     result = await db.execute(stmt)
+    deleted = result.rowcount > 0
+    if deleted:
+        from app.models.chat_conversation import ChatConversation
+        from sqlalchemy.orm import selectinload
+        saved = (await db.execute(select(ChatConversation).where(
+            ChatConversation.user_id == UUID(str(user_id)),
+            ChatConversation.service_type == 'result-explanation:' + consultation_type,
+            ChatConversation.reading_id == str(uid),
+        ).options(selectinload(ChatConversation.messages)))).scalars().all()
+        for explanation in saved:
+            await db.delete(explanation)
     await db.commit()
-    return result.rowcount > 0
+    return deleted
 
 
 async def get_history_stats(db: AsyncSession, user_id: str) -> dict:

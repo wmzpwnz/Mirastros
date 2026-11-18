@@ -15,7 +15,7 @@ from app.services.embedding import embedding_service
 from app.core.advanced_monitoring import metrics_collector
 from app.core.alerting import start_monitoring, initialize_standard_alerts
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.api import ai, documents, auth, social_auth, subscriptions, natal_chart, runes, tarot, iching, lenormand, numerology, destiny_matrix, dream, transits, synastry, horary, chakra, solar_return, karmic, mandala, chat, journal, shop, payments, admin, analytics, health, access, password_reset, email_verification, notifications, horoscope, lunar, crystals, rituals, astro, history, onboarding
+from app.api import ai, documents, auth, social_auth, subscriptions, natal_chart, runes, tarot, iching, lenormand, numerology, destiny_matrix, dream, transits, synastry, horary, chakra, solar_return, karmic, mandala, chat, journal, shop, payments, admin, analytics, health, access, password_reset, email_verification, notifications, horoscope, lunar, crystals, rituals, astro, history, onboarding, explanations
 
 settings = get_settings()
 
@@ -213,6 +213,7 @@ app.include_router(notifications.router)
 app.include_router(admin.router)
 app.include_router(analytics.router)
 app.include_router(history.router)
+app.include_router(explanations.router)
 
 @app.get("/")
 async def root():

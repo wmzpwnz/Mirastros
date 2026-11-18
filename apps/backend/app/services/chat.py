@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 
+from app.core.config import get_settings
 from app.models.chat_conversation import ChatConversation, ChatMessage
 from app.models.user import User
 from app.services.llm import UnifiedLLMService
@@ -29,6 +30,10 @@ class ChatService:
         context_data: Optional[Dict[str, Any]] = None
     ) -> ChatConversation:
         """Create a new chat conversation"""
+        if service_type and service_type.startswith("result-explanation:"):
+            raise ValueError("Reserved result explanation service")
+        if not get_settings().LEGACY_AI_CHAT_ENABLED:
+            raise ValueError("Open-ended AI chat is disabled")
         conversation = ChatConversation(
             user_id=user_id,
             service_type=service_type,
@@ -92,6 +97,12 @@ class ChatService:
         if not conversation:
             raise ValueError("Conversation not found")
         
+        if (conversation.service_type or "").startswith("result-explanation:"):
+            raise ValueError("Use the bounded result explanation endpoint")
+
+        if not get_settings().LEGACY_AI_CHAT_ENABLED:
+            raise ValueError("Open-ended AI chat is disabled")
+
         # Save user message
         user_message = ChatMessage(
             conversation_id=conversation_id,

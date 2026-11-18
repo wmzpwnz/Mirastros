@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ClarifyButton } from '../../../components/ClarifyButton';
 import { api } from '../../../services/api';
 
 const spreadTypes = [
@@ -19,6 +20,7 @@ export default function TarotPage() {
   const [error, setError] = useState('');
 
   const handleGetReading = async () => {
+    if (loading) return;
     if (!question.trim()) {
       setError('Пожалуйста, задайте вопрос');
       return;
@@ -52,7 +54,7 @@ export default function TarotPage() {
             Таро
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Задайте вопрос картам Таро и получите мистическое руководство от AI
+            Задайте вопрос и откройте символический смысл выпавших карт
           </p>
         </div>
 
@@ -93,7 +95,7 @@ export default function TarotPage() {
               <h2 className="font-cinzel text-2xl font-bold text-white mb-4">
                 Задайте вопрос
               </h2>
-              <textarea
+              <textarea aria-label="Ваш вопрос картам" maxLength={1000}
                 value={question}
                 onChange={(e) => {
                   setQuestion(e.target.value);
@@ -166,7 +168,7 @@ export default function TarotPage() {
                 {/* Interpretation */}
                 <div className="mb-6">
                   <h3 className="font-cinzel text-xl font-bold text-white mb-4">
-                    Толкование
+                    Значения карт
                   </h3>
                   <div className="prose prose-invert max-w-none">
                     <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
@@ -174,6 +176,8 @@ export default function TarotPage() {
                     </p>
                   </div>
                 </div>
+
+                <ClarifyButton contextType="tarot" contextData={reading} />
 
                 {/* Actions */}
                 <div className="flex gap-4">
@@ -205,8 +209,8 @@ export default function TarotPage() {
           </h3>
           <p className="text-gray-400 text-sm leading-relaxed">
             Таро — это древняя система гадания, использующая 78 карт для получения
-            инсайтов о прошлом, настоящем и будущем. Наш AI-оракул интерпретирует
-            карты с учетом вашего вопроса и текущей жизненной ситуации.
+            инсайтов о прошлом, настоящем и будущем. Базовые значения помогают рассмотреть символы карт.
+            Отдельное пояснение Mirastros открывается кнопкой под результатом.
           </p>
         </div>
       </div>

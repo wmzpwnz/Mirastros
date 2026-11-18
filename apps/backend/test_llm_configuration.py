@@ -39,7 +39,7 @@ async def test_configured_request_uses_server_credentials_and_model(monkeypatch)
         return httpx.Response(200, json={"choices": [{"message": {"content": "Символическое пояснение"}}]})
 
     monkeypatch.setattr(llm.httpx, "AsyncClient", lambda **kwargs: client_type(transport=httpx.MockTransport(response)))
-    assert await service.generate("Explain this calculated result", max_tokens=120) == "Символическое пояснение"
+    assert await service.generate("Explain this calculated result", max_tokens=120, purpose="result_explanation") == "Символическое пояснение"
     assert len(calls) == 1
 
 
@@ -50,7 +50,7 @@ async def test_provider_failure_does_not_expose_its_raw_body(monkeypatch):
     client_type = httpx.AsyncClient
     monkeypatch.setattr(llm.httpx, "AsyncClient", lambda **kwargs: client_type(transport=httpx.MockTransport(lambda request: httpx.Response(401, text="fixture-sensitive-upstream-body"))))
     with pytest.raises(RuntimeError, match="HTTP 401") as error:
-        await service.generate("Explain this result")
+        await service.generate("Explain this result", purpose="result_explanation")
     assert "fixture-sensitive" not in str(error.value)
 
 
@@ -63,3 +63,15 @@ async def test_failed_provider_probe_is_not_reported_as_loaded(monkeypatch, caps
     await service.load_model()
     assert not service.is_loaded
     assert "fixture-sensitive" not in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_adding_key_does_not_activate_legacy_unbounded_generation(monkeypatch):
+    monkeypatch.setattr(llm.settings, "DEEPSEEK_API_KEY", "fixture-not-a-secret")
+    monkeypatch.setattr(llm.settings, "AI_RESULT_EXPLANATIONS_ONLY", True)
+    service = llm.UnifiedLLMService()
+    client = Mock(side_effect=AssertionError("Legacy generation must not call provider"))
+    monkeypatch.setattr(llm.httpx, "AsyncClient", client)
+    with pytest.raises(llm.AIProviderUnavailable, match="bounded"):
+        await service.generate("An old endpoint's unbounded request")
+    client.assert_not_called()

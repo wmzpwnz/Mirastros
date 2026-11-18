@@ -35,7 +35,7 @@ class TarotReadingRequest(BaseModel):
     )
     question: Optional[str] = Field(
         None,
-        description="Optional question for the reading"
+        max_length=1000, description="Optional question for the reading"
     )
     
     class Config:
@@ -60,7 +60,7 @@ class TarotReadingResponse(BaseModel):
     )
     reading_id: Optional[str] = Field(
         None,
-        description="ID of the reading for chat context"
+        description="ID of the saved reading for bounded result explanations"
     )
     
     class Config:
