@@ -1,103 +1,83 @@
-/**
- * Clarify with Mirastros Button Component
- * Displays a button to open the AI chat with service context
- */
-
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { ChatInterface } from './ChatInterface';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { api } from '../services/api';
+import type { ExplanationKind, ResultExplanation } from '../../../../packages/shared-core/src/types/explanation';
+import styles from './ClarifyButton.module.css';
 
 export interface ClarifyButtonProps {
-  onClarify: () => void;
+  onClarify?: () => void;
   contextType: string;
   contextData: any;
-  available?: boolean;
+  available?: boolean; // Compatibility only: the server decides access.
   className?: string;
 }
-
-export const ClarifyButton: React.FC<ClarifyButtonProps> = ({
-  onClarify,
-  contextType,
-  contextData,
-  available = true,
-  className = '',
-}) => {
-  const [chatOpen, setChatOpen] = useState(false);
-  const context = useMemo(() => ({ type: contextType, title: 'интерпретацией', data: contextData }), [contextType, contextData]);
-  if (!available) {
-    return (
-      <div className={`bg-gradient-to-r from-gray-800/50 to-gray-700/50 border border-gray-700 rounded-lg p-6 ${className}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-cinzel text-xl font-bold text-gray-400 mb-2">
-              Есть вопросы о вашем результате?
-            </h3>
-            <p className="text-gray-500 text-sm">
-              Обновитесь до Premium или Platinum для доступа к AI-ассистенту
-            </p>
-          </div>
-          <div className="inline-flex items-center space-x-2 px-6 py-3 bg-gray-800 text-gray-400 rounded-lg border border-gray-700 cursor-not-allowed">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-            <span>Уточнить с Mirastros</span>
-            <span className="text-xs bg-mirastros-gold text-black px-2 py-0.5 rounded">
-              Premium
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-    <div className={`bg-gradient-to-r from-mirastros-gold/10 to-mirastros-gold/5 border border-mirastros-gold/30 rounded-lg p-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-cinzel text-xl font-bold text-white mb-2">
-            Есть вопросы о вашем результате?
-          </h3>
-          <p className="text-gray-400 text-sm">
-            Задайте уточняющие вопросы AI-ассистенту Mirastros
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            onClarify();
-            setChatOpen(true);
-          }}
-          className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-mirastros-gold to-mirastros-gold/80 text-black rounded-lg font-semibold hover:from-mirastros-gold/90 hover:to-mirastros-gold/70 transition-all duration-300 shadow-lg hover:shadow-mirastros-gold/50"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <span>Уточнить с Mirastros</span>
-        </button>
-      </div>
-    </div>
-    <ChatInterface context={context} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-    </>
-  );
+const supported = new Set(['tarot', 'numerology', 'iching', 'dreams', 'lenormand', 'synastry']);
+const reasons: Record<string, string> = {
+  subscription_required: 'Пояснения доступны с действующей подпиской Premium или Platinum.',
+  not_configured: 'Пояснения Mirastros пока недоступны. Ваш результат сохранён.',
+  daily_limit: 'На сегодня лимит пояснений исчерпан. Сохранённый ответ останется здесь.',
+  result_limit: 'Для этого результата пояснение и уточнение уже использованы.',
 };
+
+export function ClarifyButton({ contextType, contextData, className = '' }: ClarifyButtonProps) {
+  const kind = (contextType === 'dream' ? 'dreams' : contextType) as ExplanationKind;
+  const id: string | undefined = contextData?.reading_id || contextData?.consultation_id || contextData?.id;
+  const usable = supported.has(kind) && typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id);
+  const [state, setState] = useState<ResultExplanation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [question, setQuestion] = useState('');
+  const [asking, setAsking] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const request = useRef(false);
+  const generation = useRef(0);
+  const answer = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const version = ++generation.current;
+    setState(null); setError(''); setQuestion(''); setAsking(false); setLoading(false); request.current = false;
+    if (!usable || !id) return;
+    void api.getResultExplanation(kind, id).then(value => { if (version === generation.current) setState(value); })
+      .catch(() => { if (version === generation.current) setError('Не удалось проверить доступ к пояснению.'); });
+    return () => { generation.current++; };
+  }, [kind, id, usable, attempt]);
+  async function explain(followup = false) {
+    if (request.current || !id || !state || (followup ? !state.can_clarify : !state.available)) return;
+    if (followup && !question.trim()) { setError('Напишите один вопрос об этом результате.'); return; }
+    const version = generation.current;
+    request.current = true; setLoading(true); setError('');
+    try {
+      const value = await api.explainResult(kind, id, followup ? question.trim() : undefined);
+      if (version === generation.current) {
+        setState(value); setAsking(false); setQuestion('');
+        requestAnimationFrame(() => answer.current?.focus({ preventScroll: true }));
+      }
+    } catch {
+      if (version === generation.current) {
+        setError('Не удалось получить пояснение. Попробуйте позже — ваш результат сохранён.');
+        try { const value = await api.getResultExplanation(kind, id); if (version === generation.current) setState(value); } catch { /* Keep the previous readable state. */ }
+      }
+    } finally { if (version === generation.current) { request.current = false; setLoading(false); } }
+  }
+  // Only stored, supported results can open a paid provider operation.
+  if (!usable) return null;
+  return <section className={`${styles.root} ${className}`} aria-label="Пояснение Mirastros" aria-busy={loading}>
+    <header className={styles.header}><span className={styles.sigil} aria-hidden="true">✧</span><div><h3>Mirastros разъясняет</h3><p>Главное о вашем результате — и одно уточнение по нему.</p></div></header>
+    {!state && !error && <p role="status" className={styles.note}>Проверяем доступ…</p>}
+    {state?.answer && <section ref={answer} tabIndex={-1} className={styles.answer} aria-label="Ответ Mirastros"><p>{state.answer}</p></section>}
+    {state?.clarification && <div className={styles.followup}><p className={styles.question}>{state.clarification.question}</p><p>{state.clarification.answer}</p></div>}
+    {state && !state.available && <p className={styles.note}>{reasons[state.reason] || 'Пояснение сейчас недоступно.'}</p>}
+    {state?.reason === 'subscription_required' && <Link href="/subscription" className={styles.link}>Посмотреть подписки →</Link>}
+    {state && !state.answer && <button type="button" disabled={!state.available || loading} className={`mira-action mira-action-primary ${styles.button}`} onClick={() => void explain()}>{loading ? 'Mirastros разъясняет…' : 'Разъяснить'}</button>}
+    {state?.can_clarify && !asking && <button type="button" disabled={loading} className={styles.link} onClick={() => setAsking(true)}>Можно уточнить?</button>}
+    {asking && state?.can_clarify && <form className={styles.form} onSubmit={event => { event.preventDefault(); void explain(true); }}>
+      <label htmlFor={`explanation-${id}`}>Что в этом результате разъяснить подробнее?</label>
+      <textarea id={`explanation-${id}`} maxLength={300} rows={3} value={question} disabled={loading} onChange={event => { setQuestion(event.target.value); setError(''); }} />
+      <p className={styles.note}>Один вопрос · до 300 символов</p>
+      <button className={`mira-action mira-action-primary ${styles.button}`} disabled={loading} type="submit">{loading ? 'Готовим уточнение…' : 'Уточнить'}</button>
+    </form>}
+    {error && <p role="alert" className={styles.error}>{error}</p>}
+    {!state && error && <button className={styles.link} type="button" onClick={() => setAttempt(value => value + 1)}>Проверить снова</button>}
+  </section>;
+}

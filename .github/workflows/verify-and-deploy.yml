@@ -51,11 +51,12 @@ jobs:
         env:
           CC: gcc
           CXX: g++
-      - run: pytest -q test_email_delivery.py test_welcome.py test_llm_configuration.py
+      - run: pytest -q test_email_delivery.py test_welcome.py test_llm_configuration.py test_result_explanations.py
         working-directory: apps/backend
         env:
           PYTHONPATH: .
           SECRET_KEY: ci-test-only-0123456789abcdef0123456789abcdef
+          EXPLANATIONS_TEST_DATABASE_URL: postgresql+asyncpg://mirastros:ci-database-only@127.0.0.1:5432/mirastros_ci
       - name: Verify fresh database and authenticated API flow
         working-directory: apps/backend
         run: |

@@ -50,16 +50,14 @@ class TarotService:
         # Draw cards based on spread type
         drawn_cards = self._draw_cards(spread_type)
         
-        # Generate AI interpretation
-        interpretation = await self._generate_interpretation(
-            db=db,
-            spread_type=spread_type,
-            drawn_cards=drawn_cards,
-            question=question,
-            user_context=user_context,
-            user_id=user_id
+        # Draw and catalogue meanings never invoke a paid provider.
+        interpretation = "\n\n".join(
+            f"{card['position']} — {card['name']}" +
+            (" (перевёрнутая)" if card['reversed'] else "") +
+            f": {card['interpretation']}" for card in drawn_cards
         )
-        
+
+        reading_id = None
         # Store reading in database if user_id is provided
         if user_id:
             reading_record = TarotReading(
@@ -71,8 +69,11 @@ class TarotService:
             )
             db.add(reading_record)
             await db.commit()
+            await db.refresh(reading_record)
+            reading_id = str(reading_record.id)
         
         return {
+            "reading_id": reading_id,
             "spread_type": spread_type,
             "question": question,
             "cards": drawn_cards,

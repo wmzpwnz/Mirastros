@@ -76,7 +76,8 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         max_tokens: int = 512,
         temperature: float = 0.7,
         stream: bool = False,
-        fast_start: bool = False
+        fast_start: bool = False,
+        purpose: str | None = None,
     ) -> AsyncGenerator[str, None] | str:
         """Generate a response through the configured server-side DeepSeek provider
         
@@ -90,6 +91,9 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         """
         if not self.api_key:
             raise AIProviderUnavailable("AI provider is not configured")
+
+        if settings.AI_RESULT_EXPLANATIONS_ONLY and purpose != "result_explanation":
+            raise AIProviderUnavailable("Only bounded result explanations are enabled")
 
         # Build full prompt with context
         full_prompt = ""

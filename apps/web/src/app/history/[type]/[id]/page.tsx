@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { Section, Container, Stack, Button, Spinner } from '@mirastros-universal/design-system';
+import { ClarifyButton } from '../../../../components/ClarifyButton';
 import { api } from '../../../../services/api';
 import type { ConsultationDetailResponse } from '../../../../types';
 
@@ -144,6 +145,7 @@ export default function ConsultationDetailPage() {
                 {detail.result}
               </div>
             </div>
+            <ClarifyButton contextType={detail.type} contextData={{ reading_id: detail.id }} />
           </Section>
         </Stack>
       </Container>

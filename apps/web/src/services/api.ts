@@ -4,6 +4,7 @@
  */
 
 import config from '../config';
+import type { ExplanationKind, ResultExplanation } from '../../../../packages/shared-core/src/types/explanation';
 import type { WelcomeState, WelcomeStep, WelcomePlace } from './welcomeTypes';
 import type {
   User,
@@ -892,6 +893,14 @@ class ApiClient {
   }
 
   // ==================== Tarot ====================
+
+  async getResultExplanation(kind: ExplanationKind, id: string): Promise<ResultExplanation> {
+    return this.request(`/explanations/${kind}/${encodeURIComponent(id)}`, { cache: 'no-store' });
+  }
+
+  async explainResult(kind: ExplanationKind, id: string, question?: string): Promise<ResultExplanation> {
+    return this.request(`/explanations/${kind}/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ question: question || null }) }, false);
+  }
 
   async getTarotReading(spreadType: string, question?: string): Promise<TarotReading> {
     return this.request<TarotReading>('/tarot/reading', {

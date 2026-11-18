@@ -58,6 +58,7 @@ export interface Aspect {
 
 // Tarot
 export interface TarotReading {
+  reading_id?: string;
   id: string;
   userId: string;
   spread: 'one-card' | 'three-card' | 'celtic-cross';
@@ -155,3 +156,5 @@ export interface Subscription {
 export * from './chat';
 
 export * from './welcome';
+
+export * from './explanation';
