@@ -406,6 +406,10 @@ class ApiClient {
     });
   }
 
+  async generateWelcomeMessage(): Promise<import('../../../../packages/shared-core/src/types/welcome').WelcomeMessageResponse> {
+    return this.request('/auth/onboarding/message', { method: 'POST', body: '{}'}, false);
+  }
+
   async getWelcomeState(): Promise<WelcomeState> {
     return this.request('/auth/onboarding/state', { cache: 'no-store' });
   }

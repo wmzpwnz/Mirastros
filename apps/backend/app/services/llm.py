@@ -78,6 +78,7 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         stream: bool = False,
         fast_start: bool = False,
         purpose: str | None = None,
+        system_instruction: str | None = None,
     ) -> AsyncGenerator[str, None] | str:
         """Generate a response through the configured server-side DeepSeek provider
         
@@ -92,8 +93,11 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
         if not self.api_key:
             raise AIProviderUnavailable("AI provider is not configured")
 
-        if settings.AI_RESULT_EXPLANATIONS_ONLY and purpose != "result_explanation":
-            raise AIProviderUnavailable("Only bounded result explanations are enabled")
+        if settings.AI_RESULT_EXPLANATIONS_ONLY and purpose not in ("result_explanation", "welcome_message"):
+            raise AIProviderUnavailable("Only bounded AI operations are enabled")
+
+        if stream and purpose == "welcome_message":
+            raise AIProviderUnavailable("Welcome messages require a complete validated response")
 
         # Build full prompt with context
         full_prompt = ""
@@ -122,12 +126,13 @@ Remember: You are here to guide, inspire, and illuminate the path, not to dictat
                     json={
                         "model": self.model_name,
                         "messages": [
-                            {"role": "system", "content": self.system_prompt},
+                            {"role": "system", "content": system_instruction or self.system_prompt},
                             {"role": "user", "content": full_prompt}
                         ],
                         "max_tokens": max_tokens,
-                            "temperature": temperature,
-                        "stop": ["User:", "\n\n"]
+                        "temperature": temperature,
+                        **({"thinking": {"type": "disabled"}} if purpose in ("welcome_message", "result_explanation") else {}),
+                        "stop": ["User:"] if purpose == "welcome_message" else ["User:", "\n\n"]
                     }
                 )
                 

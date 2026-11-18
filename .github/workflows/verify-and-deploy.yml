@@ -51,7 +51,7 @@ jobs:
         env:
           CC: gcc
           CXX: g++
-      - run: pytest -q test_email_delivery.py test_welcome.py test_llm_configuration.py test_result_explanations.py
+      - run: pytest -q test_email_delivery.py test_welcome.py test_llm_configuration.py test_result_explanations.py test_welcome_narrative.py
         working-directory: apps/backend
         env:
           PYTHONPATH: .

@@ -25,7 +25,10 @@ class Settings(BaseSettings):
     # AI Model - DeepSeek API
     DEEPSEEK_API_KEY: str = Field(default="")
     DEEPSEEK_API_URL: str = "https://api.deepseek.com/v1/chat/completions"
-    DEEPSEEK_MODEL: str = "deepseek-chat"  # или "deepseek-coder" для кода
+    DEEPSEEK_MODEL: str = "deepseek-flash"
+    WELCOME_AI_ENABLED: bool = True
+    WELCOME_AI_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
+    WELCOME_AI_DAILY_LIMIT: int = Field(default=100, ge=1, le=1000)
     AI_RESULT_EXPLANATIONS_ONLY: bool = True
     LEGACY_AI_CHAT_ENABLED: bool = False
     AI_EXPLANATION_DAILY_LIMIT: int = Field(default=5, ge=1, le=20)

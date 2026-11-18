@@ -35,6 +35,7 @@ async def test_configured_request_uses_server_credentials_and_model(monkeypatch)
         assert request.headers["Authorization"] == "Bearer fixture-not-a-secret"
         assert body["model"] == service.model_name
         assert body["max_tokens"] == 120
+        assert body["thinking"] == {"type": "disabled"}
         assert body["messages"][0]["role"] == "system"
         return httpx.Response(200, json={"choices": [{"message": {"content": "Символическое пояснение"}}]})
 
@@ -75,3 +76,21 @@ async def test_adding_key_does_not_activate_legacy_unbounded_generation(monkeypa
     with pytest.raises(llm.AIProviderUnavailable, match="bounded"):
         await service.generate("An old endpoint's unbounded request")
     client.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_welcome_preserves_paragraphs_and_uses_its_own_voice(monkeypatch):
+    import json
+    monkeypatch.setattr(llm.settings, "DEEPSEEK_API_KEY", "fixture-not-a-secret")
+    service = llm.UnifiedLLMService()
+    client_type = httpx.AsyncClient
+    def response(request):
+        body = json.loads(request.content)
+        assert body["messages"][0]["content"] == "Third person guide"
+        assert body["stop"] == ["User:"]
+        assert body["thinking"] == {"type": "disabled"}
+        return httpx.Response(200, json={"choices": [{"message": {"content": "First\n\nSecond\n\nThird"}}]})
+    monkeypatch.setattr(llm.httpx, "AsyncClient", lambda **kwargs: client_type(transport=httpx.MockTransport(response)))
+    assert await service.generate("Verified facts", purpose="welcome_message", system_instruction="Third person guide") == "First\n\nSecond\n\nThird"
+    with pytest.raises(llm.AIProviderUnavailable, match="complete validated"):
+        await service.generate("Verified facts", stream=True, purpose="welcome_message")

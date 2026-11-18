@@ -4,16 +4,16 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { PersonalWelcome } from './PersonalWelcome';
 import type { WelcomeState } from '../../services/welcomeTypes';
 
-const mocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), state: vi.fn(), start: vi.fn(), save: vi.fn(), complete: vi.fn(), places: vi.fn() }));
+const mocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), state: vi.fn(), start: vi.fn(), save: vi.fn(), complete: vi.fn(), places: vi.fn(), narrative: vi.fn() }));
 vi.mock('next/navigation', () => { const router = { push: mocks.push, replace: mocks.replace }; return { useRouter: () => router }; });
-vi.mock('../../services/api', () => ({ api: { getWelcomeState: mocks.state, startWelcome: mocks.start, saveWelcomeStep: mocks.save, completeWelcome: mocks.complete, searchBirthplaces: mocks.places } }));
+vi.mock('../../services/api', () => ({ api: { getWelcomeState: mocks.state, startWelcome: mocks.start, saveWelcomeStep: mocks.save, completeWelcome: mocks.complete, searchBirthplaces: mocks.places, generateWelcomeMessage: mocks.narrative } }));
 const initial: WelcomeState = {
   started: false, completed: false, next_step: 1,
   profile: { full_name: 'Анна', birth_date: null, birth_time: null, birth_location: null },
   portrait: { name: { name: 'Анна', origin: 'Имя древнееврейского происхождения: благодать.', message: 'Принятие и доброта.', verified: true }, number: null, sky: null, summary: 'Анна, первая карта открыта.' },
 };
 beforeEach(() => {
-  vi.clearAllMocks(); window.history.replaceState(null, '', '/auth/onboarding?start=1');
+  vi.clearAllMocks(); mocks.narrative.mockResolvedValue({ status: 'reference', message: null }); window.history.replaceState(null, '', '/auth/onboarding?start=1');
   mocks.state.mockResolvedValue(structuredClone(initial));
   mocks.start.mockResolvedValue({ ...structuredClone(initial), started: true });
   mocks.complete.mockResolvedValue({ ...initial, completed: true });
@@ -137,4 +137,47 @@ it('focuses the city field when the user has not selected a search result', asyn
   expect(city).toHaveFocus();
   expect(city).toHaveAttribute('aria-invalid', 'true');
   expect(city).toHaveAccessibleDescription('Нажмите «Найти» и выберите город из результатов или добавьте его позже.');
+});
+
+
+it('keeps the reference portrait and completion available while the guide is writing', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 4 });
+  let resolve!: (value: unknown) => void;
+  mocks.narrative.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  render(<PersonalWelcome />);
+  expect(await screen.findByText('Анна, первая карта открыта.')).toBeInTheDocument();
+  await waitFor(() => expect(mocks.narrative).toHaveBeenCalledTimes(1));
+  expect(screen.getByRole('button', { name: /Открыть мой день/ })).toBeEnabled();
+  await act(async () => resolve({ status: 'ready', message: { text: 'Дитя моё, Мирастрос открывает твой путь.', source: 'deepseek', version: 'v1', fingerprint: 'saved' } }));
+  expect(await screen.findByText('Дитя моё, Мирастрос открывает твой путь.')).toBeInTheDocument();
+  expect(mocks.narrative).toHaveBeenCalledTimes(1);
+});
+
+it('reopens a saved greeting without another generation', async () => {
+  window.history.replaceState(null, '', '/auth/onboarding?view=portrait');
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), completed: true, portrait: { ...initial.portrait,
+    ai_message: { text: 'Дитя моё, сохранённое послание.', source: 'deepseek', version: 'v1', fingerprint: 'saved' } } });
+  render(<PersonalWelcome />);
+  expect(await screen.findByText('Дитя моё, сохранённое послание.')).toBeInTheDocument();
+  expect(mocks.narrative).not.toHaveBeenCalled();
+});
+
+it('ignores a greeting for a different profile fingerprint', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 4,
+    portrait: { ...initial.portrait, message_fingerprint: 'current' } });
+  mocks.narrative.mockResolvedValueOnce({ status: 'ready', message: { text: 'Устаревшее послание', fingerprint: 'old', source: 'deepseek', version: 'v1' } });
+  render(<PersonalWelcome />);
+  await waitFor(() => expect(mocks.narrative).toHaveBeenCalledTimes(1));
+  expect(screen.queryByText('Устаревшее послание')).toBeNull();
+  expect(screen.getByRole('button', { name: /Открыть мой день/ })).toBeEnabled();
+});
+
+it('does not block the welcome when the provider request fails', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 4 });
+  mocks.narrative.mockRejectedValueOnce(new Error('offline'));
+  render(<PersonalWelcome />);
+  await waitFor(() => expect(mocks.narrative).toHaveBeenCalledTimes(1));
+  expect(await screen.findByText('Анна, первая карта открыта.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Открыть мой день/ })).toBeEnabled();
+  expect(screen.queryByRole('alert')).toBeNull();
 });
