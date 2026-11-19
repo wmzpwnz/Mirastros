@@ -1,7 +1,7 @@
 """Personal onboarding endpoints."""
 
 from datetime import date, time
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -451,6 +451,17 @@ async def welcome_message(request: WelcomeMessageRequest, response: Response, cu
     """One bounded portrait; only saved profile facts enter the provider context."""
     response.headers["Cache-Control"] = "private, no-store"
     return await welcome_narrative.generate(db, current_user)
+
+
+class WelcomeReadingRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    step: Literal['name', 'birth']
+
+
+@router.post('/reading')
+async def welcome_reading(request: WelcomeReadingRequest, response: Response, current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    response.headers['Cache-Control'] = 'private, no-store'
+    return await welcome_narrative.generate(db, current_user, request.step)
 
 
 _location_cache: dict[str, tuple[float, list]] = {}

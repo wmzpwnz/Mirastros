@@ -165,7 +165,8 @@ class ApiClient {
   async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    retryOnAuthFailure: boolean = true
+    retryOnAuthFailure: boolean = true,
+    timeoutMs: number = this.timeout
   ): Promise<T> {
     // Ensure endpoint starts with /
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -185,7 +186,7 @@ class ApiClient {
     const timeoutId = setTimeout(() => {
       console.warn(`Request timeout for ${endpoint}`);
       controller.abort();
-    }, this.timeout);
+    }, timeoutMs);
 
     try {
       console.log(`Making request to: ${url}`);
@@ -406,8 +407,12 @@ class ApiClient {
     });
   }
 
+  async generateWelcomeReading(step: 'name' | 'birth'): Promise<import('../../../../packages/shared-core/src/types/welcome').WelcomeMessageResponse> {
+    return this.request('/auth/onboarding/reading', { method: 'POST', body: JSON.stringify({ step }) }, false, 20000);
+  }
+
   async generateWelcomeMessage(): Promise<import('../../../../packages/shared-core/src/types/welcome').WelcomeMessageResponse> {
-    return this.request('/auth/onboarding/message', { method: 'POST', body: '{}'}, false);
+    return this.request('/auth/onboarding/message', { method: 'POST', body: '{}'}, false, 20000);
   }
 
   async getWelcomeState(): Promise<WelcomeState> {
@@ -419,7 +424,23 @@ class ApiClient {
   }
 
   async saveWelcomeStep(data: WelcomeStep): Promise<WelcomeState> {
-    const state = await this.request<WelcomeState>('/auth/onboarding/step', { method: 'POST', body: JSON.stringify(data) });
+    let state: WelcomeState;
+    try {
+      state = await this.request<WelcomeState>('/auth/onboarding/step', { method: 'POST', body: JSON.stringify(data) });
+    } catch (error) {
+      if (!(error instanceof Error) || !/таймаут|сервер|network|fetch|timeout/i.test(error.message)) throw error;
+      // The server can commit successfully even if the response is lost. Read
+      // back once; never repeat a mutation just because the connection failed.
+      let saved: WelcomeState;
+      try { saved = await this.getWelcomeState(); } catch { throw error; }
+      const expectedStep = { name: 2, birth: 3, sky: 4 }[data.step];
+      const matches = data.step === 'name' ? saved.profile.full_name === data.full_name
+        : data.step === 'birth' ? saved.profile.birth_date === data.birth_date
+        : (saved.profile.birth_time?.slice(0, 5) || null) === (data.birth_time || null)
+          && (['city', 'country', 'latitude', 'longitude'] as const).every(key => (saved.profile.birth_location?.[key] ?? null) === (data.birth_location?.[key] ?? null));
+      if (saved.next_step < expectedStep || !matches) throw error;
+      state = saved;
+    }
     // Other browser modules still read the account cache. Keep it in sync with
     // the shared server profile without making storage failures undo a save.
     try {

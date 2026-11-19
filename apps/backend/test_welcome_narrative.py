@@ -185,3 +185,37 @@ async def test_concurrent_requests_do_not_generate_twice(case):
         assert provider.await_count==1
     finally: release.set()
     assert (await first).json()['status']=='ready'
+
+
+@pytest.mark.asyncio
+async def test_name_history_and_number_reading_are_cached_separately_from_final_portrait(case):
+    client, _, _, provider = case
+    history = {'origin': 'Азиз происходит от арабского слова ʿazīz — дорогой, почитаемый, могущественный. Имя распространено в Центральной Азии.',
+               'text': 'Дитя моё, Мирастрос связывает смысл имени с достоинством и бережным отношением к тому, что дорого тебе.'}
+    await client.post('/auth/onboarding/step',json={'step':'name','full_name':'Азиз'})
+    provider.return_value=json.dumps(history,ensure_ascii=False)
+    result=await client.post('/auth/onboarding/reading',json={'step':'name'})
+    assert result.json()['status']=='ready',result.text
+    assert result.json()['message']['origin']==history['origin']
+    assert (await client.get('/auth/onboarding/state')).json()['portrait']['name_ai_message']['text']==history['text']
+    await client.post('/auth/onboarding/reading',json={'step':'name'})
+    assert provider.await_count==1
+    assert 'birth_date' not in provider.call_args.args[0]
+    provider.return_value=json.dumps({'text':'Путник, Мирастрос отмечает тему завершения и целостности. Число девять предлагает рассмотреть связь личного опыта с общим смыслом.'},ensure_ascii=False)
+    result=await client.post('/auth/onboarding/reading',json={'step':'birth'})
+    assert result.json()['status']=='ready',result.text
+    assert (await client.get('/auth/onboarding/state')).json()['portrait']['birth_ai_message']
+    assert provider.await_count==2
+    provider.return_value=MESSAGE
+    assert (await client.post('/auth/onboarding/message',json={})).json()['status']=='ready'
+    assert (await client.post('/auth/onboarding/reading',json={'step':'name','name':'Injected'})).status_code==422
+    assert (await client.post('/auth/onboarding/reading',json={'step':'name'},headers={'x-test-user':'1'})).json()['message'] is None
+
+
+@pytest.mark.asyncio
+async def test_invalid_name_history_does_not_replace_reference_data(case):
+    client, _, _, provider=case
+    provider.return_value='not JSON'
+    result=await client.post('/auth/onboarding/reading',json={'step':'name'})
+    assert result.json()=={'status':'reference','message':None}
+    assert (await client.get('/auth/onboarding/state')).json()['portrait']['name_ai_message'] is None
