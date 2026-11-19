@@ -6,6 +6,8 @@ from datetime import date, timedelta
 import json
 import logging
 
+from app.core.config import get_settings
+from app.services.lunar import lunar_service
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_optional_user
 from app.core.redis import redis_client
@@ -85,6 +87,24 @@ def _build_horoscope_response_data(
     }
 
 
+# Editorial prompts for the daily reading. The phase and illumination come
+# from the same ephemeris as the calendar, for the requested calendar date.
+_SIGN_FOCUS = {
+    "aries": "Выберите дело, которому сегодня нужен первый шаг.",
+    "taurus": "Освободите место для того, что даёт вам опору.",
+    "gemini": "Вернитесь к разговору, в котором остался открытый вопрос.",
+    "cancer": "Подумайте, что сделало бы ваш дом уютнее сегодня.",
+    "leo": "Найдите время для замысла, которым хочется поделиться.",
+    "virgo": "Выберите одну деталь, которая упростит весь день.",
+    "libra": "Оставьте место и для своих планов, и для встречи.",
+    "scorpio": "Запишите мысль, к которой вы возвращались в последнее время.",
+    "sagittarius": "Попробуйте посмотреть на знакомую задачу с другой стороны.",
+    "capricorn": "Разделите далёкую цель на шаг, доступный уже сегодня.",
+    "aquarius": "Обсудите свежую идею с человеком, которому доверяете.",
+    "pisces": "Сохраните образ или мелодию, которые привлекли ваше внимание.",
+}
+
+
 @router.get("/daily/{sign}", response_model=HoroscopeResponse)
 async def get_daily_horoscope(
     sign: ZodiacSign,
@@ -115,8 +135,8 @@ async def get_daily_horoscope(
                     is_personalized = True
         
         # Try Redis cache first (only for general horoscopes)
-        if not is_personalized:
-            cache_key = f"horoscope:daily:{sign.value}:{target_date.isoformat()}"
+        if not current_user:
+            cache_key = f"horoscope:daily:v2:{sign.value}:{target_date.isoformat()}"
             cached = await redis_client.get(cache_key)
             
             if cached:
@@ -172,7 +192,7 @@ async def get_daily_horoscope(
             )
             
             # Cache in Redis if general horoscope
-            if not is_personalized:
+            if not current_user:
                 await redis_client.set(cache_key, response_data, ttl=86400)  # 24 hours
             
             return HoroscopeResponse(**response_data)
@@ -188,36 +208,46 @@ async def get_daily_horoscope(
             transit_data = horoscope_service.calculate_personalized_transits(natal_chart, target_date)
             transits = transit_data.get("current_transits", transits)
         
-        # Get RAG context
-        context = await rag_service.get_context(
-            db=db,
-            query=f"daily horoscope {sign.value} astrology prediction",
-            category="astrology"
-        )
-        
-        # Generate horoscope prompt
-        prompt = horoscope_service.generate_horoscope_prompt(
-            sign=sign.value,
-            period="daily",
-            target_date=target_date,
-            transits=transits,
-            natal_chart=natal_chart if is_personalized else None
-        )
-        
-        # Generate with LLM
-        prediction = await llm_service.generate(
-            prompt=prompt,
-            context=context,
-            max_tokens=512,
-            temperature=0.7
-        )
-        
+        if get_settings().AI_RESULT_EXPLANATIONS_ONLY:
+            moon = lunar_service.calculate_lunar_phase(target_date, include_next_events=False)
+            focus = _SIGN_FOCUS[sign.value]
+            sky = f"Лунный диск освещён на {moon['illumination']:g}%."
+            if is_personalized:
+                house = (natal_chart.planets.get("moon") or {}).get("house")
+                if house:
+                    sky += f" В вашей натальной карте Луна занимает дом {house}."
+            prediction = f"{focus} {sky}\n\n{moon['description_fallback_ru']}"
+        else:
+            # Get RAG context
+            context = await rag_service.get_context(
+                db=db,
+                query=f"daily horoscope {sign.value} astrology prediction",
+                category="astrology"
+            )
+
+            # Generate horoscope prompt
+            prompt = horoscope_service.generate_horoscope_prompt(
+                sign=sign.value,
+                period="daily",
+                target_date=target_date,
+                transits=transits,
+                natal_chart=natal_chart if is_personalized else None
+            )
+
+            # Generate with LLM
+            prediction = await llm_service.generate(
+                prompt=prompt,
+                context=context,
+                max_tokens=512,
+                temperature=0.7
+            )
+
         # Generate additional data
         # Try to get user's birth date and numerology for personalized lucky numbers
         user_birth_date = None
         user_life_path = None
         
-        if current_user and current_user.birth_date:
+        if is_personalized and current_user and current_user.birth_date:
             user_birth_date = current_user.birth_date
             # Try to get Life Path Number from numerology calculation if available
             try:
@@ -312,7 +342,7 @@ async def get_daily_horoscope(
         )
 
         # Cache in Redis if general horoscope
-        if not is_personalized:
+        if not current_user:
             await redis_client.set(cache_key, response_data, ttl=86400)  # 24 hours
 
         return HoroscopeResponse(**response_data)

@@ -69,6 +69,14 @@ describe('API deadlines include response bodies', () => {
     expect(await result).toMatch(/Таймаут/);
     expect(vi.getTimerCount()).toBe(0);
   });
+  it('preserves the session when a refresh cannot reach the server', async () => {
+    localStorage.setItem('refreshToken', 'valid-test-refresh');
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ detail: 'Expired token' }) })
+      .mockResolvedValueOnce({ ok: false, status: 503 }));
+    await expect(api.getCurrentUser()).rejects.toThrow(/временно недоступен/);
+    expect(localStorage.getItem('refreshToken')).toBe('valid-test-refresh');
+  });
   it('also bounds a refresh response with a body that never ends', async () => {
     localStorage.setItem('refreshToken', 'fixture-old-refresh');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ detail: 'Invalid token' }) })

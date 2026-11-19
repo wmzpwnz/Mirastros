@@ -21,7 +21,7 @@ const SCROLL_SPEED = 1.22;
 /** Original Mirastros implementation of a perspective gallery. Reference:
  * sageeast.com's continuous camera travel, rather than its code or photographs.
  * Each card occupies its own Z plane; the camera moves them as one scene. */
-export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNode; authenticated?: boolean }) {
+export function DepthJourney({ intro, authenticated = false }: { intro?: (openDirections: () => void) => ReactNode; authenticated?: boolean }) {
   const rootRef = useRef<HTMLElement>(null);
   const cameraRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
@@ -192,7 +192,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       </div>
       {view === 'flight' && <>
         <div ref={introRef} className={styles.intro}>
-          {intro ? <><div className={styles.accountScroll} data-lenis-prevent>{intro}</div><button className={`mira-action mira-action-primary ${styles.enterJourney}`} onClick={enter}>Открыть порталы направлений <span aria-hidden="true">↓</span></button></> : <HeroSection showScrollCue={false} />}
+          {intro ? <div className={styles.accountScroll} data-lenis-prevent>{intro(enter)}</div> : <HeroSection showScrollCue={false} />}
         </div>
         <div ref={endingRef} className={styles.ending} aria-hidden={!ending}>
           <p className={styles.kicker}>Весь мир Mirastros — в одном аккаунте</p>

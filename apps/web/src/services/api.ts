@@ -158,21 +158,21 @@ class ApiClient {
           signal: deadline.signal,
         }));
 
-        if (!response.ok) {
-          return null;
-        }
+        if (response.status === 401 || response.status === 403) return null;
+        if (!response.ok) throw new ApiConnectionError('Сервер авторизации временно недоступен.');
 
         const data = await deadline.wait(response.json());
         const newAccess = data.access_token || data.accessToken;
         const newRefresh = data.refresh_token || data.refreshToken;
-        if (!newAccess || !newRefresh) return null;
+        if (!newAccess || !newRefresh) throw new ApiConnectionError('Не удалось прочитать ответ сервера авторизации.');
 
         this.setToken(newAccess);
         this.setRefreshToken(newRefresh);
 
         return { accessToken: newAccess, refreshToken: newRefresh };
-      } catch {
-        return null;
+      } catch (error) {
+        if (error instanceof ApiConnectionError) throw error;
+        throw new ApiConnectionError('Не удалось связаться с сервером авторизации.');
       } finally {
         deadline.close();
         this.refreshPromise = null;
