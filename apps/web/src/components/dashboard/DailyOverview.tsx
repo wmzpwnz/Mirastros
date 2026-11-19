@@ -59,7 +59,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const dateLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, weekday: 'long', day: 'numeric', month: 'long' }).format(now);
   const zoneLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, timeZoneName: 'short' }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value;
   const updatedLabel = updatedAt ? new Intl.DateTimeFormat('ru-RU', { timeZone, hour: '2-digit', minute: '2-digit' }).format(updatedAt) : null;
-  const forecastHref = `/services/horoscope${zodiac ? `?sign=${zodiac[0]}&period=daily` : ''}`;
+  const forecastHref = `/services/horoscope${zodiac ? `?sign=${zodiac[0]}&period=daily&date=${today}` : ''}`;
   const loading = forecastState === 'loading' || moonState === 'loading';
   const partial = forecastState === 'error' || moonState === 'error';
   const name = user.fullName?.trim().split(/\s+/)[0] || 'Искатель';

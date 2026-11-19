@@ -871,9 +871,10 @@ class ApiClient {
     return `${parsed.getDate()} ${months[parsed.getMonth()]} - ${end.getDate()} ${months[end.getMonth()]} ${parsed.getFullYear()}`;
   }
 
-  async getHoroscope(sign: string, period: 'daily' | 'weekly' | 'monthly' = 'daily'): Promise<Horoscope> {
+  async getHoroscope(sign: string, period: 'daily' | 'weekly' | 'monthly' = 'daily', targetDate?: string): Promise<Horoscope> {
     try {
-      const response = await this.request<any>(`/horoscope/${period}/${sign}`);
+      const query = targetDate ? `?target_date=${encodeURIComponent(targetDate)}` : '';
+      const response = await this.request<any>(`/horoscope/${period}/${sign}${query}`);
       const normalizedPrediction = this.normalizePlainText(response.plain_text || response.prediction);
       const normalizedAdvice = this.normalizePlainText(response.advice);
       const language = response.language || 'ru';
