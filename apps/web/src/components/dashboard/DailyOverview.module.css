@@ -61,9 +61,13 @@
 .directions { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 23px 28px; background: linear-gradient(90deg,#131025ed,#211432c9,#17102280),url('/images/mirastros-sanctuary.webp') center 72% / cover; }
 .travel { padding: 8px 18px; background: #121021d9; border: 1px solid #c4a37790; border-radius: 3px; cursor: pointer; }
 @media (max-width: 900px) {
-  .sidebar { display: none; } .layout { display:block; } .content { border: 0; padding-left: 0; }
+  .layout { display:block; }
+  .content { border: 0; padding-left: 0; }
+  .sidebar { display: flex; flex-wrap: wrap; gap: 2px 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .sidebar a { padding: 5px 8px; font-size: 13px; }
 }
 @media (max-width: 600px) {
+  .sidebar { display: none; }
   .root { padding: 0 13px calc(104px + env(safe-area-inset-bottom)); }
   .header { height: 54px; } .logo { width: 125px; } .account { gap: 10px; font-size: 11px; }
   .avatar { width: 32px; height: 32px; } .content { padding-top: 16px; }
