@@ -30,13 +30,22 @@ export default function RegisterPage() {
     event.preventDefault();
     if (loading) return;
     const form = event.currentTarget;
+    // Safari/Keychain can fill the DOM without firing React change events.
+    const values = new FormData(form);
+    const enteredName = String(values.get('fullName') || '');
+    const enteredEmail = String(values.get('email') || '');
+    const enteredPassword = String(values.get('password') || '');
+    const enteredConfirmation = String(values.get('confirmPassword') || '');
+    const enteredTerms = values.has('acceptTerms');
+    setName(enteredName); setEmail(enteredEmail); setPassword(enteredPassword);
+    setConfirmation(enteredConfirmation); setTerms(enteredTerms);
     const issues: Partial<Record<Field, string>> = {};
-    if (!name.trim()) issues.fullName = 'Укажите, как к вам обращаться.';
+    if (!enteredName.trim()) issues.fullName = 'Укажите, как к вам обращаться.';
     const emailInput = form.elements.namedItem('email') as HTMLInputElement;
-    if (!email.trim() || emailInput.validity.typeMismatch) issues.email = 'Укажите корректный email.';
-    if (password.length < 8 || password.length > 100) issues.password = 'Используйте от 8 до 100 символов.';
-    if (!confirmation || password !== confirmation) issues.confirmPassword = 'Пароли не совпадают.';
-    if (!terms) issues.acceptTerms = 'Для регистрации нужно принять условия.';
+    if (!enteredEmail.trim() || emailInput.validity.typeMismatch) issues.email = 'Укажите корректный email.';
+    if (enteredPassword.length < 8 || enteredPassword.length > 100) issues.password = 'Используйте от 8 до 100 символов.';
+    if (!enteredConfirmation || enteredPassword !== enteredConfirmation) issues.confirmPassword = 'Пароли не совпадают.';
+    if (!enteredTerms) issues.acceptTerms = 'Для регистрации нужно принять условия.';
     setErrors(issues); setError('');
     const first = Object.keys(issues)[0] as Field | undefined;
     if (first) { (form.elements.namedItem(first) as HTMLElement)?.focus(); return; }
@@ -44,7 +53,7 @@ export default function RegisterPage() {
     try {
       let timezone = 'UTC';
       try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { /* Keep the default. */ }
-      await api.register({ email: email.trim(), password, full_name: name.trim(), preferredLanguage: 'ru', timezone });
+      await api.register({ email: enteredEmail.trim(), password: enteredPassword, full_name: enteredName.trim(), preferredLanguage: 'ru', timezone });
       router.push('/auth/onboarding?start=1');
     } catch (cause) {
       setError(authError(cause, 'Не удалось создать аккаунт. Проверьте данные и попробуйте ещё раз.'));
