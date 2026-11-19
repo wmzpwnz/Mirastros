@@ -2,7 +2,6 @@ import React from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { act, cleanup, render } from '@testing-library/react';
 import { Preloader } from './Preloader';
-vi.mock('./journey/PortalArtwork', () => ({ PortalArtwork: () => <span data-circle /> }));
 let settleImages: boolean;
 beforeEach(() => {
   vi.useFakeTimers(); settleImages = true;
@@ -15,7 +14,8 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 it('waits for the short entrance and completes exactly once without fake percentages', async () => {
   const done = vi.fn(); const { container } = render(<Preloader onComplete={done} />);
-  expect(container.querySelector('[data-circle]')).not.toBeNull();
+  expect(container.querySelector('[data-preloader-wheel]')).toHaveAttribute('src', '/images/preloader-zodiac-gold.webp');
+  expect(container.querySelector('video')).toBeNull();
   expect(container.textContent).not.toMatch(/\d+%/);
   await act(async () => { await vi.advanceTimersByTimeAsync(1599); });
   expect(done).not.toHaveBeenCalled();

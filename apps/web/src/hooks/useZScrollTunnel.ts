@@ -254,7 +254,7 @@ export const useZScrollTunnel = ({
           ? window.scrollY / currentScrollPerSlide : null;
         initAfterPreloader();
         if (progress !== null && body.classList.contains('zscroll-enabled') && currentScrollPerSlide) {
-          window.scrollTo({ top: progress * currentScrollPerSlide, behavior: 'instant' });
+          window.scrollTo({ top: progress * currentScrollPerSlide, behavior: 'auto' });
           ScrollTrigger.update();
         }
       }, 150);

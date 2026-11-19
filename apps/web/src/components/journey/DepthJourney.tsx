@@ -51,7 +51,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       cards.forEach((card, i) => { card.removeAttribute('aria-hidden'); links[i].tabIndex = 0; });
       headerRef.current!.style.opacity = '1';
       headerRef.current!.style.pointerEvents = 'auto';
-      const frame = requestAnimationFrame(() => cards[activeRef.current]?.scrollIntoView({ block: 'center', behavior: 'instant' }));
+      const frame = requestAnimationFrame(() => cards[activeRef.current]?.scrollIntoView({ block: 'center', behavior: 'auto' }));
       return () => { cancelAnimationFrame(frame); delete root.dataset.ready; };
     }
 
@@ -131,8 +131,10 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
       if (window.matchMedia('(pointer: coarse)').matches || layout.width < 1024) {
         normalizer = ScrollTrigger.normalizeScroll({ type: 'touch', allowNestedScroll: true, momentum: () => reduce ? 0 : 1.1 });
       }
+      // 'auto' is immediate with our CSS and also works in older Safari, where
+      // the newer 'instant' enum can throw during the initial effect.
       // Restore zero as well as later cards; retain the normalizer's 1px iOS floor.
-      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * scrollUnit), behavior: 'instant' });
+      window.scrollTo({ top: Math.max(1, root.offsetTop + restoreScreens * scrollUnit), behavior: 'auto' });
       ScrollTrigger.update();
       draw();
       window.dispatchEvent(new CustomEvent('tunnel-initialized'));
@@ -158,9 +160,9 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
 
   const navigate = (direction: number) => {
     const target = !exploring ? INTRO_SCREENS : ending ? count - 1 + INTRO_SCREENS : direction > 0 && active === count - 1 ? count + 1.6 : Math.max(0, active + direction) + INTRO_SCREENS;
-    window.scrollTo({ top: layoutRef.current.start + target * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    window.scrollTo({ top: layoutRef.current.start + target * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
-  const enter = () => window.scrollTo({ top: layoutRef.current.start + INTRO_SCREENS * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  const enter = () => window.scrollTo({ top: layoutRef.current.start + INTRO_SCREENS * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   const headerVisible = view === 'list' || exploring;
 
   return <main ref={rootRef} className={styles.root} data-view={view} data-account={authenticated} data-exploring={exploring} style={{ '--journey-screens': totalScreens, '--journey-accent': journeyModules[active].accent } as CSSProperties}>
@@ -170,7 +172,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: ReactNo
         if (window.location.pathname !== (authenticated ? '/dashboard' : '/')) return;
         event.preventDefault();
         if (view === 'list') { homeRequested.current = true; setView('flight'); }
-        else window.scrollTo({ top: 1, behavior: 'instant' });
+        else window.scrollTo({ top: 1, behavior: 'auto' });
       }} tabIndex={headerVisible ? 0 : -1}><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
       <Link href={authenticated ? "/profile" : "/auth/register"} tabIndex={headerVisible ? 0 : -1}>{authenticated ? "Профиль" : "Начать путь"}</Link>
     </header>
