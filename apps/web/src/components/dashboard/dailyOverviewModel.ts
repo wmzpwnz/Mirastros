@@ -96,3 +96,73 @@ export function nextMoonEvent(moon: DailyMoon | null, today: string) {
   });
   return events.sort((a, b) => a.date.localeCompare(b.date))[0] || null;
 }
+
+export function daysUntilDate(date: string | undefined, today: string): number | null {
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return null;
+  const toUtcDay = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.toISOString().slice(0, 10) === value ? parsed.getTime() : null;
+  };
+  const from = toUtcDay(today);
+  const to = toUtcDay(date);
+  return from === null || to === null || to < from ? null : Math.round((to - from) / 86_400_000);
+}
+
+const MASTER_NUMBERS = new Set([11, 22, 33]);
+const PERSONAL_DAY_MEANINGS: Record<number, string> = {
+  1: 'Инициатива', 2: 'Внимание к диалогу', 3: 'Самовыражение', 4: 'Порядок и опора',
+  5: 'Гибкость', 6: 'Забота', 7: 'Наблюдение', 8: 'Решительность', 9: 'Завершение',
+  11: 'Вдохновение', 22: 'Большой замысел', 33: 'Сочувствие',
+};
+
+function reduceNumber(value: number): number {
+  let result = value;
+  while (result > 9 && !MASTER_NUMBERS.has(result)) {
+    result = String(result).split('').reduce((sum, digit) => sum + Number(digit), 0);
+  }
+  return result;
+}
+
+function dateDigits(value: string): number[] | null {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  const local = /^(\d{2})[./-](\d{2})[./-](\d{4})$/.exec(value);
+  const parts = iso ? [iso[1], iso[2], iso[3]] : local ? [local[3], local[2], local[1]] : null;
+  if (!parts) return null;
+  const [year, month, day] = parts.map(Number);
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  return parts.join('').split('').map(Number);
+}
+
+export function personalDay(birthDate?: string, currentDate?: string) {
+  const birthDigits = birthDate ? dateDigits(birthDate) : null;
+  const todayDigits = currentDate ? dateDigits(currentDate) : null;
+  if (!birthDigits || !todayDigits) return null;
+  const birthSum = birthDigits.reduce((sum, digit) => sum + digit, 0);
+  const lifePath = reduceNumber(birthSum);
+  const universalDay = reduceNumber(todayDigits.reduce((sum, digit) => sum + digit, 0));
+  const value = reduceNumber(lifePath + universalDay);
+  return {
+    value,
+    meaning: PERSONAL_DAY_MEANINGS[value] || 'Личный ритм',
+    formula: `${birthDigits.join(' + ')} = ${birthSum} → ${lifePath}; ${todayDigits.join(' + ')} = ${todayDigits.reduce((sum, digit) => sum + digit, 0)} → ${universalDay}; ${lifePath} + ${universalDay} = ${value}`,
+  };
+}
+
+const DAILY_PRACTICES: Record<string, string[]> = {
+  new_moon: ['Запишите одно намерение на ближайшую неделю.', 'Выберите одну тему, которой хотите уделить внимание в новом цикле.'],
+  waxing_crescent: ['Сделайте первый небольшой шаг к важному замыслу.', 'Выделите десять минут на дело, которое давно откладывали.'],
+  first_quarter: ['Назовите главное препятствие и один способ пройти его.', 'Завершите один конкретный пункт из своего списка.'],
+  waxing_gibbous: ['Пересмотрите план и уточните одну важную деталь.', 'Подготовьте то, что поможет завершить начатое.'],
+  full_moon: ['Запишите, что сегодня стало для вас яснее.', 'Отметьте один результат, который обычно оставляете без внимания.'],
+  waning_gibbous: ['Вспомните полезный урок последней недели и запишите его.', 'Поблагодарите себя за один пройденный этап.'],
+  last_quarter: ['Освободите немного времени, отказавшись от одного лишнего дела.', 'Завершите небольшой хвост, который забирает внимание.'],
+  waning_crescent: ['Устройте короткую паузу без экрана и прислушайтесь к себе.', 'Снизьте темп хотя бы на десять минут и восстановите силы.'],
+};
+
+export function dailyPractice(phase: string | undefined, date: string): string {
+  const choices = DAILY_PRACTICES[phase || ''] || ['Выделите пять минут, чтобы записать, что сегодня для вас важно.'];
+  const seed = Number(date.replace(/\D/g, '').slice(-4)) || 0;
+  return choices[seed % choices.length];
+}

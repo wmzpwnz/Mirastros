@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
-import { dayInZone, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
+import { dailyPractice, dayInZone, daysUntilDate, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { MOON_PHASE_NAMES_EXTENDED } from '../../constants/moon';
@@ -50,7 +50,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   }, []);
   const today = dayInZone(now, timeZone);
   const zodiac = resolveZodiac(user.zodiacSign);
-  const { forecast, moon, forecastState, moonState, updatedAt, refresh } = useDailyOverview(user.id, zodiac?.[0], today, timeZone);
+  const { forecast, moon, forecastState, moonState, updatedAt, refresh, recentItems, historyState } = useDailyOverview(user.id, zodiac?.[0], today, timeZone);
   const copy = forecastCopy(forecast);
   const illumination = illuminationOf(moon);
   const rhythm = lunarRhythm(moon);
@@ -64,6 +64,22 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const partial = forecastState === 'error' || moonState === 'error';
   const name = user.fullName?.trim().split(/\s+/)[0] || 'Искатель';
   const tier = user.subscriptionTier === 'platinum' ? 'Platinum' : user.subscriptionTier === 'premium' ? 'Premium' : 'Базовый доступ';
+  const personal = personalDay(user.birthDate, today);
+  const practice = dailyPractice(moon?.phase, today);
+  const practiceKey = `mirastros:daily-practice:${user.id}:${today}`;
+  const [practiceDone, setPracticeDone] = useState(false);
+  const [showFormula, setShowFormula] = useState(false);
+
+  useEffect(() => {
+    setPracticeDone(window.localStorage.getItem(practiceKey) === 'done');
+  }, [practiceKey]);
+
+  const togglePractice = () => {
+    const next = !practiceDone;
+    setPracticeDone(next);
+    if (next) window.localStorage.setItem(practiceKey, 'done');
+    else window.localStorage.removeItem(practiceKey);
+  };
 
   const nav = [
     ['/dashboard', 'Сводка дня', '☉'],
@@ -111,6 +127,25 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           </div>}
         </article>
 
+        <section className={styles.metrics} aria-label="Ваши показатели на сегодня">
+          <article className={styles.metric}>
+            {frame}<p className={styles.label}>Личный день</p>
+            {personal ? <><strong>{personal.value}</strong><span>{personal.meaning}</span><button type="button" className={styles.formulaToggle} aria-expanded={showFormula} onClick={() => setShowFormula(value => !value)}>{showFormula ? 'Скрыть расчёт' : 'Как рассчитано?'}</button>{showFormula && <p className={styles.formula}>{personal.formula}</p>}</>
+              : <><span>Добавьте дату рождения</span><Link className={styles.metricLink} href="/profile">Заполнить профиль <ArrowIcon /></Link></>}
+          </article>
+          <article className={styles.metric}>
+            {frame}<p className={styles.label}>Лунный ритм</p>
+            <strong>{moon ? `${illumination === null ? '—' : `${Math.round(illumination)}%`}` : '—'}</strong>
+            <span>{moon ? `${moonSign} · ${phase}` : moonState === 'loading' ? 'Считаем положение Луны…' : 'Данные пока недоступны'}</span>
+          </article>
+          <article className={styles.metric}>
+            {frame}<p className={styles.label}>Ближайшее событие</p>
+            <strong>{event ? daysUntilDate(event.date, today) === 0 ? 'Сегодня' : `${daysUntilDate(event.date, today)} дн.` : '—'}</strong>
+            <span>{event ? event.title : moonState === 'loading' ? 'Сверяем лунный цикл…' : 'Нет данных о событии'}</span>
+            <Link className={styles.metricLink} href="/services/lunar">К лунному календарю <ArrowIcon /></Link>
+          </article>
+        </section>
+
         <div className={styles.grid}>
           <article className={styles.panel} aria-busy={moonState === 'loading'}>
             {frame}<p className={styles.label}>Луна сейчас</p>
@@ -125,12 +160,22 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
           </article>
           <article className={styles.panel}>
-            {frame}<p className={styles.label}>Рекомендация дня</p>
+            {frame}<p className={styles.label}>Практика дня · 2 минуты</p>
             <h2>Один шаг для себя</h2>
-            <p className={styles.detail}>{copy.advice || (forecastState === 'loading' ? 'Загружаем рекомендацию…' : 'Вернитесь к личному портрету и выберите тему, которую хотите изучить сегодня.')}</p>
-            <Link className={styles.link} href="/auth/onboarding?view=portrait">Мой портрет <ArrowIcon /></Link>
+            <p className={styles.detail}>{practice}</p>
+            <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
+              <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}
+            </button>
           </article>
         </div>
+
+        <section className={styles.historyPanel} aria-labelledby="recent-history-title">
+          {frame}<div className={styles.historyHeading}><div><p className={styles.label}>Личная библиотека</p><h2 id="recent-history-title">Недавние открытия</h2></div><Link className={styles.link} href="/history">Вся история <ArrowIcon /></Link></div>
+          {historyState === 'loading' ? <p className={styles.detail}>Открываем ваши последние результаты…</p>
+            : historyState === 'error' ? <p className={styles.detail}>История временно недоступна. Попробуйте открыть её чуть позже.</p>
+              : recentItems.length ? <div className={styles.recentList}>{recentItems.slice(0, 4).map(item => <Link href={`/history/${encodeURIComponent(item.type)}/${encodeURIComponent(item.id)}`} key={`${item.type}:${item.id}`} className={styles.recentItem}><span className={styles.recentIcon} aria-hidden="true">{item.type === 'tarot' ? '✧' : item.type === 'numerology' ? '◇' : item.type === 'dreams' ? '☾' : '✦'}</span><span><strong>{item.title}</strong><small>{new Intl.DateTimeFormat('ru-RU', { timeZone, day: 'numeric', month: 'long' }).format(new Date(item.created_at))}</small></span><ArrowIcon /></Link>)}</div>
+                : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={openDirections}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
+        </section>
         <div className={styles.directions}>{frame}<div><h2>Направления Mirastros</h2><p>Таро, натальная карта, матрица судьбы</p></div>{directions}</div>
       </div>
     </div>

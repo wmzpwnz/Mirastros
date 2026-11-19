@@ -60,6 +60,31 @@
 .link { margin-top: auto; }
 .directions { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 23px 28px; background: linear-gradient(90deg,#131025ed,#211432c9,#17102280),url('/images/mirastros-sanctuary.webp') center 72% / cover; }
 .travel { padding: 8px 18px; background: #121021d9; border: 1px solid #c4a37790; border-radius: 3px; cursor: pointer; }
+.metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; margin: 14px 0; }
+.metric,.historyPanel { position: relative; isolation: isolate; border: 1px solid var(--line); border-radius: 5px; background: radial-gradient(ellipse at 0 0,#38244553,transparent 75%),#101020; }
+.metric { display: flex; flex-direction: column; align-items: flex-start; min-height: 155px; padding: 18px 23px 15px; }
+.metric .label { margin-bottom: 5px; }
+.metric>strong { color: #f4d8a8; font: 42px/1.1 var(--font-display),Georgia,serif; }
+.metric>span { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.formulaToggle,.metricLink { margin-top: 8px; color: var(--gold); background: none; border: 0; padding: 0; font: inherit; font-size: 12px; cursor: pointer; }
+.metricLink { display: inline-flex; align-items: center; gap: 8px; }
+.formula { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 7px 0 0; overflow-wrap: anywhere; }
+.practiceButton { display: inline-flex; align-items: center; gap: 9px; margin-top: auto; padding: 9px 13px; border: 1px solid #c4a37775; border-radius: 3px; color: var(--gold); background: #171226b8; font: inherit; font-size: 12px; cursor: pointer; }
+.practiceButton>span { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid currentColor; border-radius: 50%; }
+.practiceComplete { border-color: #9cc2a2a8; color: #c0e2bd; background: #16251fa8; }
+.historyPanel { padding: 22px 26px; margin: 0 0 15px; }
+.historyHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.historyHeading h2 { margin:0; color:#f0ddba; font-size:clamp(24px,2.1vw,33px); }
+.historyHeading .link { margin:0; }
+.recentList { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 14px; margin-top:14px; }
+.recentItem { display:flex; align-items:center; gap:12px; min-width:0; padding:11px 12px; border:1px solid #b68c582a; background:#090a176b; transition:background .2s,border-color .2s; }
+.recentItem:hover { background:#24172f; border-color:#b68c5870; }
+.recentItem>span:nth-child(2) { display:grid; gap:3px; min-width:0; flex:1; }
+.recentItem strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:500; }
+.recentItem small,.emptyHistory p { color:var(--muted); font-size:11px; }
+.recentIcon { display:grid; place-items:center; width:34px; height:34px; border:1px solid var(--line); border-radius:50%; color:var(--gold); font:20px Georgia,serif; }
+.emptyHistory { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; }
+.emptyHistory button { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid #c4a37775; background:#171226b8; color:var(--gold); cursor:pointer; }
 @media (max-width: 900px) {
   .layout { display:block; }
   .content { border: 0; padding-left: 0; }
@@ -78,4 +103,16 @@
   .signArt { position: absolute; width: 75px; right: 14px; top: 9px; margin: 0; }
   .grid { grid-template-columns: 1fr; gap: 12px; margin: 12px 0; }
   .panel { padding: 20px 21px 10px; } .directions { flex-wrap: wrap; padding: 18px 21px; }
+  .metrics { gap:8px; }
+  .metric { min-height:132px; padding:14px 14px 12px; }
+  .metric>strong { font-size:34px; }
+  .metric>span { font-size:11px; }
+  .recentList { grid-template-columns:1fr; }
+  .historyPanel { padding:18px; }
+}
+@media (max-width: 420px) {
+  .metrics { grid-template-columns:1fr; }
+  .metric { min-height:0; }
+  .metric>strong { font-size:30px; }
+  .emptyHistory { align-items:flex-start; flex-direction:column; }
 }

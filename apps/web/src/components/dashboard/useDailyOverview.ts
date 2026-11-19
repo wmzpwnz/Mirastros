@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
+import type { ConsultationHistoryItem } from '../../types';
 import type { DailyForecast, DailyMoon } from './dailyOverviewModel';
 
 export type ResourceState = 'loading' | 'ready' | 'error' | 'missing';
@@ -15,6 +16,8 @@ export function useDailyOverview(userId: string, sign: string | undefined, date:
   const [moonState, setMoonState] = useState<ResourceState>('loading');
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [recentItems, setRecentItems] = useState<ConsultationHistoryItem[]>([]);
+  const [historyState, setHistoryState] = useState<ResourceState>('loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +74,24 @@ export function useDailyOverview(userId: string, sign: string | undefined, date:
     };
   }, [userId, sign, date, timeZone, resourceKey, attempt]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryState('loading');
+    api.getUnifiedHistory({ page: 1, pageSize: 4 })
+      .then(result => {
+        if (cancelled) return;
+        setRecentItems(result.items || []);
+        setHistoryState('ready');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecentItems([]);
+          setHistoryState('error');
+        }
+      });
+    return () => { cancelled = true; };
+  }, [userId, date, attempt]);
+
   const current = snapshotKey === resourceKey;
   return {
     forecast: current ? forecast : null,
@@ -78,6 +99,8 @@ export function useDailyOverview(userId: string, sign: string | undefined, date:
     forecastState: current ? forecastState : sign ? 'loading' as const : 'missing' as const,
     moonState: current ? moonState : 'loading' as const,
     updatedAt: current ? updatedAt : null,
+    recentItems,
+    historyState,
     refresh: () => setAttempt(n => n + 1),
   };
 }
