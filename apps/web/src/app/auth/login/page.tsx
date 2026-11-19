@@ -24,8 +24,13 @@ export default function LoginPage() {
   };
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (loading) return;
+    const fields = new FormData(event.currentTarget);
+    const submittedEmail = String(fields.get('email') ?? '').trim();
+    const submittedPassword = String(fields.get('password') ?? '');
+    setEmail(submittedEmail);
+    setPassword(submittedPassword);
     setError(''); setLoading(true);
-    try { await api.login(email.trim(), password); await continueAfterLogin(); }
+    try { await api.login(submittedEmail, submittedPassword); await continueAfterLogin(); }
     catch (cause) { setError(authError(cause, 'Не удалось войти. Проверьте email и пароль и попробуйте снова.')); }
     finally { setLoading(false); }
   }

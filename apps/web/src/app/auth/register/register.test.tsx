@@ -57,3 +57,17 @@ it('keeps technical server instructions out of the registration error', async ()
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось связаться с Mirastros');
   expect(screen.getByRole('alert')).not.toHaveTextContent(/PostgreSQL|DATABASE_URL|localhost/);
 });
+
+it('reads Safari autofill values even when no React change event was fired', async () => {
+  render(<RegisterPage />);
+  const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  fireEvent.click(screen.getByRole('checkbox'));
+  // Fill after React's checkbox render, as a password manager would.
+  for (const [label, value] of [
+    ['Как к вам обращаться', 'Азиз'], ['Email', 'fixture@example.com'],
+    ['Пароль · от 8 символов', 'Fixture8300!'], ['Повторите пароль', 'Fixture8300!'],
+  ]) setValue.call(screen.getByLabelText(label, { exact: true }), value);
+  submit();
+  await waitFor(() => expect(mocks.register).toHaveBeenCalledWith(expect.objectContaining({ full_name: 'Азиз', email: 'fixture@example.com', password: 'Fixture8300!' })));
+  expect(mocks.push).toHaveBeenCalledWith('/auth/onboarding?start=1');
+});

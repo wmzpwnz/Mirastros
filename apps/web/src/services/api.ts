@@ -68,6 +68,26 @@ export interface OnboardingInsight {
   source: 'deepseek' | 'fallback';
 }
 
+class ApiConnectionError extends Error {}
+
+/** One deadline covers headers, body decoding and an optional token refresh.
+ * Abort alone is not sufficient for transports that leave a body promise pending. */
+function requestDeadline(milliseconds: number) {
+  const controller = new AbortController();
+  let timer!: ReturnType<typeof setTimeout>;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new DOMException('Request deadline exceeded', 'AbortError'));
+    }, milliseconds);
+  });
+  return {
+    signal: controller.signal,
+    wait: <T>(operation: Promise<T>): Promise<T> => Promise.race([operation, expired]),
+    close: () => clearTimeout(timer),
+  };
+}
+
 class ApiClient {
   private baseUrl: string;
   private timeout: number;
@@ -129,18 +149,20 @@ class ApiClient {
     if (this.refreshPromise) return this.refreshPromise;
 
     this.refreshPromise = (async () => {
+      const deadline = requestDeadline(this.timeout);
       try {
-        const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+        const response = await deadline.wait(fetch(`${this.baseUrl}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
-        });
+          signal: deadline.signal,
+        }));
 
         if (!response.ok) {
           return null;
         }
 
-        const data = await response.json();
+        const data = await deadline.wait(response.json());
         const newAccess = data.access_token || data.accessToken;
         const newRefresh = data.refresh_token || data.refreshToken;
         if (!newAccess || !newRefresh) return null;
@@ -152,6 +174,7 @@ class ApiClient {
       } catch {
         return null;
       } finally {
+        deadline.close();
         this.refreshPromise = null;
       }
     })();
@@ -171,7 +194,8 @@ class ApiClient {
     // Ensure endpoint starts with /
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${this.baseUrl}${normalizedEndpoint}`;
-    const token = this.getToken();
+    const publicCredentials = /^\/auth\/(login|register)$/.test(normalizedEndpoint);
+    const token = publicCredentials ? null : this.getToken();
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -182,28 +206,23 @@ class ApiClient {
       (headers as any)['Authorization'] = `Bearer ${token}`;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.warn(`Request timeout for ${endpoint}`);
-      controller.abort();
-    }, timeoutMs);
+    const deadline = requestDeadline(timeoutMs);
 
     try {
       console.log(`Making request to: ${url}`);
-      const response = await fetch(url, {
+      const response = await deadline.wait(fetch(url, {
         ...options,
         headers,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
+        signal: deadline.signal,
+      }));
 
       if (!response.ok) {
         let errorMessage = response.statusText;
         try {
-          const error = await response.json();
+          const error = await deadline.wait(response.json());
           errorMessage = error.detail || error.message || error.error || response.statusText;
-        } catch {
+        } catch (error) {
+          if (deadline.signal.aborted) throw error;
           // If response is not JSON, use status text
           errorMessage = response.statusText || `HTTP ${response.status}`;
         }
@@ -237,7 +256,7 @@ class ApiClient {
           }
           // Try refresh once, then retry the original request.
           if (retryOnAuthFailure) {
-            const refreshed = await this.refreshTokens();
+            const refreshed = await deadline.wait(this.refreshTokens());
             if (refreshed) {
               return this.request<T>(endpoint, options, false);
             }
@@ -257,11 +276,10 @@ class ApiClient {
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data = await deadline.wait(response.json());
       console.log(`Request successful for ${endpoint}`);
       return data;
     } catch (error) {
-      clearTimeout(timeoutId);
       const msg = error instanceof Error ? error.message : String(error);
       const isNetworkError =
         error instanceof TypeError ||
@@ -271,13 +289,13 @@ class ApiClient {
         msg.includes('Load failed') ||
         msg.includes('ERR_CONNECTION_REFUSED');
 
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (deadline.signal.aborted || (error instanceof Error && error.name === 'AbortError')) {
         console.error(`Request aborted (timeout) for ${endpoint}`);
-        throw new Error('Таймаут запроса. Сервер не ответил вовремя.');
+        throw new ApiConnectionError('Таймаут запроса. Сервер не ответил вовремя.');
       }
       if (isNetworkError) {
         console.error(`Network error for ${endpoint}:`, error);
-        throw new Error(
+        throw new ApiConnectionError(
           `Сервер API недоступен (${this.baseUrl}). Запустите бэкенд: в корне проекта выполните \`npm start\` или \`bash start-local.sh\`.`
         );
       }
@@ -286,6 +304,8 @@ class ApiClient {
         throw error;
       }
       throw new Error('Неизвестная ошибка');
+    } finally {
+      deadline.close();
     }
   }
 
@@ -341,16 +361,24 @@ class ApiClient {
     preferredLanguage: string;
     timezone: string;
   }): Promise<AuthResponse> {
-    const response = await this.request<any>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-        full_name: data.full_name,
-        preferred_language: data.preferredLanguage || 'ru',
-        timezone: data.timezone || 'UTC',
-      }),
-    });
+    let response: any;
+    try {
+      response = await this.request<any>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          full_name: data.full_name,
+          preferred_language: data.preferredLanguage || 'ru',
+          timezone: data.timezone || 'UTC',
+        }),
+      });
+    } catch (error) {
+      if (!(error instanceof ApiConnectionError)) throw error;
+      // A lost response does not mean the account was not committed. Authenticate
+      // once with the submitted credentials; do not repeat the registration POST.
+      try { return await this.login(data.email, data.password); } catch { throw error; }
+    }
 
     // Normalize response: convert snake_case to camelCase if needed
     const normalizedResponse: AuthResponse = {
@@ -460,7 +488,14 @@ class ApiClient {
   }
 
   async completeWelcome(): Promise<WelcomeState> {
-    return this.request('/auth/onboarding/complete', { method: 'POST' });
+    try {
+      return await this.request<WelcomeState>('/auth/onboarding/complete', { method: 'POST' });
+    } catch (error) {
+      if (!(error instanceof ApiConnectionError)) throw error;
+      const saved = await this.getWelcomeState().catch(() => null);
+      if (saved?.completed) return saved;
+      throw error;
+    }
   }
 
   async searchBirthplaces(query: string): Promise<WelcomePlace[]> {
