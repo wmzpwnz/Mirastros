@@ -105,7 +105,10 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
               : <p className={styles.focus}>{forecastState === 'missing' ? 'Добавьте дату рождения, чтобы открыть прогноз для своего знака.' : forecastState === 'error' ? 'Сегодняшний прогноз пока недоступен.' : 'Загружаем прогноз…'}</p>}
             <Link className="mira-action mira-action-primary" href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
           </div>
-          {zodiac && <img className={styles.signArt} src={`/zodiac/${zodiac[0]}.png`} alt="" width="666" height="666" />}
+          {zodiac && <div className={styles.signArt} aria-hidden="true">
+            <img src={zodiac[0] === 'aries' ? '/zodiac/aries.png' : '/images/preloader-zodiac-gold.webp'} alt="" width="666" height="666" />
+            {zodiac[0] !== 'aries' && <span>{zodiac[1].emoji.replace(/\uFE0F/g, '')}︎</span>}
+          </div>}
         </article>
 
         <div className={styles.grid}>
