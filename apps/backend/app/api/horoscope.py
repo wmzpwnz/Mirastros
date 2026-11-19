@@ -137,7 +137,7 @@ async def get_daily_horoscope(
         # Try Redis cache first (only for general horoscopes)
         if not current_user:
             cache_key = f"horoscope:daily:v2:{sign.value}:{target_date.isoformat()}"
-            cached = await redis_client.get(cache_key)
+            cached = await redis_client.get_cached(cache_key)
             
             if cached:
                 logger.info(f"Returning cached daily horoscope for {sign.value}")
@@ -193,7 +193,7 @@ async def get_daily_horoscope(
             
             # Cache in Redis if general horoscope
             if not current_user:
-                await redis_client.set(cache_key, response_data, ttl=86400)  # 24 hours
+                await redis_client.set_cached(cache_key, response_data, ttl=86400)  # 24 hours
             
             return HoroscopeResponse(**response_data)
         
@@ -343,7 +343,7 @@ async def get_daily_horoscope(
 
         # Cache in Redis if general horoscope
         if not current_user:
-            await redis_client.set(cache_key, response_data, ttl=86400)  # 24 hours
+            await redis_client.set_cached(cache_key, response_data, ttl=86400)  # 24 hours
 
         return HoroscopeResponse(**response_data)
         

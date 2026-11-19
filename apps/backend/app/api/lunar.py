@@ -39,29 +39,15 @@ async def get_current_lunar_phase(
         if target_date is None:
             target_date = date.today()
         
-        # Calculate lunar phase to get Russian fallback
-        logger.info(f"Calculating lunar phase for {target_date}")
-        lunar_data = lunar_service.calculate_lunar_phase(
-            target_date,
-            include_next_events=True
-        )
-        phase = lunar_data["phase"]
-        
-        # ALWAYS use Russian fallback (never English)
-        description = lunar_data.get("description_fallback_ru", "")
-        if not description:
-            # Fallback: get directly from service if not in response
-            description = lunar_service.phase_descriptions.get(phase, "")
-        
-        # Check Redis cache (v3 - uses Russian descriptions + exact next moon dates)
         cache_key = f"lunar:phase:v3:{target_date.isoformat()}"
-        cached = await redis_client.get(cache_key)
-        
+        cached = await redis_client.get_cached(cache_key)
         if cached:
-            # Always replace description with Russian, even if cached
-            cached["description"] = description
-            logger.info(f"Returning cached lunar phase (with Russian description) for {target_date}")
+            cached["description"] = lunar_service.phase_descriptions.get(cached["phase"], cached["description"])
             return LunarPhaseResponse(**cached)
+
+        lunar_data = lunar_service.calculate_lunar_phase(target_date, include_next_events=True)
+        phase = lunar_data["phase"]
+        description = lunar_data.get("description_fallback_ru") or lunar_service.phase_descriptions.get(phase, "")
 
         response_data = {
             "phase": phase,
@@ -76,7 +62,7 @@ async def get_current_lunar_phase(
         }
 
         # Cache full response for 6 hours
-        await redis_client.set(cache_key, response_data, ttl=21600)
+        await redis_client.set_cached(cache_key, response_data, ttl=21600)
 
         return LunarPhaseResponse(**response_data)
         
