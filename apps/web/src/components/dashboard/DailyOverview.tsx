@@ -3,47 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
-import { cleanText, dayInZone, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
+import { dayInZone, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
+import { MOON_PHASE_NAMES_EXTENDED } from '../../constants/moon';
 import styles from './DailyOverview.module.css';
 
 function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d={diagonal ? 'M5 15 15 5M5 5h10v10' : 'M3 10h13m-5-5 5 5-5 5'} /></svg>;
-}
-
-function Ornament({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} width="76" height="76" viewBox="0 0 80 80" fill="none" aria-hidden="true">
-      <path d="M3 77V14C3 7 7 3 14 3h63M9 68V17c0-5 3-8 8-8h51M3 35C22 35 35 22 35 3M9 47C26 44 44 26 47 9" />
-      <path d="M8 8c20-3 28 11 20 19C19 35 5 22 8 8Zm7 7c12 0 18 8 10 11-5 2-11-4-10-11ZM3 54c16-20 20-7 13-3S5 66 9 70M54 3c-20 16-7 20-3 13S66 5 70 9M19 3l8 8M3 19l8 8M37 17l7 7-7 7-7-7Z" />
-      <path d="M40 40c9-3 16-9 20-18-2 13-9 22-20 25-3 11-12 18-25 20 9-4 15-11 18-20l7-7Z" />
-      <circle cx="24" cy="24" r="3" /><circle cx="8" cy="8" r="2" /><path d="m50 50 3-7 3 7-3 7-3-7Z" />
-    </svg>
-  );
-}
-
-function Astrolabe({ symbol }: { symbol: string }) {
-  return (
-    <svg viewBox="0 0 220 220" className={styles.astrolabe} aria-hidden="true">
-      <circle cx="110" cy="110" r="102" />
-      <circle cx="110" cy="110" r="88" />
-      <circle cx="110" cy="110" r="65" />
-      <path d="m110 19 23 59 63 4-49 40 16 64-53-35-53 35 16-64-49-40 63-4Z" />
-      <path d="m110 8 0 38m0 128v38M8 110h38m128 0h38M38 38l26 26m92 92 26 26m0-144-26 26m-92 92-26 26" />
-      {Array.from({ length: 12 }, (_, i) => (
-        <circle key={i} cx="110" cy="15" r="1.7" transform={`rotate(${i * 30} 110 110)`} />
-      ))}
-      <text x="110" y="125" textAnchor="middle">{symbol}</text>
-    </svg>
-  );
-}
-
-function Artifact({ kind }: { kind: 'energy' | 'event' | 'advice' }) {
-  return <svg className={styles.artifact} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <circle cx="32" cy="32" r="29" strokeOpacity=".25" /><circle cx="32" cy="32" r="25" strokeOpacity=".15" />
-    {kind === 'energy' ? <><path d="m32 8 13 21-13 25-13-25L32 8Zm0 0v46M19 29h26M32 8l5 21-5 25-5-25 5-21Z" /><path d="m10 15 2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4Z" /></> : kind === 'event' ? <><path d="M39 12a21 21 0 1 0 13 32A22 22 0 0 1 39 12Z" /><path d="m43 10 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" /><circle cx="21" cy="33" r="3" strokeOpacity=".4" /></> : <><path d="M32 21c-6-5-14-5-21-2v28c7-3 15-3 21 2 6-5 14-5 21-2V19c-7-3-15-3-21 2Zm0 0v28M16 25l10 1m-10 5 10 1m-10 5 10 1m12-12 10-1m-10 7 10-1m-10 7 10-1" /><path d="m32 5 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" /></>}
-  </svg>;
 }
 
 function MoonVisual({ phase }: { phase?: string }) {
@@ -52,7 +19,7 @@ function MoonVisual({ phase }: { phase?: string }) {
     phase?.includes('crescent') ? 25 : phase?.includes('gibbous') ? 84 : 55;
   return (
     <div className={styles.moonOrbit} aria-hidden="true">
-      <span className={styles.orbitStar}>✦</span>
+
       <svg viewBox="0 0 160 160" className={styles.moon}>
         <defs>
           <radialGradient id="daily-moon-surface" cx="32%" cy="25%" r="80%">
@@ -72,7 +39,7 @@ function MoonVisual({ phase }: { phase?: string }) {
   );
 }
 
-export function DailyOverview({ user }: { user: User }) {
+export function DailyOverview({ user, openDirections }: { user: User; openDirections?: () => void }) {
   const timeZone = resolveTimeZone(user.timezone);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -83,7 +50,6 @@ export function DailyOverview({ user }: { user: User }) {
   }, []);
   const today = dayInZone(now, timeZone);
   const zodiac = resolveZodiac(user.zodiacSign);
-  const zodiacSymbol = zodiac ? `${zodiac[1].emoji}\uFE0E` : '✧';
   const { forecast, moon, forecastState, moonState, updatedAt, refresh } = useDailyOverview(user.id, zodiac?.[0], today, timeZone);
   const copy = forecastCopy(forecast);
   const illumination = illuminationOf(moon);
@@ -93,122 +59,80 @@ export function DailyOverview({ user }: { user: User }) {
   const dateLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, weekday: 'long', day: 'numeric', month: 'long' }).format(now);
   const zoneLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, timeZoneName: 'short' }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value;
   const updatedLabel = updatedAt ? new Intl.DateTimeFormat('ru-RU', { timeZone, hour: '2-digit', minute: '2-digit' }).format(updatedAt) : null;
-  const forecastHref = `/services/horoscope${zodiac ? `?sign=${zodiac[0]}&period=daily` : ''}`;
+  const forecastHref = `/services/horoscope${zodiac ? `?sign=${zodiac[0]}&period=daily&date=${today}` : ''}`;
   const loading = forecastState === 'loading' || moonState === 'loading';
   const partial = forecastState === 'error' || moonState === 'error';
   const name = user.fullName?.trim().split(/\s+/)[0] || 'Искатель';
   const tier = user.subscriptionTier === 'platinum' ? 'Platinum' : user.subscriptionTier === 'premium' ? 'Premium' : 'Базовый доступ';
 
-  const panelOrnaments = <OrnamentFrame className={styles.panelTrim} />;
+  const nav = [
+    ['/dashboard', 'Сводка дня', '☉'],
+    ['/auth/onboarding?view=portrait', 'Мой портрет', '✧'],
+    ['/services/lunar', 'Лунный календарь', '☾'],
+    ['/history', 'Моя история', '◷'],
+    ['/profile', 'Профиль', '♙'],
+  ];
+  const phase = moon && (MOON_PHASE_NAMES_EXTENDED[moon.phase] || moon.phase_name);
+  const frame = <OrnamentFrame className={styles.trim} />;
+  const directions = openDirections
+    ? <button className={styles.travel} onClick={openDirections}>Войти в туннель <ArrowIcon /></button>
+    : <Link className={styles.travel} href="/services">К направлениям <ArrowIcon /></Link>;
 
-  return (
-    <section className={`personal-hero-root ${styles.root}`} aria-labelledby="daily-overview-title">
-      <div className={`personal-hero-bg ${styles.background}`} aria-hidden="true">
-        <img className="hero-bg-img" src="/images/mirastros-reference-desktop.webp" alt="" />
-      </div>
-      <div className={`personal-hero-overlay ${styles.overlay}`} aria-hidden="true" />
-      <OrnamentFrame className={styles.screenFrame} />
-      <div className={styles.shell}>
-        <Ornament className={`${styles.corner} ${styles.topLeft}`} />
-        <Ornament className={`${styles.corner} ${styles.topRight}`} />
-        <Ornament className={`${styles.corner} ${styles.bottomLeft}`} />
-        <Ornament className={`${styles.corner} ${styles.bottomRight}`} />
-
-        <header className={styles.header}>
-          <Link href="/dashboard" className={styles.brand} aria-label="Mirastros — личный кабинет"><img src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
-          <div className={styles.account}>
-            <Link href="/subscription" className={styles.tier}>{tier}</Link>
-            <Link href="/profile" className={styles.profile} aria-label="Открыть профиль">{name.slice(0, 1).toUpperCase()}</Link>
+  return <section className={styles.root} aria-labelledby="daily-overview-title">
+    <header className={styles.header}>
+      <Link href="/dashboard" aria-label="Mirastros — личный кабинет"><img className={styles.logo} src="/logo.png" alt="Mirastros" width="800" height="205" /></Link>
+      <div className={styles.account}><Link href="/subscription">{tier}</Link><Link href="/profile" className={styles.avatar} aria-label="Открыть профиль">{name.slice(0, 1)}</Link></div>
+    </header>
+    <div className={styles.layout}>
+      <nav className={styles.sidebar} aria-label="Личный кабинет">
+        {nav.map(([url, label, icon]) => <Link href={url} key={url} aria-current={url === '/dashboard' ? 'page' : undefined}><span aria-hidden="true">{icon}</span>{label}</Link>)}
+        <Link href="/services"><span aria-hidden="true">✥</span>Все направления</Link>
+      </nav>
+      <div className={styles.content}>
+        <div className={styles.heading}>
+          <div><time dateTime={today}>{dateLabel}</time><h1 id="daily-overview-title">Ваш день, {name}</h1></div>
+          <div className={styles.freshness} role="status"><span>{loading ? 'Обновляем…' : partial ? 'Часть данных недоступна' : updatedLabel ? `Обновлено в ${updatedLabel}` : zoneLabel}</span>
+            <button type="button" onClick={refresh} disabled={loading} aria-label="Обновить сводку">↻</button>
           </div>
-        </header>
-
-        <div className={styles.accountLayout}>
-        <nav className={styles.sidebar} aria-label="Личный кабинет">
-          <span className={styles.navCaption}>Ваше пространство</span>
-          {[
-            ['/dashboard', 'Сводка дня', 'M3 11 12 3l9 8M5 10v11h5v-7h4v7h5V10'],
-            ['/services', 'Направления', 'm12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z'],
-            ['/services/lunar', 'Календарь', 'M5 5h14v16H5V5Zm3-3v6m8-6v6M5 10h14'],
-            ['/history', 'Моя история', 'M5 4h14v17H5V4Zm3 5h8m-8 4h8m-8 4h5'],
-            ['/profile', 'Мой профиль', 'M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0ZM3 22v-2a9 9 0 0 1 18 0v2'],
-            ['/subscription', 'Подписка', 'm3 6 5 5 4-8 4 8 5-5-3 13H6L3 6Zm3 10h12'],
-          ].map(([href, label, path]) => <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true"><path d={path} /></svg>{label}</Link>)}
-          <span className={styles.sidebarFoot}>Ваша личная<br />вселенная знаний</span>
-        </nav>
-        <div className={styles.workspace}>
-        <div className={styles.intro}>
-          <div><p className={styles.eyebrow}>Личный кабинет · сводка на сегодня</p><h1 id="daily-overview-title">Добро пожаловать, <em>{name}</em></h1></div>
-          <div className={styles.date}><time dateTime={today}>{dateLabel}</time><span>{zodiac?.[1].name || 'Знак не указан'} <i aria-hidden="true">·</i> {zoneLabel}</span></div>
-        </div>
-        <div className={styles.divider} aria-hidden="true"><span>✧</span></div>
-
-        <div className={styles.mainGrid}>
-          <article className={`${styles.panel} ${styles.moonPanel} personal-hero-block`} aria-busy={moonState === 'loading'}>
-            {panelOrnaments}
-            <p className={styles.eyebrow}><span aria-hidden="true">☽</span> Луна сейчас</p>
-            {moonState !== 'error' && <MoonVisual phase={rhythm ? moon?.phase : undefined} />}
-            <h2>{moon?.phase_name || (moonState === 'loading' ? 'Считываем лунный ритм…' : 'Лунные данные недоступны')}</h2>
-            {moonState === 'error' && <p className={styles.state}>Обновите сводку, чтобы повторить.</p>}
-            <dl className={styles.moonStats}>
-              <div><dt>Освещённость</dt><dd>{illumination === null ? 'Нет данных' : `${Math.round(illumination)}%`}</dd></div>
-              <div><dt>Луна в знаке</dt><dd>{moonSign}</dd></div>
-            </dl>
-            <Link className={styles.textLink} href="/services/lunar">Лунный календарь <ArrowIcon diagonal /></Link>
-          </article>
-
-          <article className={`${styles.focusPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
-            <p className={styles.eyebrow}>✦ Фокус дня</p>
-            <div className={styles.portalEmblem}><Astrolabe symbol={zodiacSymbol} /><span className={styles.portalHalo} aria-hidden="true" /></div>
-            <h2>{copy.focus || (forecastState === 'missing' ? 'Начните с себя' : forecastState === 'error' ? 'Ваш день — больше одного прогноза' : 'Настраиваем ваш дневной ориентир…')}</h2>
-            <p className={styles.focusNote}>{forecastState === 'missing'
-              ? 'Добавьте данные рождения в профиль, чтобы здесь появился ваш прогноз.'
-              : forecastState === 'error' ? 'Прогноз не загрузился. Лунная сводка доступна независимо — вернуться к прогнозу можно позже.'
-              : forecast ? forecast.is_personalized ? 'Главное из вашего персонального прогноза на сегодня.' : `Главное из общего прогноза для знака ${zodiac?.[1].name || ''}.` : 'Обращаемся к прогнозу на текущую дату.'}</p>
-            <Link className={`mira-action mira-action-primary ${styles.primaryAction}`} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
-          </article>
-
-          <article className={`${styles.panel} ${styles.forecastPanel} personal-hero-block`} aria-busy={forecastState === 'loading'}>
-            {panelOrnaments}
-            <p className={styles.eyebrow}><span aria-hidden="true">☉</span> Гороскоп сегодня</p>
-            <div className={styles.forecastHeading}><h2>{zodiac?.[1].name || 'Ваш знак'}</h2><span aria-hidden="true">{zodiacSymbol}</span></div>
-            {forecast ? <><p className={styles.forecastText}>{copy.forecast}</p><p className={styles.caption}>{forecast.is_personalized ? 'Персональная интерпретация' : 'Общий прогноз по знаку'}</p></>
-              : <p className={styles.state}>{forecastState === 'missing' ? 'Укажите данные рождения в профиле. Мы не будем угадывать ваш знак.' : forecastState === 'error' ? 'Не удалось получить прогноз. Обновите сводку, чтобы повторить попытку.' : 'Загружаем прогноз на сегодня…'}</p>}
-            <Link className={styles.textLink} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'К профилю' : 'Читать целиком'} <ArrowIcon diagonal /></Link>
-          </article>
         </div>
 
-        <div className={styles.bottomGrid}>
-          <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
-            {panelOrnaments}
-            <Artifact kind="energy" />
-            <p className={styles.eyebrow}>Энергия дня</p>
-            <h2>{rhythm?.title || (moonState === 'loading' ? 'Определяем ритм…' : 'Ритм пока неизвестен')}</h2>
-            <p>{rhythm?.text || 'Появится после загрузки лунной фазы.'}</p>
-            <span className={styles.caption}>Символика лунной фазы</span>
+        <article className={styles.hero} aria-busy={forecastState === 'loading'}>
+          {frame}
+          <div className={styles.heroCopy}>
+            <p className={styles.label}>{forecast?.is_personalized ? 'Персональный гороскоп' : 'Гороскоп на сегодня'}</p>
+            <h2>{zodiac?.[1].name || 'Ваш гороскоп'}</h2>
+            {forecast ? <><p className={styles.focus}>{copy.focus}</p><p className={styles.excerpt}>{copy.forecast}</p></>
+              : <p className={styles.focus}>{forecastState === 'missing' ? 'Добавьте дату рождения, чтобы открыть прогноз для своего знака.' : forecastState === 'error' ? 'Сегодняшний прогноз пока недоступен.' : 'Загружаем прогноз…'}</p>}
+            <Link className="mira-action mira-action-primary" href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
+          </div>
+          {zodiac && <div className={styles.signArt} aria-hidden="true">
+            <img src={zodiac[0] === 'aries' ? '/zodiac/aries.png' : '/images/preloader-zodiac-gold.webp'} alt="" width="666" height="666" />
+            {zodiac[0] !== 'aries' && <span>{zodiac[1].emoji.replace(/\uFE0F/g, '')}︎</span>}
+          </div>}
+        </article>
+
+        <div className={styles.grid}>
+          <article className={styles.panel} aria-busy={moonState === 'loading'}>
+            {frame}<p className={styles.label}>Луна сейчас</p>
+            <div className={styles.lunar}>
+              <MoonVisual phase={moon?.phase} />
+              <div><h2>{phase || (moonState === 'loading' ? 'Загрузка…' : 'Лунные данные недоступны')}</h2>
+                {moon && <p>{moonSign} · Освещённость <strong>{illumination === null ? '—' : `${Math.round(illumination)}%`}</strong></p>}
+              </div>
+            </div>
+            {rhythm && <p className={styles.detail}>{rhythm.text}</p>}
+            {event && <p className={styles.event}>{event.title} <time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p>}
+            <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
           </article>
-          <article className={`${styles.panel} ${styles.smallPanel} personal-hero-block`}>
-            {panelOrnaments}
-            <Artifact kind="event" />
-            <p className={styles.eyebrow}>Ближайшее событие</p>
-            <h2>{event?.title || (moonState === 'loading' ? 'Сверяем календарь…' : 'Дата пока неизвестна')}</h2>
-            {event ? <><p className={styles.eventDate}><time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p><Link className={styles.textLink} href="/services/lunar">Посмотреть календарь <ArrowIcon diagonal /></Link></> : <p>Покажем ближайшее новолуние или полнолуние, когда получим дату.</p>}
-          </article>
-          <article className={`${styles.panel} ${styles.smallPanel} ${styles.advicePanel} personal-hero-block`}>
-            {panelOrnaments}
-            <Artifact kind="advice" />
-            <p className={styles.eyebrow}>Рекомендация дня</p>
+          <article className={styles.panel}>
+            {frame}<p className={styles.label}>Рекомендация дня</p>
             <h2>Один шаг для себя</h2>
-            <p>{copy.advice || (forecastState === 'missing' ? 'Начните с профиля: ваши данные помогут настроить личную сводку.' : forecastState === 'loading' ? 'Совет появится вместе с прогнозом.' : 'Отдельной рекомендации пока нет. Выберите полезное действие из полного прогноза.')}</p>
+            <p className={styles.detail}>{copy.advice || (forecastState === 'loading' ? 'Загружаем рекомендацию…' : 'Вернитесь к личному портрету и выберите тему, которую хотите изучить сегодня.')}</p>
+            <Link className={styles.link} href="/auth/onboarding?view=portrait">Мой портрет <ArrowIcon /></Link>
           </article>
         </div>
-
-        <footer className={styles.footer}>
-          <div className={styles.freshness} role="status"><span className={partial ? styles.warningDot : loading ? styles.loadingDot : styles.readyDot} />{loading ? 'Обновляем сводку…' : partial ? 'Часть данных недоступна' : updatedLabel ? `Проверено в ${updatedLabel}` : 'Сводка на сегодня'}<button type="button" onClick={refresh} disabled={loading} aria-label="Обновить сводку" className={styles.refresh}>↻</button></div>
-          <Link className={styles.catalogLink} href="/services">Дальше — ваш мир Mirastros <span aria-hidden="true">↓</span></Link>
-        </footer>
-        </div>
-        </div>
+        <div className={styles.directions}>{frame}<div><h2>Направления Mirastros</h2><p>Таро, натальная карта, матрица судьбы</p></div>{directions}</div>
       </div>
-    </section>
-  );
+    </div>
+  </section>;
 }

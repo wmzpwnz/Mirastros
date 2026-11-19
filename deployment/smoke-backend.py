@@ -58,6 +58,11 @@ with tempfile.TemporaryFile() as log:
             assert client.get('/auth/onboarding/state', headers=headers).json()['completed']
             assert client.get('/auth/me', headers=headers).json()['birth_date'] == '1990-01-01'
             assert client.get('/auth/onboarding/state').status_code in (401, 403)
+            today = '2026-11-19'
+            for route in ('horoscope/daily/capricorn', 'lunar/current'):
+                daily = client.get(f'/{route}', params={'target_date': today}, headers=headers)
+                assert daily.status_code == 200, f'{route}: {daily.status_code} {daily.text}'
+                assert daily.json()['date'] == today
             print('Database/API readiness, registration, login, shared profile and welcome flow passed')
     finally:
         process.terminate()

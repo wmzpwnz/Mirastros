@@ -427,11 +427,10 @@ class HoroscopeService:
             except Exception as e:
                 logger.warning(f"Failed to calculate numerology-based lucky numbers: {e}. Falling back to sign-based.")
         
-        # Fallback: Use sign-based calculation with date seed for consistency
-        # This is more astrologically meaningful than pure random
-        seed = int(target_date.strftime("%Y%m%d")) + hash(sign)
-        random.seed(seed)
-        
+        # Stable across workers and independent of Python's randomized hash.
+        sign_number = self.zodiac_signs.index(sign.lower()) + 1
+        rng = random.Random(f"{target_date.isoformat()}:{sign_number}")
+
         # Generate numbers based on sign element and date components
         sign_elements = {
             "aries": 1, "leo": 1, "sagittarius": 1,  # Fire
@@ -458,31 +457,14 @@ class HoroscopeService:
         element_lucky = (element_num * 10 + day_num) % 99 + 1
         numbers.add(element_lucky)
         
-        # Add sign-based number (using hash for consistency)
-        sign_hash = abs(hash(sign)) % 99 + 1
-        numbers.add(sign_hash)
-        
-        # Fill to 5 if needed
-        while len(numbers) < 5:
-            combo = (day_num * month_num) % 99 + 1
-            numbers.add(combo)
-            if len(numbers) >= 5:
-                break
-            combo2 = (year_num + element_num) % 99 + 1
-            numbers.add(combo2)
-            if len(numbers) >= 5:
-                break
-        
-        result = sorted(list(numbers))[:5]
-        
-        # Ensure exactly 5 numbers
-        while len(result) < 5:
-            fallback = random.randint(1, 99)
-            if fallback not in result:
-                result.append(fallback)
-        
-        return sorted(result[:5])
-    
+        numbers.add(sign_number)
+        for candidate in ((day_num * month_num) % 99 + 1, (year_num + element_num) % 99 + 1):
+            if len(numbers) < 5:
+                numbers.add(candidate)
+        remaining = sorted(set(range(1, 100)) - numbers)
+        numbers.update(rng.sample(remaining, 5 - len(numbers)))
+        return sorted(numbers)
+
     def generate_lucky_colors(self, sign: str) -> List[str]:
         """Generate lucky colors based on zodiac sign"""
         color_map = {
@@ -615,7 +597,7 @@ class HoroscopeService:
             horoscope = Horoscope(
                 user_id=user_id,
                 zodiac_sign=sign.lower(),
-                period=period,
+                period=HoroscopePeriod(period),
                 date=target_date,
                 prediction=prediction,
                 lucky_numbers=lucky_numbers,
@@ -649,7 +631,7 @@ class HoroscopeService:
             query = select(Horoscope).where(
                 and_(
                     Horoscope.zodiac_sign == sign.lower(),
-                    Horoscope.period == period,
+                    Horoscope.period == HoroscopePeriod(period),
                     Horoscope.date == target_date
                 )
             )
@@ -660,7 +642,7 @@ class HoroscopeService:
             else:
                 query = query.where(Horoscope.user_id.is_(None))
             
-            result = await db.execute(query)
+            result = await db.execute(query.order_by(Horoscope.created_at.desc(), Horoscope.id.desc()).limit(1))
             return result.scalar_one_or_none()
             
         except Exception as e:

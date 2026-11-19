@@ -10,12 +10,23 @@ import { DepthJourney } from '../../components/journey/DepthJourney';
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let mounted = true;
-    const timeout = window.setTimeout(() => { if (mounted) router.replace('/auth/login'); }, 10000);
-    api.getCurrentUser().then(data => { if (mounted) { setUser(data); window.clearTimeout(timeout); } }).catch(() => { if (mounted) router.replace('/auth/login'); });
-    return () => { mounted = false; window.clearTimeout(timeout); };
-  }, [router]);
-  if (!user) return <div className="min-h-screen flex items-center justify-center text-purple-200" role="status">Открываем ваш мир Mirastros…</div>;
-  return <DepthJourney authenticated intro={<DailyOverview key={user.id} user={user} />} />;
+    setFailed(false);
+    api.getCurrentUser().then(data => {
+      if (mounted) setUser(data);
+    }).catch(error => {
+      if (!mounted) return;
+      if (/401|not authenticated|требуется авторизация/i.test(error.message)) router.replace('/auth/login');
+      else setFailed(true);
+    });
+    return () => { mounted = false; };
+  }, [router, attempt]);
+  if (!user) return <main className="min-h-screen grid place-content-center gap-4 text-center text-purple-100" role="status">
+    <p>{failed ? 'Не удалось загрузить ваш профиль.' : 'Открываем ваш день…'}</p>
+    {failed && <button className="mira-action mira-action-primary" onClick={() => setAttempt(value => value + 1)}>Попробовать снова</button>}
+  </main>;
+  return <DepthJourney authenticated intro={openDirections => <DailyOverview key={user.id} user={user} openDirections={openDirections} />} />;
 }

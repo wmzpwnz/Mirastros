@@ -1,4 +1,5 @@
 import redis.asyncio as aioredis
+from redis.exceptions import RedisError
 from app.core.config import get_settings
 from typing import Optional, Any, Callable
 import json
@@ -41,6 +42,19 @@ class RedisClient:
         ttl = ttl or settings.REDIS_CACHE_TTL
         await self.redis.setex(key, ttl, json.dumps(value))
     
+    async def get_cached(self, key: str):
+        """Read an optional cache for results the caller can recompute."""
+        try:
+            return await self.get(key)
+        except (RedisError, json.JSONDecodeError):
+            return None
+
+    async def set_cached(self, key: str, value: Any, ttl: int):
+        try:
+            await self.set(key, value, ttl)
+        except RedisError:
+            pass  # The calculated result is still available to the caller.
+
     async def delete(self, key: str):
         """Delete key from cache"""
         if not self.redis:

@@ -40,7 +40,10 @@ export default function HoroscopePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
-  const [selectedSign, setSelectedSign] = useState('aries');
+  const requestedSign = searchParams.get('sign');
+  const dateParam = searchParams.get('date') || '';
+  const requestedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : undefined;
+  const [selectedSign, setSelectedSign] = useState(isValidSign(requestedSign) ? requestedSign! : 'aries');
   const [period, setPeriod] = useState<Period>('daily');
   const [horoscopes, setHoroscopes] = useState<Record<Period, Horoscope | null>>({
     daily: null,
@@ -65,20 +68,23 @@ export default function HoroscopePage() {
   }, [searchParams]);
 
   useEffect(() => {
+    let active = true;
     const loadUser = async () => {
       try {
         const current = await api.getCurrentUser();
+        if (!active) return;
         setUser(current);
-        if (current.zodiacSign) {
+        if (current.zodiacSign && !isValidSign(requestedSign)) {
           const normalized = current.zodiacSign.toLowerCase();
           if (isValidSign(normalized)) setSelectedSign(normalized);
         }
       } catch {
-        setUser(null);
+        if (active) setUser(null);
       }
     };
     loadUser();
-  }, []);
+    return () => { active = false; };
+  }, [requestedSign]);
 
   useEffect(() => {
     const allowedPeriod = !isPremium && period !== 'daily' ? 'daily' : period;
@@ -88,21 +94,24 @@ export default function HoroscopePage() {
       return;
     }
 
+    let active = true;
     const load = async () => {
       setLoading(true);
       setRatingsLoading(true);
       try {
-        const result = await api.getHoroscope(selectedSign, allowedPeriod);
+        const result = await api.getHoroscope(selectedSign, allowedPeriod, allowedPeriod === 'daily' ? requestedDate : undefined);
+        if (!active) return;
         setHoroscopes((prev) => ({ ...prev, [allowedPeriod]: result }));
       } catch (error) {
+        if (active) setHoroscopes(prev => ({ ...prev, [allowedPeriod]: null }));
         console.error('Failed to load horoscope:', error);
       } finally {
-        setLoading(false);
-        setRatingsLoading(false);
+        if (active) { setLoading(false); setRatingsLoading(false); }
       }
     };
     load();
-  }, [selectedSign, period, isPremium]);
+    return () => { active = false; };
+  }, [selectedSign, period, isPremium, requestedDate]);
 
   const activeHoroscope = horoscopes[period];
 

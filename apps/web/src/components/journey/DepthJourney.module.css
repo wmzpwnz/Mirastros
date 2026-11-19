@@ -60,13 +60,11 @@
 .root[data-exploring=true] .stageFrame { opacity:1; }
 .header { inset:32px 46px auto; }.header .brand { width:165px; }.header>a { font:500 15px var(--font-display),Georgia,serif; letter-spacing:.06em; }
 .root[data-ready=true] .footer { left:46px; right:46px; bottom:max(30px,env(safe-area-inset-bottom)); }
-.accountScroll { height:calc(100% - 105px); overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#766080 #0b0b19; }
-.enterJourney { position:absolute; left:50%; transform:translateX(-50%); bottom:68px; min-height:44px; padding:10px 22px; background:linear-gradient(#291a41,#100e22); border:1px solid #c7a57580; border-radius:4px; color:#f0d4aa; white-space:nowrap; font:500 14px var(--font-display),Georgia,serif; letter-spacing:.04em; cursor:pointer; }
-.enterJourney span { margin-left:15px; }.enterJourney:hover { background:#382248; transform:translateX(-50%); }
+.accountScroll { height:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#766080 #0b0b19; }
 .root[data-account=true] .intro { background:#070817; }
 .root[data-view=list] .stageFrame { display:none; }
 @media(max-width:900px) { .caption h2 { font-size:29px; }.cardSurface { padding:23px 18px; }.header { left:35px; right:35px; } }
-@media(max-width:600px) { .stageFrame { inset:14px; }.header { top:20px; left:26px; right:26px; }.header>a { font-size:12px; }.header .brand { width:125px; }.root[data-ready=true] .footer { left:23px; right:23px; bottom:max(23px,env(safe-area-inset-bottom)); }.cardSurface { padding:18px 14px 19px; }.cardFrame { inset:5px; }.cardFrame>svg:not(:last-child) { width:34px; }.cardFrame>svg:last-child { width:65px; height:10px; top:-5px; }.cardNumber { font-size:6px; gap:7px; letter-spacing:.14em; }.caption { margin-top:-6px; padding:0 3px; }.caption h2 { font-size:24px; }.caption p { font-size:9px; margin-top:9px; line-height:1.55; }.cardArrow { width:25px; height:25px; margin-top:14px; }.cardArrow svg { width:15px; height:15px; }.root[data-view=list] .caption h2 { font-size:30px; }.root[data-view=list] .caption p { font-size:12px; }.root[data-view=list] .cardNumber { font-size:8px; }.accountScroll { height:calc(100% - 115px); }.enterJourney { bottom:72px; font-size:13px; padding:10px 15px; } }
+@media(max-width:600px) { .stageFrame { inset:14px; }.header { top:20px; left:26px; right:26px; }.header>a { font-size:12px; }.header .brand { width:125px; }.root[data-ready=true] .footer { left:23px; right:23px; bottom:max(23px,env(safe-area-inset-bottom)); }.cardSurface { padding:18px 14px 19px; }.cardFrame { inset:5px; }.cardFrame>svg:not(:last-child) { width:34px; }.cardFrame>svg:last-child { width:65px; height:10px; top:-5px; }.cardNumber { font-size:6px; gap:7px; letter-spacing:.14em; }.caption { margin-top:-6px; padding:0 3px; }.caption h2 { font-size:24px; }.caption p { font-size:9px; margin-top:9px; line-height:1.55; }.cardArrow { width:25px; height:25px; margin-top:14px; }.cardArrow svg { width:15px; height:15px; }.root[data-view=list] .caption h2 { font-size:30px; }.root[data-view=list] .caption p { font-size:12px; }.root[data-view=list] .cardNumber { font-size:8px; }.accountScroll { height:100%; } }
 @media(max-width:360px) { .root[data-ready=true] .footer { left:20px; right:20px; }.viewSwitch button { min-width:40px; }.header .brand { width:105px; } }
 
 .accountNavigation { display:none; }
@@ -74,16 +72,14 @@
  .accountNavigation { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:fixed; z-index:26; left:18px; right:18px; bottom:max(18px,env(safe-area-inset-bottom)); min-height:63px; padding:8px 5px; background:#0c0b1de8; --ornament-color:#d1af7d85; --ornament-faint:#c7a57529; }
  .accountNavigation>span>svg:not(:last-child) { width:27px; }.accountNavigation>span>svg:last-child { width:70px; height:10px; top:-5px; }
  .accountNavigation>a,.accountNavigation>button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:44px; min-width:0; padding:2px; border:0; background:none; color:#cbb89c; font:8px var(--font-inter),sans-serif; text-decoration:none; cursor:pointer; }.accountNavigation svg { width:19px; height:19px; }.accountNavigation [aria-current] { color:#f2e1ca; }.accountNavigation a:focus-visible,.accountNavigation button:focus-visible { outline:2px solid #e4ccee; }
- .root[data-account=true][data-exploring=false][data-view=flight] .footer { display:none; }.root[data-account=true] .enterJourney { bottom:98px; }.root[data-account=true] .accountScroll { height:calc(100% - 147px); }
+ .root[data-account=true][data-exploring=false][data-view=flight] .footer { display:none; }.root[data-account=true] .accountScroll { height:100%; }
 }
 @media(max-height:500px) and (orientation:landscape) { .ending { padding:60px 25px 65px; }.ending .kicker { display:none; }.ending h2 { font-size:28px; margin:8px 0; }.ending>p:not(.kicker) { font-size:11px; line-height:1.5; }.ending>a { min-height:44px; margin-top:12px; }.ending>a.catalog { min-height:30px; margin-top:0; } }
 
 /* Gold board cover proportions; the camera spacing/transforms are unchanged. */
 @media(max-width:900px) { .cardSurface { padding:24px 23px; } }
 @media(max-width:600px) { .cardSurface { padding:20px 15px; }.cardNumber { font-size:8px; gap:11px; }.cardNumber>span { font-size:7px; }.caption { margin-top:0; }.caption h2 { font-size:24px; }.caption p { font-size:11px; margin-top:9px; line-height:1.55; }.cardArrow { margin-top:16px; width:29px; height:29px; }.cardArrow svg { width:16px; height:16px; }.root[data-view=list] .caption p { font-size:14px; }.root[data-view=list] .caption h2 { font-size:30px; } }
-.root[data-account=true] .enterJourney { position:absolute; left:50%; bottom:68px; transform:translateX(-50%); max-width:calc(100% - 70px); width:max-content; white-space:normal; text-align:center; font-size:14px; padding:12px 20px; }
-.root[data-account=true] .enterJourney:hover { transform:translateX(-50%); }
-@media(max-width:600px) { .root[data-account=true] .enterJourney { bottom:98px; width:calc(100% - 64px); max-width:360px; font-size:13px; line-height:1.25; padding:12px 15px; } }
+
 
 .cardLink { position:absolute; inset:0; z-index:1; border-radius:4px; }
 
@@ -95,3 +91,5 @@
 @media(max-width:600px) { .root[data-view=list] .camera { grid-template-columns:repeat(2,minmax(0,1fr)); padding:32px 24px 80px; gap:18px; }.root[data-view=list] :global(.mira-portal-cover) { padding:15px; } }
 /* Keep the cover and its overlay link in one local surface on WebKit. */
 .cardBody { position:relative; }
+
+.root[data-account=true][data-exploring=false][data-view=flight] .footer { display:none; }
