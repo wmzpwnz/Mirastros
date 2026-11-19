@@ -29,6 +29,7 @@ try {
   for (const route of ['/', '/auth/login', '/services/tarot', '/tunnel-preview', '/diagnostics.html']) {
     const response = await fetch(origin + route);
     assert.equal(response.status, 200, route);
+    if (route !== '/diagnostics.html') assert.match(response.headers.get('cache-control') || '', /no-store/, 'Entry HTML must not retain obsolete chunk URLs after releases: ' + route);
     const html = await response.text();
     for (const match of html.matchAll(/src="(\/images\/portals\/[^"?]+)"/g)) {
       assets.add(match[1]);
@@ -37,10 +38,12 @@ try {
       assets.add(match[1]);
     }
   }
+  assets.add('/images/preloader-zodiac-gold.webp');
   assert(assets.size > 5, 'Expected JS/CSS/font assets in rendered HTML');
   for (const asset of assets) {
     const response = await fetch(origin + asset);
     assert.equal(response.status, 200, asset);
+    if (asset.startsWith('/_next/static/')) assert.match(response.headers.get('cache-control') || '', /immutable/, asset + ' keeps fingerprinted caching');
     await response.arrayBuffer();
   }
   console.log(`Packaged pages and ${assets.size} static assets passed`);

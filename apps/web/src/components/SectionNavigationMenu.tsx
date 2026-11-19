@@ -122,7 +122,7 @@ export const SectionNavigationMenu: React.FC = () => {
     if (!document.body.classList.contains('zscroll-enabled')) {
       document.getElementById(sections[index]?.id)?.scrollIntoView({
         block: 'start',
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
       setIsOpen(false);
       return;
