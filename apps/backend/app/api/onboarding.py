@@ -312,8 +312,8 @@ from datetime import datetime, timezone
 from enum import Enum
 
 import httpx
-from fastapi import HTTPException, Query
-from pydantic import field_validator
+from fastapi import HTTPException, Query, Response
+from pydantic import ConfigDict, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -321,6 +321,7 @@ from starlette.concurrency import run_in_threadpool
 from app.core.database import get_db
 from app.models.analytics_event import AnalyticsEvent
 from app.services.welcome import build_portrait
+from app.services import welcome_narrative
 
 
 class WelcomeLocation(BaseModel):
@@ -375,6 +376,7 @@ async def _welcome_state(user: User, db: AsyncSession) -> dict:
     completed = any(event.event_type == "welcome_completed" for event in events)
     progress = max([int((event.event_metadata or {}).get("step", 0)) for event in events] or [0])
     portrait = await run_in_threadpool(build_portrait, user.full_name, user.birth_date, user.birth_time, user.birth_location)
+    portrait = await welcome_narrative.enrich(db, user, portrait, final=completed or progress >= 3)
     return {
         "started": bool(events), "completed": completed, "next_step": min(progress + 1, 4),
         "profile": {"full_name": user.full_name, "birth_date": user.birth_date,
@@ -397,8 +399,9 @@ async def _welcome_event(user: User, db: AsyncSession, kind: str, step: int = 0)
 
 
 @router.get("/state")
-async def get_welcome_state(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+async def get_welcome_state(response: Response, current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     """Profile-backed progress works across devices; no personal data in event logs."""
+    response.headers["Cache-Control"] = "private, no-store"
     return await _welcome_state(current_user, db)
 
 
@@ -437,6 +440,17 @@ async def save_welcome_step(data: WelcomeStepRequest, current_user: User = Depen
 async def complete_welcome(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     await _welcome_event(current_user, db, "welcome_completed", 3)
     return await _welcome_state(current_user, db)
+
+
+class WelcomeMessageRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
+@router.post('/message')
+async def welcome_message(request: WelcomeMessageRequest, response: Response, current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    """One bounded portrait; only saved profile facts enter the provider context."""
+    response.headers["Cache-Control"] = "private, no-store"
+    return await welcome_narrative.generate(db, current_user)
 
 
 _location_cache: dict[str, tuple[float, list]] = {}

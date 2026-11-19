@@ -4,7 +4,21 @@ export interface WelcomeLocation {
   latitude: number;
   longitude: number;
 }
+export interface WelcomeAiMessage {
+  text: string;
+  source: 'deepseek';
+  version: string;
+  fingerprint: string;
+}
+export interface WelcomeMessageResponse {
+  status: 'ready' | 'reference' | 'pending';
+  message: WelcomeAiMessage | null;
+}
 export interface WelcomePortrait {
+  step_messages?: { name: string; birth: string; sky: string };
+  greeting?: string;
+  message_fingerprint?: string;
+  ai_message?: WelcomeAiMessage | null;
   name: { name: string; origin: string; message: string; verified: boolean };
   number: { value: number; title: string; message: string; formula: string } | null;
   sky: { available: boolean; timezone?: string; time_known?: boolean; sun?: string[]; moon?: string[]; ascendant?: string | null; element?: string | null; message?: string; note: string } | null;

@@ -28,9 +28,9 @@ const descriptions = ['Откройте историю своего имени �
 
 function Reading({ portrait, step }: { portrait: WelcomePortrait; step: number }) {
   const { name, number, sky } = portrait;
-  if (step === 1) return <><span className={styles.readingLabel}>История имени</span><h2>{name.name}</h2><p>{name.origin}</p><span className={styles.readingLabel}>Символическое послание</span><p>{name.message}</p></>;
-  if (step === 2) return number ? <><span className={styles.readingLabel}>Число жизненного пути</span><h2>{number.value} <span>· {number.title}</span></h2><p>{number.message}</p><details><summary>Как получилось это число</summary><p className={styles.formula}>{number.formula}</p><p>Сумма цифр даты рождения. В этой системе числа 11, 22 и 33 сохраняются без сокращения.</p></details></> : <><h2>У каждой истории свой ритм</h2><p>Добавьте дату позже — тогда здесь появится ваш первый числовой ключ.</p></>;
-  return sky?.available ? <><span className={styles.readingLabel}>Первые координаты вашего неба</span><dl className={styles.sky}><div><dt>☉ Солнце</dt><dd>{sky.sun?.join(' / ')}</dd></div><div><dt>☽ Луна</dt><dd>{sky.moon?.join(' / ')}</dd></div><div><dt>↗ Асцендент</dt><dd>{sky.ascendant || 'Нужно время'}</dd></div></dl><p>{sky.message}</p><p className={styles.note}>{sky.note}</p></> : <><h2>Ваша карта остаётся открытой</h2><p>{sky?.note || 'Место и время можно добавить позже в профиле. Для небесного портрета также нужна дата рождения.'}</p></>;
+  if (step === 1) return <><span className={styles.readingLabel}>История имени</span><h2>{name.name}</h2><p>{name.origin}</p><span className={styles.readingLabel}>Символическое послание</span><p>{portrait.step_messages?.name || name.message}</p></>;
+  if (step === 2) return number ? <><span className={styles.readingLabel}>Число жизненного пути</span><h2>{number.value} <span>· {number.title}</span></h2><p>{portrait.step_messages?.birth || number.message}</p><details><summary>Как получилось это число</summary><p className={styles.formula}>{number.formula}</p><p>Сумма цифр даты рождения. В этой системе числа 11, 22 и 33 сохраняются без сокращения.</p></details></> : <><h2>У каждой истории свой ритм</h2><p>{portrait.step_messages?.birth || "Добавьте дату позже — тогда здесь появится ваш первый числовой ключ."}</p></>;
+  return sky?.available ? <><span className={styles.readingLabel}>Первые координаты вашего неба</span><dl className={styles.sky}><div><dt>☉ Солнце</dt><dd>{sky.sun?.join(' / ')}</dd></div><div><dt>☽ Луна</dt><dd>{sky.moon?.join(' / ')}</dd></div><div><dt>↗ Асцендент</dt><dd>{sky.ascendant || 'Нужно время'}</dd></div></dl><p>{portrait.step_messages?.sky || sky.message}</p><p className={styles.note}>{sky.note}</p></> : <><h2>Ваша карта остаётся открытой</h2><p>{portrait.step_messages?.sky || sky?.note || 'Место и время можно добавить позже в профиле. Для небесного портрета также нужна дата рождения.'}</p></>;
 }
 
 export function PersonalWelcome() {
@@ -52,6 +52,11 @@ export function PersonalWelcome() {
   const [error, setError] = useState('');
   const [invalidField, setInvalidField] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [narrativeLoading, setNarrativeLoading] = useState(false);
+  const triedNarratives = useRef(new Set<string>());
+  const profileKey = JSON.stringify(state?.profile || null);
+  const messageText = state?.portrait.ai_message?.text;
+  const messageFingerprint = state?.portrait.message_fingerprint;
   const busy = useRef(false);
   const searchVersion = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -91,6 +96,22 @@ export function PersonalWelcome() {
 
   useEffect(() => { if (state) bringIntoView(heading.current); }, [step, !!state]);
   useEffect(() => { if (revealed) bringIntoView(reading.current); }, [revealed]);
+
+  useEffect(() => {
+    if (!state || step !== 4 || messageText) { setNarrativeLoading(false); return; }
+    const key = messageFingerprint || profileKey;
+    if (triedNarratives.current.has(key)) return;
+    triedNarratives.current.add(key);
+    let active = true;
+    setNarrativeLoading(true);
+    void api.generateWelcomeMessage().then(result => {
+      if (!active || !result.message || (messageFingerprint && result.message.fingerprint !== messageFingerprint)) return;
+      setState(current => current && JSON.stringify(current.profile) === profileKey
+        ? { ...current, portrait: { ...current.portrait, ai_message: result.message } } : current);
+    }).catch(() => { /* The reference portrait remains complete and usable. */ })
+      .finally(() => { if (active) setNarrativeLoading(false); });
+    return () => { active = false; };
+  }, [step, profileKey, messageText, messageFingerprint]);
 
   async function search() {
     if (searching) return;
@@ -194,8 +215,11 @@ export function PersonalWelcome() {
           {step > 1 && <button className={styles.back} onClick={back} disabled={saving}>← Назад</button>}
         </> : <>
           <span className={styles.eyebrow}>Ваш личный портрет</span>
-          <h1 ref={heading} tabIndex={-1}>{state.portrait.name.name},<br />ваша карта открыта</h1>
-          <p className={styles.summary}>{state.portrait.summary}</p>
+          <h1 ref={heading} tabIndex={-1}>{state.portrait.name.name},<br />первая карта открыта</h1>
+          <div className={styles.summary} aria-live="polite" aria-atomic="true" data-message-source={state.portrait.ai_message ? 'deepseek' : 'reference'}>
+            {(state.portrait.ai_message?.text || state.portrait.greeting || state.portrait.summary).split(/\n\s*\n/).map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+          </div>
+          {narrativeLoading && <p className={styles.narrativeStatus} role="status"><span aria-hidden="true" />Мирастрос соединяет знаки твоего пути…</p>}
           <section className={styles.profileReview} aria-label="Данные вашей карты">
             <h2>Данные вашей карты</h2>
             <dl><div><dt>Дата рождения</dt><dd>{displayBirthDate(state.profile.birth_date)}</dd></div>

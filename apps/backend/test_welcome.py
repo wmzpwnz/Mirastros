@@ -16,6 +16,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_active_user
 from app.models.user import User
 from app.models.analytics_event import AnalyticsEvent
+from app.models.chat_conversation import ChatConversation, ChatMessage
 from app.services.welcome import _utc, build_portrait, name_reading, number_reading, sky_reading
 
 MOSCOW = {"city": "Москва", "country": "Россия", "latitude": 55.75, "longitude": 37.62}
@@ -69,6 +70,8 @@ async def client():
     async with engine.begin() as connection:
         await connection.run_sync(User.__table__.create)
         await connection.run_sync(AnalyticsEvent.__table__.create)
+        await connection.run_sync(ChatConversation.__table__.create)
+        await connection.run_sync(ChatMessage.__table__.create)
     ids = [uuid4(), uuid4()]
     async with sessions() as db:
         db.add_all([User(id=uid, email=f'user{i}@example.com', full_name='Анна') for i, uid in enumerate(ids)])

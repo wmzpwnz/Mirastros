@@ -35,3 +35,9 @@
 .search { align-items:stretch; }.search button { min-height:48px; cursor:pointer; }.places button { min-height:44px; cursor:pointer; }.check { min-height:44px; }.secondary,.back { min-height:44px; }
 @media(max-width:760px) { .content { padding:27px 26px 30px; }.steps { gap:12px; }.profileReview { padding:17px 18px; }.profileReview dl>div { grid-template-columns:1fr; gap:3px; }.profileReview dd { font-size:13px; }.steps li { font-size:10px; }.steps li>span { width:24px; height:24px; }.sky dd { font-size:20px; }.primary { line-height:1.5; padding:12px 18px; } }
 @media(max-width:360px) { .content { padding:24px 22px 27px; }.steps { gap:8px; }.steps li { font-size:9px; }.steps li>span { width:21px; height:21px; }.profileReview { padding:16px; } }
+
+/* A stored personal greeting; the next action never waits on the provider. */
+.summary { overflow-wrap:anywhere; }.summary p { margin:0 0 17px; }.summary p:last-child { margin-bottom:0; }.summary[data-message-source=deepseek] { animation:reveal .5s ease-out; }
+.narrativeStatus { display:flex; gap:9px; align-items:center; margin:-7px 0 22px; color:#aa94bd; font-size:11px; line-height:1.7; }.narrativeStatus span { flex-shrink:0; width:5px; height:5px; border-radius:50%; background:#c8a0e4; box-shadow:0 0 10px #b47fe37a; animation:welcomeGlow 1.5s ease-in-out infinite alternate; }
+@keyframes welcomeGlow { to { opacity:.35; } }
+@media(prefers-reduced-motion:reduce) { .summary[data-message-source=deepseek],.narrativeStatus span { animation:none; } }
