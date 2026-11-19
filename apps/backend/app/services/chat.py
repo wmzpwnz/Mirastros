@@ -30,7 +30,7 @@ class ChatService:
         context_data: Optional[Dict[str, Any]] = None
     ) -> ChatConversation:
         """Create a new chat conversation"""
-        if service_type and service_type.startswith(("result-explanation:", "welcome-portrait:")):
+        if service_type and service_type.startswith(("result-explanation:", "welcome-portrait:", "welcome-name:", "welcome-birth:")):
             raise ValueError("Reserved result explanation service")
         if not get_settings().LEGACY_AI_CHAT_ENABLED:
             raise ValueError("Open-ended AI chat is disabled")
@@ -97,7 +97,7 @@ class ChatService:
         if not conversation:
             raise ValueError("Conversation not found")
         
-        if (conversation.service_type or "").startswith(("result-explanation:", "welcome-portrait:")):
+        if (conversation.service_type or "").startswith(("result-explanation:", "welcome-portrait:", "welcome-name:", "welcome-birth:")):
             raise ValueError("Use the bounded result explanation endpoint")
 
         if not get_settings().LEGACY_AI_CHAT_ENABLED:

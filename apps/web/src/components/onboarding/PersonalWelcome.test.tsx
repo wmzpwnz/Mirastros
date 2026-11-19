@@ -4,16 +4,16 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { PersonalWelcome } from './PersonalWelcome';
 import type { WelcomeState } from '../../services/welcomeTypes';
 
-const mocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), state: vi.fn(), start: vi.fn(), save: vi.fn(), complete: vi.fn(), places: vi.fn(), narrative: vi.fn() }));
+const mocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), state: vi.fn(), start: vi.fn(), save: vi.fn(), complete: vi.fn(), places: vi.fn(), narrative: vi.fn(), reading: vi.fn() }));
 vi.mock('next/navigation', () => { const router = { push: mocks.push, replace: mocks.replace }; return { useRouter: () => router }; });
-vi.mock('../../services/api', () => ({ api: { getWelcomeState: mocks.state, startWelcome: mocks.start, saveWelcomeStep: mocks.save, completeWelcome: mocks.complete, searchBirthplaces: mocks.places, generateWelcomeMessage: mocks.narrative } }));
+vi.mock('../../services/api', () => ({ api: { getWelcomeState: mocks.state, startWelcome: mocks.start, saveWelcomeStep: mocks.save, completeWelcome: mocks.complete, searchBirthplaces: mocks.places, generateWelcomeMessage: mocks.narrative, generateWelcomeReading: mocks.reading } }));
 const initial: WelcomeState = {
   started: false, completed: false, next_step: 1,
   profile: { full_name: 'Анна', birth_date: null, birth_time: null, birth_location: null },
   portrait: { name: { name: 'Анна', origin: 'Имя древнееврейского происхождения: благодать.', message: 'Принятие и доброта.', verified: true }, number: null, sky: null, summary: 'Анна, первая карта открыта.' },
 };
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.narrative.mockResolvedValue({ status: 'reference', message: null }); window.history.replaceState(null, '', '/auth/onboarding?start=1');
+  vi.clearAllMocks(); mocks.reading.mockResolvedValue({ status: 'reference', message: null }); mocks.narrative.mockResolvedValue({ status: 'reference', message: null }); window.history.replaceState(null, '', '/auth/onboarding?start=1');
   mocks.state.mockResolvedValue(structuredClone(initial));
   mocks.start.mockResolvedValue({ ...structuredClone(initial), started: true });
   mocks.complete.mockResolvedValue({ ...initial, completed: true });
@@ -35,7 +35,7 @@ it('reveals each result in place, allows unknown time, and enters only after com
   expect(await screen.findByText(/благодать/)).toBeInTheDocument();
   expect(screen.queryByLabelText('Дата рождения')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'К дате рождения' }));
-  fireEvent.change(screen.getByLabelText('Дата рождения'), { target: { value: '1990-01-01' } });
+  fireEvent.change(screen.getByLabelText('Дата рождения'), { target: { value: '01.01.1990' } });
   fireEvent.click(screen.getByRole('button', { name: /Открыть моё число/ }));
   expect(await screen.findByText('Творчество и общение.')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'К месту рождения' }));
@@ -180,4 +180,30 @@ it('does not block the welcome when the provider request fails', async () => {
   expect(await screen.findByText('Анна, первая карта открыта.')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Открыть мой день/ })).toBeEnabled();
   expect(screen.queryByRole('alert')).toBeNull();
+});
+
+
+it('loads DeepSeek name history while keeping the next step available', async () => {
+  mocks.save.mockResolvedValue({ ...structuredClone(initial), next_step: 2, started: true });
+  mocks.reading.mockResolvedValue({ status: 'ready', message: { text: 'Дитя моё, Мирастрос раскрывает смысл твоего имени.', origin: 'История имени, полученная от DeepSeek.', source: 'deepseek', version: 'v1', fingerprint: 'name' } });
+  render(<PersonalWelcome />);
+  fireEvent.click(await screen.findByRole('button', { name: /Узнать значение/ }));
+  expect(await screen.findByText('История имени, полученная от DeepSeek.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'К дате рождения' })).toBeEnabled();
+  expect(mocks.reading).toHaveBeenCalledWith('name');
+});
+
+it('uses day-month-year independently of browser locale and rejects impossible dates', async () => {
+  mocks.state.mockResolvedValue({ ...structuredClone(initial), started: true, next_step: 2 });
+  render(<PersonalWelcome />);
+  const field = await screen.findByLabelText('Дата рождения');
+  expect(field).toHaveAttribute('placeholder', 'ДД.ММ.ГГГГ');
+  fireEvent.change(field, { target: { value: '31.02.1990' } });
+  fireEvent.click(screen.getByRole('button', { name: /Открыть моё число/ }));
+  expect(mocks.save).not.toHaveBeenCalled();
+  mocks.save.mockResolvedValue({ ...structuredClone(initial), next_step: 3 });
+  fireEvent.change(field, { target: { value: '13041990' } });
+  expect(field).toHaveValue('13.04.1990');
+  fireEvent.click(screen.getByRole('button', { name: /Открыть моё число/ }));
+  await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ step: 'birth', birth_date: '1990-04-13' }));
 });

@@ -11,6 +11,16 @@ import { authError } from '../auth/authError';
 
 function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 
+function dateText(value: string) { return /^(\d{4})-(\d{2})-(\d{2})$/.test(value) ? value.split('-').reverse().join('.') : value; }
+function inputDate(value: string) { const n = value.replace(/\D/g, '').slice(0, 8); return [n.slice(0, 2), n.slice(2, 4), n.slice(4)].filter(Boolean).join('.'); }
+function dateISO(value: string) {
+  if (!/^\d{2}\.\d{2}\.\d{4}$/.test(value)) return '';
+  const iso = value.split('.').reverse().join('-');
+  const d = new Date(iso + 'T12:00:00Z');
+  return Number.isFinite(d.valueOf()) && d.toISOString().slice(0, 10) === iso ? iso : '';
+}
+function timeText(value: string) { const n = value.replace(/\D/g, '').slice(0, 4); return n.length > 2 ? n.slice(0, 2) + ':' + n.slice(2) : n; }
+
 function bringIntoView(element: HTMLElement | null) {
   if (!element) return;
   element.focus({ preventScroll: true });
@@ -28,8 +38,8 @@ const descriptions = ['Откройте историю своего имени �
 
 function Reading({ portrait, step }: { portrait: WelcomePortrait; step: number }) {
   const { name, number, sky } = portrait;
-  if (step === 1) return <><span className={styles.readingLabel}>История имени</span><h2>{name.name}</h2><p>{name.origin}</p><span className={styles.readingLabel}>Символическое послание</span><p>{portrait.step_messages?.name || name.message}</p></>;
-  if (step === 2) return number ? <><span className={styles.readingLabel}>Число жизненного пути</span><h2>{number.value} <span>· {number.title}</span></h2><p>{portrait.step_messages?.birth || number.message}</p><details><summary>Как получилось это число</summary><p className={styles.formula}>{number.formula}</p><p>Сумма цифр даты рождения. В этой системе числа 11, 22 и 33 сохраняются без сокращения.</p></details></> : <><h2>У каждой истории свой ритм</h2><p>{portrait.step_messages?.birth || "Добавьте дату позже — тогда здесь появится ваш первый числовой ключ."}</p></>;
+  if (step === 1) return <><span className={styles.readingLabel}>История имени</span><h2>{name.name}</h2><p>{portrait.name_ai_message?.origin || name.origin}</p><span className={styles.readingLabel}>Символическое послание</span><p>{portrait.name_ai_message?.text || portrait.step_messages?.name || name.message}</p></>;
+  if (step === 2) return number ? <><span className={styles.readingLabel}>Число жизненного пути</span><h2>{number.value} <span>· {number.title}</span></h2><p>{portrait.birth_ai_message?.text || portrait.step_messages?.birth || number.message}</p><details><summary>Как получилось это число</summary><p>Для даты {number.birth_date || "рождения"}:</p><p className={styles.formula}>{number.formula}</p><p>Сумма цифр даты рождения. В этой системе числа 11, 22 и 33 сохраняются без сокращения.</p></details></> : <><h2>У каждой истории свой ритм</h2><p>{portrait.step_messages?.birth || "Добавьте дату позже — тогда здесь появится ваш первый числовой ключ."}</p></>;
   return sky?.available ? <><span className={styles.readingLabel}>Первые координаты вашего неба</span><dl className={styles.sky}><div><dt>☉ Солнце</dt><dd>{sky.sun?.join(' / ')}</dd></div><div><dt>☽ Луна</dt><dd>{sky.moon?.join(' / ')}</dd></div><div><dt>↗ Асцендент</dt><dd>{sky.ascendant || 'Нужно время'}</dd></div></dl><p>{portrait.step_messages?.sky || sky.message}</p><p className={styles.note}>{sky.note}</p></> : <><h2>Ваша карта остаётся открытой</h2><p>{portrait.step_messages?.sky || sky?.note || 'Место и время можно добавить позже в профиле. Для небесного портрета также нужна дата рождения.'}</p></>;
 }
 
@@ -53,6 +63,10 @@ export function PersonalWelcome() {
   const [invalidField, setInvalidField] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [narrativeLoading, setNarrativeLoading] = useState(false);
+  const [readingLoading, setReadingLoading] = useState(false);
+  const [readingAttempt, setReadingAttempt] = useState(0);
+  const [readingUnavailable, setReadingUnavailable] = useState(false);
+  const triedReadings = useRef(new Set<string>());
   const triedNarratives = useRef(new Set<string>());
   const profileKey = JSON.stringify(state?.profile || null);
   const messageText = state?.portrait.ai_message?.text;
@@ -76,7 +90,7 @@ export function PersonalWelcome() {
         if (!mounted) return;
         setState(value);
         setName(value.profile.full_name);
-        setBirthDate(value.profile.birth_date || '');
+        setBirthDate(dateText(value.profile.birth_date || ''));
         setBirthTime(value.profile.birth_time?.slice(0, 5) || '');
         setUnknownTime(!value.profile.birth_time);
         setLocation(value.profile.birth_location);
@@ -113,6 +127,26 @@ export function PersonalWelcome() {
     return () => { active = false; };
   }, [step, profileKey, messageText, messageFingerprint]);
 
+  const readingKind = step === 1 ? 'name' : 'birth';
+  const readingKey = state?.portrait[readingKind + '_fingerprint' as 'name_fingerprint' | 'birth_fingerprint'];
+  const readingText = state?.portrait[readingKind === 'name' ? 'name_ai_message' : 'birth_ai_message']?.text;
+  useEffect(() => {
+    if (!revealed || step > 2 || !state || readingText || (step === 2 && !state.portrait.number)) { setReadingLoading(false); return; }
+    const key = `${readingKey || profileKey}:${readingAttempt}`;
+    if (triedReadings.current.has(key)) return;
+    triedReadings.current.add(key);
+    let active = true;
+    setReadingLoading(true); setReadingUnavailable(false);
+    void api.generateWelcomeReading(readingKind).then(result => {
+      if (!active) return;
+      if (!result.message || (readingKey && result.message.fingerprint !== readingKey)) { setReadingUnavailable(true); return; }
+      setState(current => current && JSON.stringify(current.profile) === profileKey
+        ? { ...current, portrait: { ...current.portrait, [readingKind + '_ai_message']: result.message } } : current);
+    }).catch(() => { if (active) setReadingUnavailable(true); })
+      .finally(() => { if (active) setReadingLoading(false); });
+    return () => { active = false; };
+  }, [revealed, step, readingKey, readingText, profileKey, readingAttempt]);
+
   async function search() {
     if (searching) return;
     const query = city.trim();
@@ -137,8 +171,8 @@ export function PersonalWelcome() {
       if (!name.trim()) { validation('Укажите, как к вам обращаться.', 'welcome-name'); return; }
       payload = { step: 'name', full_name: name.trim() };
     } else if (step === 2) {
-      if (!skip && (!birthDate || birthDate < '1900-01-01' || birthDate > todayISO())) { validation('Укажите дату рождения от 1900 года до сегодняшнего дня.', 'welcome-date'); return; }
-      payload = { step: 'birth', birth_date: skip ? state.profile.birth_date : birthDate };
+      if (!skip && (!dateISO(birthDate) || dateISO(birthDate) < '1900-01-01' || dateISO(birthDate) > todayISO())) { validation('Укажите дату рождения от 1900 года до сегодняшнего дня.', 'welcome-date'); return; }
+      payload = { step: 'birth', birth_date: skip ? state.profile.birth_date : dateISO(birthDate) };
     } else {
       if (!skip && city.trim() && !location) { validation('Нажмите «Найти» и выберите город из результатов или добавьте его позже.', 'welcome-city'); return; }
       if (!skip && !unknownTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(birthTime)) { validation('Укажите время рождения или выберите «Не знаю время».', 'welcome-time'); return; }
@@ -149,7 +183,7 @@ export function PersonalWelcome() {
       const result = await api.saveWelcomeStep(payload);
       setState(result);
       setName(result.profile.full_name);
-      setBirthDate(result.profile.birth_date || '');
+      setBirthDate(dateText(result.profile.birth_date || ''));
       setBirthTime(result.profile.birth_time?.slice(0, 5) || '');
       setUnknownTime(!result.profile.birth_time);
       setLocation(result.profile.birth_location);
@@ -192,12 +226,12 @@ export function PersonalWelcome() {
           <h1 ref={heading} tabIndex={-1}>{headings[step - 1]}</h1>
           <p className={styles.description}>{descriptions[step - 1]}</p>
           {revealed ? <>
-            <section className={styles.reading} ref={reading} tabIndex={-1} aria-label="Послание Mirastros"><Reading portrait={state.portrait} step={step} /></section>
+            <section className={styles.reading} ref={reading} tabIndex={-1} aria-label="Послание Mirastros"><Reading portrait={state.portrait} step={step} />{readingLoading && <p role="status" className={styles.narrativeStatus}>Мирастрос раскрывает {step === 1 ? "историю имени" : "смысл твоего числа"}…</p>}{readingUnavailable && step < 3 && <p className={styles.note}>Личное разъяснение пока не пришло. <button type="button" className={styles.back} onClick={() => setReadingAttempt(n => n + 1)}>Попробовать ещё раз</button></p>}</section>
             <button className={`mira-action mira-action-primary ${styles.primary}`} onClick={next}>{step === 1 ? 'К дате рождения' : step === 2 ? 'К месту рождения' : 'Открыть мой портрет'} <span aria-hidden="true">→</span></button>
             <button className={styles.secondary} onClick={() => setRevealed(false)}>Изменить ответ</button>
           </> : <form onSubmit={submit} noValidate aria-busy={saving}>
             {step === 1 && <div className={styles.field}><label htmlFor="welcome-name">Ваше имя</label><input id="welcome-name" aria-invalid={Boolean(error) && invalidField === "welcome-name"} aria-describedby={error && invalidField === "welcome-name" ? "welcome-error" : undefined} autoComplete="given-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} required maxLength={255} disabled={saving} placeholder="Как к вам обращаться" /><p className={styles.note}>Мы уже подставили имя из аккаунта. Его можно изменить.</p></div>}
-            {step === 2 && <div className={styles.field}><label htmlFor="welcome-date">Дата рождения</label><input id="welcome-date" aria-invalid={Boolean(error) && invalidField === "welcome-date"} aria-describedby={error && invalidField === "welcome-date" ? "welcome-error" : undefined} type="date" disabled={saving} min="1900-01-01" max={todayISO()} value={birthDate} onChange={e => { setBirthDate(e.target.value); setError(''); }} required /><p className={styles.note}>Одна дата для нумерологии, матрицы судьбы и астрологии.</p></div>}
+            {step === 2 && <div className={styles.field}><label htmlFor="welcome-date">Дата рождения</label><input id="welcome-date" aria-invalid={Boolean(error) && invalidField === "welcome-date"} aria-describedby={error && invalidField === "welcome-date" ? "welcome-error" : undefined} type="text" inputMode="numeric" placeholder="ДД.ММ.ГГГГ" maxLength={10} disabled={saving} value={birthDate} onChange={e => { setBirthDate(inputDate(e.target.value)); setError(''); }} required /><p className={styles.note}>Одна дата для нумерологии, матрицы судьбы и астрологии.</p></div>}
             {step === 3 && <>
               <div className={styles.field}><label htmlFor="welcome-city">Город рождения</label><div className={styles.search}><input id="welcome-city" aria-invalid={Boolean(error) && invalidField === "welcome-city"} aria-describedby={error && invalidField === "welcome-city" ? "welcome-error" : undefined} disabled={saving} autoComplete="off" value={city} maxLength={120} placeholder="Город и страна" aria-controls={places.length ? "welcome-places" : undefined} onChange={e => { setCity(e.target.value); setLocation(null); invalidateSearch(); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void search(); } }} /><button type="button" onClick={() => void search()} disabled={searching || saving}>{searching ? 'Ищем…' : 'Найти'}</button></div>
                 {location && <p className={styles.selected}>✧ {location.city}{location.country ? `, ${location.country}` : ''}</p>}
@@ -206,7 +240,7 @@ export function PersonalWelcome() {
                 {searchError && <p role="alert" className={styles.error}>{searchError}</p>}
                 <p className={styles.attribution}>Поиск: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a></p>
               </div>
-              <div className={styles.field}><span className={styles.fieldLabel}>Время рождения</span><label className={styles.check}><input type="checkbox" disabled={saving} checked={unknownTime} onChange={e => { setUnknownTime(e.target.checked); setError(''); }} />Не знаю время</label>{!unknownTime && <input id="welcome-time" aria-invalid={Boolean(error) && invalidField === "welcome-time"} aria-describedby={error && invalidField === "welcome-time" ? "welcome-error" : undefined} aria-label="Точное время рождения" type="time" disabled={saving} value={birthTime} onChange={e => { setBirthTime(e.target.value); setError(''); }} required />}<p className={styles.note}>Точное время нужно для асцендента. Его можно добавить позже.</p></div>
+              <div className={styles.field}><span className={styles.fieldLabel}>Время рождения</span><label className={styles.check}><input type="checkbox" disabled={saving} checked={unknownTime} onChange={e => { setUnknownTime(e.target.checked); setError(''); }} />Не знаю время</label>{!unknownTime && <input id="welcome-time" aria-invalid={Boolean(error) && invalidField === "welcome-time"} aria-describedby={error && invalidField === "welcome-time" ? "welcome-error" : undefined} aria-label="Точное время рождения" type="text" inputMode="numeric" placeholder="ЧЧ:ММ" maxLength={5} disabled={saving} value={birthTime} onChange={e => { setBirthTime(timeText(e.target.value)); setError(''); }} required />}<p className={styles.note}>24-часовой формат: например, 05:00 или 17:30. Точное время нужно для асцендента. Его можно добавить позже.</p></div>
             </>}
             {error && <p id="welcome-error" role="alert" className={styles.error}>{error}</p>}
             <button className={`mira-action mira-action-primary ${styles.primary}`} type="submit" disabled={saving || searching}>{saving ? 'Открываем ваш знак…' : step === 1 ? 'Узнать значение имени' : step === 2 ? 'Открыть моё число' : 'Раскрыть моё небо'} <span aria-hidden="true">✧</span></button>
@@ -227,7 +261,7 @@ export function PersonalWelcome() {
             <div><dt>Время рождения</dt><dd>{state.profile.birth_time?.slice(0, 5) || 'Неизвестно'}</dd></div></dl>
           </section>
           <div className={styles.portrait}>
-            <article><span className={styles.readingLabel}>✧ Ваше имя</span><h2>{state.portrait.name.name}</h2><p>{state.portrait.name.origin}</p></article>
+            <article><span className={styles.readingLabel}>✧ Ваше имя</span><h2>{state.portrait.name.name}</h2><p>{state.portrait.name_ai_message?.origin || state.portrait.name.origin}</p></article>
             {state.portrait.number && <article><span className={styles.readingLabel}>✦ Число жизненного пути</span><h2>{state.portrait.number.value} · {state.portrait.number.title}</h2></article>}
             {state.portrait.sky?.available && <article><span className={styles.readingLabel}>☽ Ваше небо</span><p>Солнце: {state.portrait.sky.sun?.join(' / ')} · Луна: {state.portrait.sky.moon?.join(' / ')}{state.portrait.sky.ascendant ? ` · Асцендент: ${state.portrait.sky.ascendant}` : ''}</p>{!state.portrait.sky.time_known && <p className={styles.note}>{state.portrait.sky.note}</p>}</article>}
           </div>

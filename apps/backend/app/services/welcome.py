@@ -28,13 +28,13 @@ def number_reading(birth_date: date | None) -> dict | None:
         return None
     value = calculate_life_path_number(birth_date.isoformat())
     title, message = NUMBERS[value]
-    digits = [int(n) for n in birth_date.isoformat() if n.isdigit()]
+    digits = [int(n) for n in birth_date.strftime("%d%m%Y") if n.isdigit()]
     total = sum(digits)
     terms = [" + ".join(map(str, digits)), str(total)]
     while total > 9 and total not in (11, 22, 33):
         total = sum(map(int, str(total)))
         terms.append(str(total))
-    return {"value": value, "title": title, "message": message, "formula": " = ".join(terms)}
+    return {"value": value, "title": title, "message": message, "formula": " = ".join(terms), "birth_date": birth_date.strftime("%d.%m.%Y")}
 
 
 def _utc(local: datetime, zone: ZoneInfo) -> datetime:

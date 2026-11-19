@@ -155,3 +155,18 @@ async def test_place_search_cache_and_upstream_failure(client, monkeypatch):
     assert len(calls) == 1
     assert 'full_name' not in str(calls[0].url)
     assert (await client.get('/auth/onboarding/places', params={'q': 'Париж'})).status_code == 429
+
+
+@pytest.mark.parametrize('birthday,expected', [(date(1990,4,13),9),(date(1990,1,1),3),(date(2000,1,8),11),(date(1985,12,30),11)])
+def test_formula_follows_the_actual_day_month_year(birthday, expected):
+    result = number_reading(birthday)
+    assert result['value'] == expected
+    assert result['formula'].startswith(' + '.join(birthday.strftime('%d%m%Y')))
+    assert result['birth_date'] == birthday.strftime('%d.%m.%Y')
+
+
+def test_dashoguz_exact_birth_time_and_historical_timezone():
+    result = sky_reading(date(1990,4,13), time(5), {'latitude':41.8363,'longitude':59.9666})
+    assert result['available'] and result['time_known']
+    assert result['timezone'] == 'Asia/Ashgabat'
+    assert result['sun'] == ['Овен'] and result['ascendant'] == 'Водолей'
