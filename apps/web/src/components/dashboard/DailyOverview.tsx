@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
-import { dailyPractice, dayInZone, daysUntilDate, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
+import { dailyPractice, dailyQuestion, dayInZone, daysUntilDate, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { MOON_PHASE_NAMES_EXTENDED } from '../../constants/moon';
+import { tarotCardForDate } from '../../constants/dailyTarot';
 import styles from './DailyOverview.module.css';
 
 function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
@@ -90,9 +91,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   ];
   const phase = moon && (MOON_PHASE_NAMES_EXTENDED[moon.phase] || moon.phase_name);
   const frame = <OrnamentFrame className={styles.trim} />;
-  const directions = openDirections
-    ? <button className={styles.travel} onClick={openDirections}>Войти в туннель <ArrowIcon /></button>
-    : <Link className={styles.travel} href="/services">К направлениям <ArrowIcon /></Link>;
+  const cardToday = tarotCardForDate(today);
 
   return <section className={styles.root} aria-labelledby="daily-overview-title">
     <header className={styles.header}>
@@ -146,6 +145,22 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           </article>
         </section>
 
+        <div className={styles.dailyActions}>
+          <article className={styles.dailyAction}>
+            <p className={styles.label}>Карта дня</p>
+            <Link href="/services/tarot">{cardToday.name} <ArrowIcon /></Link>
+          </article>
+          <article className={styles.dailyAction}>
+            <p className={styles.label}>Практика дня · 2 минуты</p>
+            <p className={styles.detail}>{practice}</p>
+            <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
+              <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}
+            </button>
+          </article>
+        </div>
+        <details className={styles.moreDetails}>
+          <summary>Подробнее о дне и недавних открытиях</summary>
+          <p className={styles.detail}>{cardToday.meaning}</p>
         <div className={styles.grid}>
           <article className={styles.panel} aria-busy={moonState === 'loading'}>
             {frame}<p className={styles.label}>Луна сейчас</p>
@@ -160,12 +175,9 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
           </article>
           <article className={styles.panel}>
-            {frame}<p className={styles.label}>Практика дня · 2 минуты</p>
+            {frame}<p className={styles.label}>Вопрос дня</p>
             <h2>Один шаг для себя</h2>
-            <p className={styles.detail}>{practice}</p>
-            <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
-              <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}
-            </button>
+            <p className={styles.detail}>{dailyQuestion(today)}</p>
           </article>
         </div>
 
@@ -176,7 +188,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
               : recentItems.length ? <div className={styles.recentList}>{recentItems.slice(0, 4).map(item => <Link href={`/history/${encodeURIComponent(item.type)}/${encodeURIComponent(item.id)}`} key={`${item.type}:${item.id}`} className={styles.recentItem}><span className={styles.recentIcon} aria-hidden="true">{item.type === 'tarot' ? '✧' : item.type === 'numerology' ? '◇' : item.type === 'dreams' ? '☾' : '✦'}</span><span><strong>{item.title}</strong><small>{new Intl.DateTimeFormat('ru-RU', { timeZone, day: 'numeric', month: 'long' }).format(new Date(item.created_at))}</small></span><ArrowIcon /></Link>)}</div>
                 : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={openDirections}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
         </section>
-        <div className={styles.directions}>{frame}<div><h2>Направления Mirastros</h2><p>Таро, натальная карта, матрица судьбы</p></div>{directions}</div>
+        </details>
       </div>
     </div>
   </section>;

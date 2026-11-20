@@ -85,6 +85,30 @@
 .recentIcon { display:grid; place-items:center; width:34px; height:34px; border:1px solid var(--line); border-radius:50%; color:var(--gold); font:20px Georgia,serif; }
 .emptyHistory { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; }
 .emptyHistory button { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid #c4a37775; background:#171226b8; color:var(--gold); cursor:pointer; }
+/* Keep the day's information visible without oversized cards. */
+.header { height: 62px; }
+.content { padding-top: 16px; }
+.heading { margin-bottom: 12px; }
+.heading h1 { font-size: clamp(30px, 2.7vw, 44px); }
+.hero { min-height: 200px; padding: 20px clamp(22px, 2.5vw, 34px); }
+.hero h2 { font-size: clamp(38px, 3.5vw, 56px); }
+.heroCopy a { margin-top: 10px; }
+.signArt { width: clamp(120px, 15vw, 185px); }
+.metrics { gap: 10px; margin: 10px 0; }
+.metric { min-height: 125px; padding: 14px 20px; }
+.metric>strong { font-size: 34px; }
+.grid { gap: 10px; margin: 10px 0; }
+.panel { padding: 17px 22px 10px; }
+.panel h2,.directions h2,.historyHeading h2 { font-size: clamp(23px, 1.8vw, 29px); }
+.historyPanel { padding: 16px 22px; margin-bottom: 10px; }
+.directions { padding: 16px 22px; }
+.moreDetails { margin: 8px 0; color: var(--gold); }
+.moreDetails summary { cursor: pointer; padding: 10px 14px; border: 1px solid var(--line); background: #101020; font-size: 13px; }
+.dailyActions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
+.dailyAction { min-width: 0; padding: 9px 12px; border: 1px solid var(--line); background: #101020; border-radius: 5px; }
+.dailyAction a { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.dailyAction .detail { margin: 0 0 4px; font-size: 13px; line-height: 1.35; }
+.dailyAction .label { margin-bottom: 4px; }
 @media (max-width: 900px) {
   .layout { display:block; }
   .content { border: 0; padding-left: 0; }
@@ -103,16 +127,45 @@
   .signArt { position: absolute; width: 75px; right: 14px; top: 9px; margin: 0; }
   .grid { grid-template-columns: 1fr; gap: 12px; margin: 12px 0; }
   .panel { padding: 20px 21px 10px; } .directions { flex-wrap: wrap; padding: 18px 21px; }
-  .metrics { gap:8px; }
-  .metric { min-height:132px; padding:14px 14px 12px; }
+  .metrics { gap:8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric { min-height:110px; padding:12px 14px; }
   .metric>strong { font-size:34px; }
   .metric>span { font-size:11px; }
   .recentList { grid-template-columns:1fr; }
   .historyPanel { padding:18px; }
 }
 @media (max-width: 420px) {
-  .metrics { grid-template-columns:1fr; }
+  .metrics { grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .metric { min-height:0; }
   .metric>strong { font-size:30px; }
   .emptyHistory { align-items:flex-start; flex-direction:column; }
+}
+@media (max-width: 600px) {
+  .root { padding: 0 10px calc(84px + env(safe-area-inset-bottom)); }
+  .content { padding-top: 8px; }
+  .heading h1 { font-size: 25px; }
+  .heading { margin-bottom: 8px; }
+  .hero { min-height: 0; padding: 14px; }
+  .hero h2 { font-size: 30px; }
+  .hero .focus { margin-top: 8px; font-size: 14px; }
+  .excerpt { -webkit-line-clamp: 1; font-size: 12px; }
+  .heroCopy a { margin-top: 8px; min-height: 40px; padding: 7px 15px; font-size: 12px; }
+  .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin: 7px 0; }
+  .metric { min-height: 0; padding: 10px 8px; }
+  .metric .label { font-size: 9px; letter-spacing: .03em; }
+  .metric>strong { font-size: 24px; }
+  .metric>span { font-size: 11px; }
+  .formulaToggle,.metricLink { font-size: 11px; }
+  .directions { padding: 12px 14px; }
+  .directions h2 { font-size: 21px; }
+  .directions p { font-size: 12px; }
+  .travel { min-height: 40px; }
+}
+@media (max-height: 720px) {
+  .hero { min-height: 0; padding-block: 10px; }
+  .hero h2 { font-size: 27px; }
+  .signArt { max-width: 105px; }
+  .excerpt { display: none; }
+  .metric { min-height: 0; }
+  .dailyAction { padding-block: 6px; }
 }
