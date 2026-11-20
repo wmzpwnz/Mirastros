@@ -118,7 +118,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <h2>{zodiac?.[1].name || 'Ваш гороскоп'}</h2>
             {forecast ? <><p className={styles.focus}>{copy.focus}</p><p className={styles.excerpt}>{copy.forecast}</p></>
               : <p className={styles.focus}>{forecastState === 'missing' ? 'Добавьте дату рождения, чтобы открыть прогноз для своего знака.' : forecastState === 'error' ? 'Сегодняшний прогноз пока недоступен.' : 'Загружаем прогноз…'}</p>}
-            <Link className="mira-action mira-action-primary" href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
+            <Link className={styles.forecastLink} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
           </div>
           {zodiac && <div className={styles.signArt} aria-hidden="true">
             <img src={zodiac[0] === 'aries' ? '/zodiac/aries.png' : '/images/preloader-zodiac-gold.webp'} alt="" width="666" height="666" />
@@ -138,7 +138,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <span>{moon ? `${moonSign} · ${phase}` : moonState === 'loading' ? 'Считаем положение Луны…' : 'Данные пока недоступны'}</span>
           </article>
           <article className={styles.metric}>
-            {frame}<p className={styles.label}>Ближайшее событие</p>
+            {frame}<p className={styles.label}>Следующая фаза</p>
             <strong>{event ? daysUntilDate(event.date, today) === 0 ? 'Сегодня' : `${daysUntilDate(event.date, today)} дн.` : '—'}</strong>
             <span>{event ? event.title : moonState === 'loading' ? 'Сверяем лунный цикл…' : 'Нет данных о событии'}</span>
             <Link className={styles.metricLink} href="/services/lunar">К лунному календарю <ArrowIcon /></Link>
@@ -151,10 +151,10 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <Link href="/services/tarot">{cardToday.name} <ArrowIcon /></Link>
           </article>
           <article className={styles.dailyAction}>
-            <p className={styles.label}>Практика дня · 2 минуты</p>
+            <p className={styles.label}>Практика дня</p>
             <p className={styles.detail}>{practice}</p>
             <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
-              <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}
+              <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span><span className={styles.practiceText}>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}</span>
             </button>
           </article>
         </div>
@@ -177,6 +177,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           <article className={styles.panel}>
             {frame}<p className={styles.label}>Вопрос дня</p>
             <h2>Один шаг для себя</h2>
+            <p className={styles.detail}>{practice}</p>
             <p className={styles.detail}>{dailyQuestion(today)}</p>
           </article>
         </div>
