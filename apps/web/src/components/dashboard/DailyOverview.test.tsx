@@ -14,6 +14,7 @@ const lunar = () => ({ date: date(), phase: 'new_moon', phase_name: 'Новол�
 const forecast = () => ({ date: date(), prediction: 'Начните с главного. Не спешите с решениями.', advice: 'Выделите время на прогулку.' });
 
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   vi.mocked(api.request).mockImplementation(async path => (path.startsWith('/lunar') ? lunar() : forecast()) as any);
   vi.mocked(api.getUnifiedHistory).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 4, total_pages: 0 });
 });
@@ -95,6 +96,8 @@ describe('DailyOverview', () => {
     });
     render(<DailyOverview user={user} />);
     expect(await screen.findByText('Три карты на сегодня')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Подробнее о дне/ }));
+    expect(screen.getByRole('dialog')).toBeVisible();
     expect(screen.getByRole('link', { name: /Три карты на сегодня/ })).toHaveAttribute('href', '/history/tarot/read-1');
   });
 });

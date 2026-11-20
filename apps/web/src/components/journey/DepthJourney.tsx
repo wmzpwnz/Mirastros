@@ -192,7 +192,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
       </div>
       {view === 'flight' && <>
         <div ref={introRef} className={styles.intro}>
-          {intro ? <div className={styles.accountScroll} data-lenis-prevent>{intro(enter)}</div> : <HeroSection showScrollCue={false} />}
+          {intro ? <div className={styles.accountIntro}>{intro(enter)}</div> : <HeroSection showScrollCue={false} />}
         </div>
         <div ref={endingRef} className={styles.ending} aria-hidden={!ending}>
           <p className={styles.kicker}>Весь мир Mirastros — в одном аккаунте</p>
