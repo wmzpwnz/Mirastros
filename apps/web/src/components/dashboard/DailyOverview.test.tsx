@@ -25,8 +25,8 @@ describe('DailyOverview', () => {
     render(<DailyOverview user={user} />);
     await screen.findByText('Начните с главного.');
     expect(screen.getByText('Не спешите с решениями.')).toBeInTheDocument();
-    expect(screen.getAllByText('0%')).toHaveLength(2);
-    expect(screen.getByText('Один шаг для себя')).toBeInTheDocument();
+    expect(screen.getAllByText('0%')).toHaveLength(1);
+    expect(screen.getByText('Практика дня')).toBeInTheDocument();
     expect(screen.getByText('Личная библиотека')).toBeInTheDocument();
     expect(screen.getByText('Недавние открытия')).toBeInTheDocument();
     expect(vi.mocked(api.request).mock.calls.every(([path]) => path.includes(`target_date=${date()}`))).toBe(true);
@@ -38,14 +38,14 @@ describe('DailyOverview', () => {
     });
     render(<DailyOverview user={user} />);
     await screen.findByText('Часть данных недоступна');
-    expect(screen.getAllByText('0%')).toHaveLength(2);
-    expect(screen.getByText('Луна сейчас')).toBeInTheDocument();
+    expect(screen.getAllByText('0%')).toHaveLength(1);
+    expect(screen.getByText('Лунный ритм')).toBeInTheDocument();
     expect(screen.queryByText('100%')).not.toBeInTheDocument();
     expect(screen.queryByText('Скорпион')).not.toBeInTheDocument();
   });
   it('does not fetch an invented zodiac sign when the profile is incomplete', async () => {
     render(<DailyOverview user={{ ...user, zodiacSign: undefined }} />);
-    expect(await screen.findAllByText('0%')).toHaveLength(2);
+    expect(await screen.findAllByText('0%')).toHaveLength(1);
     expect(screen.getAllByRole('link', { name: /Заполнить профиль/ })).toHaveLength(2);
     expect(screen.getAllByRole('link', { name: /Заполнить профиль/ })[0]).toHaveAttribute('href', '/profile');
     expect(vi.mocked(api.request).mock.calls.some(([path]) => path.startsWith('/horoscope'))).toBe(false);
@@ -57,7 +57,7 @@ describe('DailyOverview', () => {
     expect(screen.queryByText('0%')).not.toBeInTheDocument();
     vi.mocked(api.request).mockImplementation(async path => (path.startsWith('/lunar') ? lunar() : forecast()) as any);
     fireEvent.click(screen.getByRole('button', { name: 'Обновить сводку' }));
-    expect(await screen.findAllByText('0%')).toHaveLength(2);
+    expect(await screen.findAllByText('0%')).toHaveLength(1);
     expect(screen.queryByText('Лунные данные недоступны')).not.toBeInTheDocument();
   });
   it('ignores a late response from the previous account', async () => {
@@ -96,8 +96,6 @@ describe('DailyOverview', () => {
     });
     render(<DailyOverview user={user} />);
     expect(await screen.findByText('Три карты на сегодня')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Подробнее о дне/ }));
-    expect(screen.getByRole('dialog')).toBeVisible();
     expect(screen.getByRole('link', { name: /Три карты на сегодня/ })).toHaveAttribute('href', '/history/tarot/read-1');
   });
 });
