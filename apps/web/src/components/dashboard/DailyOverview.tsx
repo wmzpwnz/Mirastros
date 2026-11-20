@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
 import { dailyPractice, dailyQuestion, dayInZone, daysUntilDate, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
@@ -69,7 +69,8 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const practice = dailyPractice(moon?.phase, today);
   const practiceKey = `mirastros:daily-practice:${user.id}:${today}`;
   const [practiceDone, setPracticeDone] = useState(false);
-  const [showFormula, setShowFormula] = useState(false);
+  const detailsDialog = useRef<HTMLDialogElement>(null);
+  const formulaDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     setPracticeDone(window.localStorage.getItem(practiceKey) === 'done');
@@ -129,7 +130,10 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
         <section className={styles.metrics} aria-label="Ваши показатели на сегодня">
           <article className={styles.metric}>
             {frame}<p className={styles.label}>Личный день</p>
-            {personal ? <><strong>{personal.value}</strong><span>{personal.meaning}</span><button type="button" className={styles.formulaToggle} aria-expanded={showFormula} onClick={() => setShowFormula(value => !value)}>{showFormula ? 'Скрыть расчёт' : 'Как рассчитано?'}</button>{showFormula && <p className={styles.formula}>{personal.formula}</p>}</>
+            {personal ? <><strong>{personal.value}</strong><span>{personal.meaning}</span><button type="button" className={styles.formulaToggle} aria-haspopup="dialog" onClick={() => formulaDialog.current?.showModal()}>Как рассчитано?</button>
+              <dialog ref={formulaDialog} className={styles.dialog} aria-label="Расчёт личного дня" data-lenis-prevent>
+                <form method="dialog"><button>Закрыть</button></form><h2>Расчёт личного дня</h2><p>{personal.formula}</p>
+              </dialog></>
               : <><span>Добавьте дату рождения</span><Link className={styles.metricLink} href="/profile">Заполнить профиль <ArrowIcon /></Link></>}
           </article>
           <article className={styles.metric}>
@@ -158,8 +162,11 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             </button>
           </article>
         </div>
-        <details className={styles.moreDetails}>
-          <summary>Подробнее о дне и недавних открытиях</summary>
+        <button className={styles.moreDetails} type="button" aria-haspopup="dialog" onClick={() => detailsDialog.current?.showModal()}>Подробнее о дне и недавних открытиях →</button>
+        <dialog ref={detailsDialog} className={styles.dialog} aria-labelledby="daily-details-title" data-lenis-prevent>
+          <form method="dialog"><button>Закрыть</button></form>
+          <h2 id="daily-details-title">Подробнее о дне</h2>
+          <h3>Карта дня · {cardToday.name}</h3>
           <p className={styles.detail}>{cardToday.meaning}</p>
         <div className={styles.grid}>
           <article className={styles.panel} aria-busy={moonState === 'loading'}>
@@ -187,9 +194,9 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           {historyState === 'loading' ? <p className={styles.detail}>Открываем ваши последние результаты…</p>
             : historyState === 'error' ? <p className={styles.detail}>История временно недоступна. Попробуйте открыть её чуть позже.</p>
               : recentItems.length ? <div className={styles.recentList}>{recentItems.slice(0, 4).map(item => <Link href={`/history/${encodeURIComponent(item.type)}/${encodeURIComponent(item.id)}`} key={`${item.type}:${item.id}`} className={styles.recentItem}><span className={styles.recentIcon} aria-hidden="true">{item.type === 'tarot' ? '✧' : item.type === 'numerology' ? '◇' : item.type === 'dreams' ? '☾' : '✦'}</span><span><strong>{item.title}</strong><small>{new Intl.DateTimeFormat('ru-RU', { timeZone, day: 'numeric', month: 'long' }).format(new Date(item.created_at))}</small></span><ArrowIcon /></Link>)}</div>
-                : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={openDirections}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
+                : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={() => { detailsDialog.current?.close(); openDirections(); }}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
         </section>
-        </details>
+        </dialog>
       </div>
     </div>
   </section>;
