@@ -147,16 +147,30 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => initialize(unitsRef.current), 180);
     };
+    // A single wheel notch can be just three lines on Firefox or a few dozen
+    // pixels on macOS. Carry the first notch through the long intro fade.
+    const onWheel = (event: WheelEvent) => {
+      if (!authenticated || event.ctrlKey || event.shiftKey || event.defaultPrevented ||
+          event.deltaY <= Math.abs(event.deltaX) || !event.cancelable ||
+          (event.target instanceof Element && event.target.closest('dialog'))) return;
+      const { start, height } = layoutRef.current;
+      if (window.scrollY > start + 2) return;
+      if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL && event.deltaY < 32) return;
+      event.preventDefault();
+      window.scrollTo({ top: start + INTRO_SCREENS * height, behavior: reduce ? 'auto' : 'smooth' });
+    };
+    if (authenticated) root.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('resize', onResize);
     window.visualViewport?.addEventListener('resize', onResize);
     return () => {
       clearTimeout(resizeTimer);
+      root.removeEventListener('wheel', onWheel);
       window.removeEventListener('resize', onResize); window.visualViewport?.removeEventListener('resize', onResize);
       drawing = false;
       stopNormalizer(); context?.revert(); root.style.height = ''; delete root.dataset.ready;
       cards.forEach((card, i) => { card.style.visibility = ''; card.style.willChange = ''; card.style.pointerEvents = ''; card.removeAttribute('aria-hidden'); links[i].tabIndex = 0; });
     };
-  }, [view]);
+  }, [view, authenticated]);
 
   const navigate = (direction: number) => {
     const target = !exploring ? INTRO_SCREENS : ending ? count - 1 + INTRO_SCREENS : direction > 0 && active === count - 1 ? count + 1.6 : Math.max(0, active + direction) + INTRO_SCREENS;
@@ -165,7 +179,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
   const enter = () => window.scrollTo({ top: layoutRef.current.start + INTRO_SCREENS * layoutRef.current.height, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   const headerVisible = view === 'list' || exploring;
 
-  return <main ref={rootRef} className={styles.root} data-view={view} data-account={authenticated} data-exploring={exploring} style={{ '--journey-screens': totalScreens, '--journey-accent': journeyModules[active].accent } as CSSProperties}>
+  return <main ref={rootRef} className={styles.root} data-lenis-prevent-wheel={authenticated && view === 'flight' ? '' : undefined} data-view={view} data-account={authenticated} data-exploring={exploring} style={{ '--journey-screens': totalScreens, '--journey-accent': journeyModules[active].accent } as CSSProperties}>
     <header ref={headerRef} className={styles.header} aria-hidden={!headerVisible}>
       <Link href="/services" tabIndex={headerVisible ? 0 : -1}>Направления</Link>
       <Link href={authenticated ? "/dashboard" : "/"} className={styles.brand} onClick={event => {
