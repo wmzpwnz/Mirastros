@@ -166,3 +166,19 @@ export function dailyPractice(phase: string | undefined, date: string): string {
   const seed = Number(date.replace(/\D/g, '').slice(-4)) || 0;
   return choices[seed % choices.length];
 }
+
+const DAILY_QUESTIONS = [
+  'Что сегодня заслуживает моего внимания?',
+  'Какой разговор стоит начать?',
+  'Что мне хочется попробовать по-другому?',
+  'Какое маленькое дело облегчит завтрашний день?',
+  'Как сегодня освободить время для важного?',
+  'Что за эту неделю получилось лучше, чем я ожидал?',
+  'Что поможет мне восстановить силы?',
+];
+
+export function dailyQuestion(date: string): string {
+  const day = Math.floor(Date.parse(date) / 86_400_000);
+  return DAILY_QUESTIONS[((day % DAILY_QUESTIONS.length) + DAILY_QUESTIONS.length) % DAILY_QUESTIONS.length]
+    ?? DAILY_QUESTIONS[0];
+}

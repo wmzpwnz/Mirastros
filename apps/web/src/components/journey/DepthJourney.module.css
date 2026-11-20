@@ -60,7 +60,7 @@
 .root[data-exploring=true] .stageFrame { opacity:1; }
 .header { inset:32px 46px auto; }.header .brand { width:165px; }.header>a { font:500 15px var(--font-display),Georgia,serif; letter-spacing:.06em; }
 .root[data-ready=true] .footer { left:46px; right:46px; bottom:max(30px,env(safe-area-inset-bottom)); }
-.accountScroll { height:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#766080 #0b0b19; }
+.accountScroll { height:100%; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#766080 #0b0b19; }
 .root[data-account=true] .intro { background:#070817; }
 .root[data-view=list] .stageFrame { display:none; }
 @media(max-width:900px) { .caption h2 { font-size:29px; }.cardSurface { padding:23px 18px; }.header { left:35px; right:35px; } }
