@@ -203,3 +203,37 @@
 .dialog form { float: right; }
 .dialog form button { padding: 8px; color: var(--gold); }
 .dialog h2, .dialog h3 { color: var(--gold); margin-bottom: 8px; }
+
+.sky { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); gap:12px; }
+.sky .hero { min-height:215px; }
+.observatory { position:relative; isolation:isolate; display:grid; align-content:center; justify-items:center; gap:4px; text-align:center; padding:16px; border:1px solid var(--line); background:radial-gradient(ellipse at 50% 25%,#39305270,transparent 65%),linear-gradient(#100d22d9,#0f0e20ec),url('/images/mirastros-cosmos.webp') center/cover; }
+.observatory .lunar { flex-direction:column; gap:6px; }
+.observatory h2 { margin:0; font-size:clamp(18px,2vw,28px); color:#f1dcb3; }
+.observatory .moonOrbit { width:52px; border:1px solid #c79b635c; border-radius:50%; outline:1px dashed #bea07857; outline-offset:3px; }
+.observatory .link { min-height:0; }
+.metrics { grid-template-columns:.8fr 1fr 1.3fr; }
+.metrics .dailyAction { position:relative; padding:16px; border-color:var(--line); background:radial-gradient(ellipse at top right,#30203c,#101020 75%); }
+.question { font:italic 14px/1.35 Georgia,serif; color:#e7cfa6; margin:5px 0; }
+.rail { min-width:0; }
+.rail .historyPanel { padding:12px; margin:12px 10px 0 0; }
+.rail .historyHeading,.rail .emptyHistory { display:grid; gap:3px; }
+.rail .historyHeading h2 { font-size:18px; }
+.rail .recentList { grid-template-columns:1fr; }
+.rail .link { min-height:24px; }
+@media(max-width:900px) {
+ .layout { display:flex; flex-direction:column; } .rail { order:2; }
+ .rail .sidebar { display:none; }
+ .rail .historyPanel { margin:4px 0; padding:6px 12px; }
+ .rail .historyHeading { display:flex; } .rail .historyHeading h2,.rail .emptyHistory { display:none; }
+ .rail .recentList { display:flex; margin:0; } .rail .recentItem { padding:2px; } .rail .recentItem:nth-child(n+2) { display:none; }
+ .rail .historyHeading .label { margin:0; }
+}
+@media(max-width:600px) {
+ .sky { grid-template-columns:1.15fr 1fr; gap:5px; }
+ .sky .hero,.observatory { min-height:0; padding:10px; }
+ .sky .heroCopy { max-width:100%; } .sky .signArt { position:absolute; opacity:.18; right:0; z-index:-1; }
+ .observatory .moonOrbit { width:30px; }
+ .observatory .lunar { gap:3px; } .observatory .lunar p,.observatory .event,.observatory .link { font-size:11px; }
+ .metrics { grid-template-columns:.65fr 1fr 1.2fr; }
+ .metrics .dailyAction { padding:7px; } .question,.metrics .detail { font-size:11px; line-height:1.25; }
+}

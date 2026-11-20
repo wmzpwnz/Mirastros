@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
-import { dailyPractice, dailyQuestion, dayInZone, daysUntilDate, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
+import { dailyPractice, dailyQuestion, dayInZone, forecastCopy, illuminationOf, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { MOON_PHASE_NAMES_EXTENDED } from '../../constants/moon';
@@ -54,7 +54,6 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const { forecast, moon, forecastState, moonState, updatedAt, refresh, recentItems, historyState } = useDailyOverview(user.id, zodiac?.[0], today, timeZone);
   const copy = forecastCopy(forecast);
   const illumination = illuminationOf(moon);
-  const rhythm = lunarRhythm(moon);
   const event = nextMoonEvent(moon, today);
   const moonSign = resolveZodiac(moon?.zodiac_sign)?.[1].name || moon?.zodiac_sign || 'Нет данных';
   const dateLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, weekday: 'long', day: 'numeric', month: 'long' }).format(now);
@@ -69,7 +68,6 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const practice = dailyPractice(moon?.phase, today);
   const practiceKey = `mirastros:daily-practice:${user.id}:${today}`;
   const [practiceDone, setPracticeDone] = useState(false);
-  const detailsDialog = useRef<HTMLDialogElement>(null);
   const formulaDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -100,10 +98,17 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
       <div className={styles.account}><Link href="/subscription">{tier}</Link><Link href="/profile" className={styles.avatar} aria-label="Открыть профиль">{name.slice(0, 1)}</Link></div>
     </header>
     <div className={styles.layout}>
-      <nav className={styles.sidebar} aria-label="Личный кабинет">
+      <aside className={styles.rail}><nav className={styles.sidebar} aria-label="Личный кабинет">
         {nav.map(([url, label, icon]) => <Link href={url} key={url} aria-current={url === '/dashboard' ? 'page' : undefined}><span aria-hidden="true">{icon}</span>{label}</Link>)}
         <Link href="/services"><span aria-hidden="true">✥</span>Все направления</Link>
-      </nav>
+      </nav>        <section className={styles.historyPanel} aria-labelledby="recent-history-title">
+          {frame}<div className={styles.historyHeading}><div><p className={styles.label}>Личная библиотека</p><h2 id="recent-history-title">Недавние открытия</h2></div><Link className={styles.link} href="/history">Вся история <ArrowIcon /></Link></div>
+          {historyState === 'loading' ? <p className={styles.detail}>Открываем ваши последние результаты…</p>
+            : historyState === 'error' ? <p className={styles.detail}>История временно недоступна. Попробуйте открыть её чуть позже.</p>
+              : recentItems.length ? <div className={styles.recentList}>{recentItems.slice(0, 4).map(item => <Link href={`/history/${encodeURIComponent(item.type)}/${encodeURIComponent(item.id)}`} key={`${item.type}:${item.id}`} className={styles.recentItem}><span className={styles.recentIcon} aria-hidden="true">{item.type === 'tarot' ? '✧' : item.type === 'numerology' ? '◇' : item.type === 'dreams' ? '☾' : '✦'}</span><span><strong>{item.title}</strong><small>{new Intl.DateTimeFormat('ru-RU', { timeZone, day: 'numeric', month: 'long' }).format(new Date(item.created_at))}</small></span><ArrowIcon /></Link>)}</div>
+                : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={openDirections}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
+        </section>
+</aside>
       <div className={styles.content}>
         <div className={styles.heading}>
           <div><time dateTime={today}>{dateLabel}</time><h1 id="daily-overview-title">Ваш день, {name}</h1></div>
@@ -112,7 +117,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           </div>
         </div>
 
-        <article className={styles.hero} aria-busy={forecastState === 'loading'}>
+        <div className={styles.sky}><article className={styles.hero} aria-busy={forecastState === 'loading'}>
           {frame}
           <div className={styles.heroCopy}>
             <p className={styles.label}>{forecast?.is_personalized ? 'Персональный гороскоп' : 'Гороскоп на сегодня'}</p>
@@ -127,6 +132,19 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           </div>}
         </article>
 
+          <article className={styles.observatory} aria-busy={moonState === 'loading'}>
+            {frame}<p className={styles.label}>Лунный ритм</p>
+            <div className={styles.lunar}>
+              <MoonVisual phase={moon?.phase} />
+              <div><h2>{phase || (moonState === 'loading' ? 'Загрузка…' : 'Лунные данные недоступны')}</h2>
+                {moon && <p>{moonSign} · Освещённость <strong>{illumination === null ? '—' : `${Math.round(illumination)}%`}</strong></p>}
+              </div>
+            </div>
+            
+            {event && <p className={styles.event}>{event.title} <time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p>}
+            <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
+          </article>
+        </div>
         <section className={styles.metrics} aria-label="Ваши показатели на сегодня">
           <article className={styles.metric}>
             {frame}<p className={styles.label}>Личный день</p>
@@ -136,67 +154,18 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
               </dialog></>
               : <><span>Добавьте дату рождения</span><Link className={styles.metricLink} href="/profile">Заполнить профиль <ArrowIcon /></Link></>}
           </article>
-          <article className={styles.metric}>
-            {frame}<p className={styles.label}>Лунный ритм</p>
-            <strong>{moon ? `${illumination === null ? '—' : `${Math.round(illumination)}%`}` : '—'}</strong>
-            <span>{moon ? `${moonSign} · ${phase}` : moonState === 'loading' ? 'Считаем положение Луны…' : 'Данные пока недоступны'}</span>
-          </article>
-          <article className={styles.metric}>
-            {frame}<p className={styles.label}>Следующая фаза</p>
-            <strong>{event ? daysUntilDate(event.date, today) === 0 ? 'Сегодня' : `${daysUntilDate(event.date, today)} дн.` : '—'}</strong>
-            <span>{event ? event.title : moonState === 'loading' ? 'Сверяем лунный цикл…' : 'Нет данных о событии'}</span>
-            <Link className={styles.metricLink} href="/services/lunar">К лунному календарю <ArrowIcon /></Link>
-          </article>
-        </section>
-
-        <div className={styles.dailyActions}>
           <article className={styles.dailyAction}>
             <p className={styles.label}>Карта дня</p>
-            <Link href="/services/tarot">{cardToday.name} <ArrowIcon /></Link>
+            <Link href="/services/tarot">{cardToday.name} <ArrowIcon /></Link><p className={styles.detail}>{cardToday.meaning}</p>
           </article>
           <article className={styles.dailyAction}>
             <p className={styles.label}>Практика дня</p>
-            <p className={styles.detail}>{practice}</p>
+            <p className={styles.detail}>{practice}</p><p className={styles.question}>{dailyQuestion(today)}</p>
             <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
               <span aria-hidden="true">{practiceDone ? '✓' : '○'}</span><span className={styles.practiceText}>{practiceDone ? 'Отмечено на сегодня' : 'Отметить выполнение'}</span>
             </button>
           </article>
-        </div>
-        <button className={styles.moreDetails} type="button" aria-haspopup="dialog" onClick={() => detailsDialog.current?.showModal()}>Подробнее о дне и недавних открытиях →</button>
-        <dialog ref={detailsDialog} className={styles.dialog} aria-labelledby="daily-details-title" data-lenis-prevent>
-          <form method="dialog"><button>Закрыть</button></form>
-          <h2 id="daily-details-title">Подробнее о дне</h2>
-          <h3>Карта дня · {cardToday.name}</h3>
-          <p className={styles.detail}>{cardToday.meaning}</p>
-        <div className={styles.grid}>
-          <article className={styles.panel} aria-busy={moonState === 'loading'}>
-            {frame}<p className={styles.label}>Луна сейчас</p>
-            <div className={styles.lunar}>
-              <MoonVisual phase={moon?.phase} />
-              <div><h2>{phase || (moonState === 'loading' ? 'Загрузка…' : 'Лунные данные недоступны')}</h2>
-                {moon && <p>{moonSign} · Освещённость <strong>{illumination === null ? '—' : `${Math.round(illumination)}%`}</strong></p>}
-              </div>
-            </div>
-            {rhythm && <p className={styles.detail}>{rhythm.text}</p>}
-            {event && <p className={styles.event}>{event.title} <time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p>}
-            <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
-          </article>
-          <article className={styles.panel}>
-            {frame}<p className={styles.label}>Вопрос дня</p>
-            <h2>Один шаг для себя</h2>
-            <p className={styles.detail}>{practice}</p>
-            <p className={styles.detail}>{dailyQuestion(today)}</p>
-          </article>
-        </div>
-
-        <section className={styles.historyPanel} aria-labelledby="recent-history-title">
-          {frame}<div className={styles.historyHeading}><div><p className={styles.label}>Личная библиотека</p><h2 id="recent-history-title">Недавние открытия</h2></div><Link className={styles.link} href="/history">Вся история <ArrowIcon /></Link></div>
-          {historyState === 'loading' ? <p className={styles.detail}>Открываем ваши последние результаты…</p>
-            : historyState === 'error' ? <p className={styles.detail}>История временно недоступна. Попробуйте открыть её чуть позже.</p>
-              : recentItems.length ? <div className={styles.recentList}>{recentItems.slice(0, 4).map(item => <Link href={`/history/${encodeURIComponent(item.type)}/${encodeURIComponent(item.id)}`} key={`${item.type}:${item.id}`} className={styles.recentItem}><span className={styles.recentIcon} aria-hidden="true">{item.type === 'tarot' ? '✧' : item.type === 'numerology' ? '◇' : item.type === 'dreams' ? '☾' : '✦'}</span><span><strong>{item.title}</strong><small>{new Intl.DateTimeFormat('ru-RU', { timeZone, day: 'numeric', month: 'long' }).format(new Date(item.created_at))}</small></span><ArrowIcon /></Link>)}</div>
-                : <div className={styles.emptyHistory}><p>Здесь появятся сохранённые расклады и расчёты.</p>{openDirections ? <button type="button" onClick={() => { detailsDialog.current?.close(); openDirections(); }}>Выбрать первое направление <ArrowIcon /></button> : <Link href="/services">Выбрать первое направление <ArrowIcon /></Link>}</div>}
         </section>
-        </dialog>
       </div>
     </div>
   </section>;
