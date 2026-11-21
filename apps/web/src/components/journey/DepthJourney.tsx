@@ -218,17 +218,18 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
         </div>
       </>}
     </div>
-    {authenticated && view === 'flight' && !exploring && <nav className={styles.accountNavigation} aria-label="Быстрая навигация кабинета">
+    {authenticated && view === 'flight' && <nav className={styles.accountNavigation} aria-label="Быстрая навигация кабинета">
       <OrnamentFrame />
       {[
-        ['/dashboard', 'Главная', 'M3 11 12 3l9 8M5 10v11h5v-7h4v7h5V10'],
         ['#directions', 'Направления', 'm12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z'],
         ['/services/lunar', 'Календарь', 'M5 5h14v16H5V5Zm3-3v6m8-6v6M5 10h14'],
+        ['/dashboard', 'Главная', 'M3 11 12 3l9 8M5 10v11h5v-7h4v7h5V10'],
         ['/history', 'История', 'M5 4h14v17H5V4Zm3 5h8m-8 4h8m-8 4h5'],
         ['/profile', 'Профиль', 'M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0ZM3 22v-2a9 9 0 0 1 18 0v2'],
       ].map(([href, label, path]) => {
         const content = <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true"><path d={path} /></svg><span>{label}</span></>;
-        return href === '#directions' ? <button key={href} onClick={enter}>{content}</button> : <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}>{content}</Link>;
+        if (href === '/dashboard') return <button key={href} className={styles.dockHome} aria-current={!exploring ? 'page' : undefined} onClick={() => window.scrollTo({ top: layoutRef.current.start, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>{content}</button>;
+        return href === '#directions' ? <button key={href} aria-current={exploring ? 'location' : undefined} onClick={enter}>{content}</button> : <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}>{content}</Link>;
       })}
     </nav>}
     <footer className={styles.footer}>

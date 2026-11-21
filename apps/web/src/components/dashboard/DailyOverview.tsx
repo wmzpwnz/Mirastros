@@ -14,6 +14,25 @@ function ArrowIcon({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d={diagonal ? 'M5 15 15 5M5 5h10v10' : 'M3 10h13m-5-5 5 5-5 5'} /></svg>;
 }
 
+function DailyNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const node = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const element = node.current;
+    if (!element || !value || !window.matchMedia ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const start = performance.now();
+    let frame: number;
+    const draw = (time: number) => {
+      const progress = Math.min(1, (time - start) / 650);
+      element.textContent = Math.round(value * (1 - (1 - progress) ** 3)) + suffix;
+      if (progress < 1) frame = requestAnimationFrame(draw);
+    };
+    frame = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(frame);
+  }, [value, suffix]);
+  return <span ref={node} aria-live="off">{value}{suffix}</span>;
+}
+
 function MoonVisual({ phase }: { phase?: string }) {
   const waxing = phase?.startsWith('waxing') || phase === 'first_quarter';
   const shadow = phase === 'new_moon' ? 0 : phase === 'full_moon' ? 130 :
@@ -138,7 +157,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
             <div className={styles.lunar}>
               <MoonVisual phase={moon?.phase} />
               <div><h2>{phase || (moonState === 'loading' ? 'Загрузка…' : 'Лунные данные недоступны')}</h2>
-                {moon && <p>{moonSign} · Освещённость <strong>{illumination === null ? '—' : `${Math.round(illumination)}%`}</strong></p>}
+                {moon && <p>{moonSign} · Освещённость <strong>{illumination === null ? '—' : <DailyNumber value={Math.round(illumination)} suffix="%" />}</strong></p>}
               </div>
             </div>
             
@@ -150,17 +169,17 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
         <section className={styles.metrics} aria-label="Ваши показатели на сегодня">
           <article className={styles.metric}>
             {frame}<p className={styles.label}>Личный день</p>
-            {personal ? <><strong>{personal.value}</strong><span>{personal.meaning}</span><button type="button" className={styles.formulaToggle} aria-haspopup="dialog" onClick={() => formulaDialog.current?.showModal()}>Как рассчитано?</button>
+            {personal ? <><strong><DailyNumber value={personal.value} /></strong><span>{personal.meaning}</span><button type="button" className={styles.formulaToggle} aria-haspopup="dialog" onClick={() => formulaDialog.current?.showModal()}>Как рассчитано?</button>
               <dialog ref={formulaDialog} className={styles.dialog} aria-label="Расчёт личного дня" data-lenis-prevent>
                 <form method="dialog"><button>Закрыть</button></form><h2>Расчёт личного дня</h2><p>{personal.formula}</p>
               </dialog></>
               : <><span>Добавьте дату рождения</span><Link className={styles.metricLink} href="/profile">Заполнить профиль <ArrowIcon /></Link></>}
           </article>
-          <article className={styles.dailyAction}>
+          <article className={styles.dailyAction}>{frame}
             <p className={styles.label}>Карта дня</p>
             <Link href="/services/tarot">{cardToday.name} <ArrowIcon /></Link><p className={styles.detail}>{cardToday.meaning}</p>
           </article>
-          <article className={styles.dailyAction}>
+          <article className={styles.dailyAction}>{frame}
             <p className={styles.label}>Практика дня</p>
             <p className={styles.detail}>{practice}</p><p className={styles.question}>{dailyQuestion(today)}</p>
             <button type="button" className={`${styles.practiceButton} ${practiceDone ? styles.practiceComplete : ''}`} onClick={togglePractice} aria-pressed={practiceDone}>
