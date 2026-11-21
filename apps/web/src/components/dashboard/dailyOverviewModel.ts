@@ -58,7 +58,8 @@ export function forecastCopy(forecast: DailyForecast | null) {
   const advice = cleanText(forecast?.advice);
   return {
     focus,
-    forecast: remainder || (text ? 'Прогноз собран. Откройте его, чтобы прочитать детали и пояснения.' : ''),
+    // Stored editorial forecasts append a lunar-calendar paragraph after the sign's focus.
+    forecast: /^Лунный диск освещён на \d/.test(remainder) ? '' : remainder,
     advice: advice && advice !== first && advice !== text ? advice : '',
   };
 }

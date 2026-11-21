@@ -237,3 +237,6 @@
  .metrics { grid-template-columns:.65fr 1fr 1.2fr; }
  .metrics .dailyAction { padding:7px; } .question,.metrics .detail { font-size:11px; line-height:1.25; }
 }
+
+.lunarNote { max-width: 36ch; margin: 2px 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+@media (max-width:600px) { .lunarNote { font-size: 11px; } }
