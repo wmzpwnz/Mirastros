@@ -231,7 +231,14 @@
 @media(max-width:600px) {
  .sky { grid-template-columns:1.15fr 1fr; gap:5px; }
  .sky .hero,.observatory { min-height:0; padding:10px; }
- .sky .heroCopy { max-width:100%; } .sky .signArt { position:absolute; opacity:.18; right:0; z-index:-1; }
+ /* Give the illustration its own row alongside the sign name. */
+ .sky .hero { display:grid; grid-template-columns:minmax(0,1fr) auto; align-content:center; align-items:center; gap:4px; }
+ .sky .heroCopy { display:contents; }
+ .sky .heroCopy>* { grid-column:1/-1; }
+ .sky .hero .label,.sky .hero h2 { max-width:100%; }
+ .sky .hero h2 { grid-area:2/1; font-size:clamp(20px,5.8vw,32px); overflow-wrap:anywhere; }
+ .sky .signArt { position:relative; inset:auto; grid-area:2/2; width:clamp(34px,11vw,56px); margin:0; }
+ .sky .heroCopy a { justify-self:start; }
  .observatory .moonOrbit { width:30px; }
  .observatory .lunar { gap:3px; } .observatory .lunar p,.observatory .event,.observatory .link { font-size:11px; }
  .metrics { grid-template-columns:.65fr 1fr 1.2fr; }
@@ -270,4 +277,19 @@
  .content { display:flex; flex-direction:column; }
  .sky { max-height:46svh; }
  .sky .moonOrbit { width:clamp(36px,6svh,60px); }
+}
+
+/* The corners and the rules sit inside each card's border. Reserve their
+   footprint even when the short-screen layout compresses the card grid. */
+.root { --card-inset:clamp(22px,2.2vw,36px); }
+.sky .hero,.sky .observatory,.metrics .metric,.metrics .dailyAction,.rail .historyPanel {
+  padding:var(--card-inset);
+}
+.root .trim>svg:not(:last-child) { width:calc(var(--card-inset) - 6px); height:auto; }
+@media(max-width:600px) {
+ .root { --card-inset:14px; }
+ .metrics { grid-template-columns:.8fr 1fr 1.2fr; }
+ .metrics>article { min-width:0; overflow-wrap:anywhere; }
+ .metrics .practiceButton { max-width:100%; }
+ .rail .historyPanel { padding-block:10px; }
 }
