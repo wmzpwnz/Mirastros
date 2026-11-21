@@ -228,7 +228,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
         ['/profile', 'Профиль', 'M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0ZM3 22v-2a9 9 0 0 1 18 0v2'],
       ].map(([href, label, path]) => {
         const content = <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true"><path d={path} /></svg><span>{label}</span></>;
-        if (href === '/dashboard') return <button key={href} className={styles.dockHome} aria-current={!exploring ? 'page' : undefined} onClick={() => window.scrollTo({ top: layoutRef.current.start, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>{content}</button>;
+        if (href === '/dashboard') return <button key={href} className={styles.dockHome} aria-current={!exploring ? 'page' : undefined} onClick={() => window.scrollTo({ top: Math.max(1, layoutRef.current.start), behavior: 'auto' })}>{content}</button>;
         return href === '#directions' ? <button key={href} aria-current={exploring ? 'location' : undefined} onClick={enter}>{content}</button> : <Link key={href} href={href} aria-current={href === '/dashboard' ? 'page' : undefined}>{content}</Link>;
       })}
     </nav>}
