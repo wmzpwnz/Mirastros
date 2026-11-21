@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '../../types';
-import { dailyPractice, dailyQuestion, dayInZone, forecastCopy, illuminationOf, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
+import { dailyPractice, dailyQuestion, dayInZone, forecastCopy, illuminationOf, lunarRhythm, nextMoonEvent, personalDay, resolveTimeZone, resolveZodiac } from './dailyOverviewModel';
 import { useDailyOverview } from './useDailyOverview';
 import { OrnamentFrame } from '../ornaments/OrnamentFrame';
 import { MOON_PHASE_NAMES_EXTENDED } from '../../constants/moon';
@@ -54,6 +54,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
   const { forecast, moon, forecastState, moonState, updatedAt, refresh, recentItems, historyState } = useDailyOverview(user.id, zodiac?.[0], today, timeZone);
   const copy = forecastCopy(forecast);
   const illumination = illuminationOf(moon);
+  const rhythm = lunarRhythm(moon);
   const event = nextMoonEvent(moon, today);
   const moonSign = resolveZodiac(moon?.zodiac_sign)?.[1].name || moon?.zodiac_sign || 'Нет данных';
   const dateLabel = new Intl.DateTimeFormat('ru-RU', { timeZone, weekday: 'long', day: 'numeric', month: 'long' }).format(now);
@@ -122,7 +123,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
           <div className={styles.heroCopy}>
             <p className={styles.label}>{forecast?.is_personalized ? 'Персональный гороскоп' : 'Гороскоп на сегодня'}</p>
             <h2>{zodiac?.[1].name || 'Ваш гороскоп'}</h2>
-            {forecast ? <><p className={styles.focus}>{copy.focus}</p><p className={styles.excerpt}>{copy.forecast}</p></>
+            {forecast ? <><p className={styles.focus}>{copy.focus}</p>{copy.forecast && <p className={styles.excerpt}>{copy.forecast}</p>}</>
               : <p className={styles.focus}>{forecastState === 'missing' ? 'Добавьте дату рождения, чтобы открыть прогноз для своего знака.' : forecastState === 'error' ? 'Сегодняшний прогноз пока недоступен.' : 'Загружаем прогноз…'}</p>}
             <Link className={styles.forecastLink} href={forecastState === 'missing' ? '/profile' : forecastHref}>{forecastState === 'missing' ? 'Заполнить профиль' : 'Открыть прогноз'} <ArrowIcon /></Link>
           </div>
@@ -141,6 +142,7 @@ export function DailyOverview({ user, openDirections }: { user: User; openDirect
               </div>
             </div>
             
+            {rhythm && <p className={styles.lunarNote}>{rhythm.text}</p>}
             {event && <p className={styles.event}>{event.title} <time dateTime={event.date}>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${event.date}T12:00:00Z`))}</time></p>}
             <Link className={styles.link} href="/services/lunar">Лунный календарь <ArrowIcon /></Link>
           </article>
