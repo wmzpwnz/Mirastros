@@ -68,7 +68,7 @@
 @media(max-width:360px) { .root[data-ready=true] .footer { left:20px; right:20px; }.viewSwitch button { min-width:40px; }.header .brand { width:105px; } }
 
 .accountNavigation { display:none; }
-@media(max-width:600px) {
+@media(max-width:600px), (orientation:landscape) and (max-height:540px) and (pointer:coarse) {
  .accountNavigation { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:fixed; z-index:26; left:18px; right:18px; bottom:max(18px,env(safe-area-inset-bottom)); min-height:63px; padding:8px 5px; background:#0c0b1de8; --ornament-color:#d1af7d85; --ornament-faint:#c7a57529; }
  .accountNavigation>span>svg:not(:last-child) { width:27px; }.accountNavigation>span>svg:last-child { width:70px; height:10px; top:-5px; }
  .accountNavigation>a,.accountNavigation>button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:44px; min-width:0; padding:2px; border:0; background:none; color:#cbb89c; font:8px var(--font-inter),sans-serif; text-decoration:none; cursor:pointer; }.accountNavigation svg { width:19px; height:19px; }.accountNavigation [aria-current] { color:#f2e1ca; }.accountNavigation a:focus-visible,.accountNavigation button:focus-visible { outline:2px solid #e4ccee; }
@@ -94,10 +94,16 @@
 
 .root[data-account=true][data-exploring=false][data-view=flight] .footer { display:none; }
 
-@media (max-width:600px) {
+@media (max-width:600px), (orientation:landscape) and (max-height:540px) and (pointer:coarse) {
  .accountNavigation { border-radius:50% 50% 18px 18px / 24px 24px 16px 16px; border:1px solid #947447; background:radial-gradient(ellipse at top,#3b2849,#100f21 70%); box-shadow:inset 0 2px #e3c38730,0 7px 22px #030310b0; }
  .accountNavigation>span { display:none; }
  .accountNavigation .dockHome { border-radius:50%; width:54px; height:54px; justify-self:center; margin-top:-19px; gap:2px; border:1px solid #caa971; background:radial-gradient(circle at 46% 30%,#584067,#20152e 70%); box-shadow:0 0 0 3px #191322,0 0 0 4px #846640; color:#f9dfae; }
  .dockHome svg { width:23px; height:23px; }
  .root[data-ready=true][data-account=true][data-view=flight] .footer { bottom:calc(max(18px,env(safe-area-inset-bottom)) + 84px); }
+}
+
+@media (orientation:landscape) and (max-height:540px) and (pointer:coarse) {
+ .accountNavigation { width:min(420px,85vw); left:50%; right:auto; transform:translateX(-50%); bottom:max(3px,env(safe-area-inset-bottom)); min-height:44px; padding:1px 5px; }
+ .accountNavigation .dockHome { margin-top:-6px; height:46px; width:46px; }
+ .root[data-ready=true][data-account=true][data-view=flight] .footer { bottom:calc(max(3px,env(safe-area-inset-bottom)) + 54px); }
 }
