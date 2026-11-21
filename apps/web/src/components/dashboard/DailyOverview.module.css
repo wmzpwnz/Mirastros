@@ -240,3 +240,34 @@
 
 .lunarNote { max-width: 36ch; margin: 2px 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
 @media (max-width:600px) { .lunarNote { font-size: 11px; } }
+
+.sky>article,.metrics>article,.historyPanel { box-shadow:inset 0 1px #f7d59e2b,inset 0 -4px 9px #06051085,0 5px 0 -2px #090816,0 8px 18px #03030b66; }
+.metrics .dailyAction { isolation:isolate; }
+.observatory .moonOrbit { position:relative; }
+.moonOrbit::after { content:''; position:absolute; inset:-6px; border:1px solid #ab8b544d; border-top-color:#f1d399; border-radius:50%; pointer-events:none; }
+@media (prefers-reduced-motion:no-preference) {
+ .moonOrbit::after { animation:dailyOrbit 18s linear infinite; }
+ .signArt img { animation:dailyFloat 8s ease-in-out infinite alternate; }
+ @keyframes dailyOrbit { to { transform:rotate(360deg); } }
+ @keyframes dailyFloat { to { transform:translateY(-4px) scale(1.035); } }
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+ .metrics>article { transition:transform .22s ease,box-shadow .22s ease; }
+ .metrics>article:hover { transform:perspective(900px) translateY(-3px) rotateX(1.5deg); box-shadow:inset 0 1px #ffe2b455,0 12px 24px #03030b99; }
+}
+@media (min-width:901px) and (min-height:680px) {
+ .root { display:flex; flex-direction:column; min-height:var(--journey-vh,100svh); }
+ .header,.layout { width:100%; }
+ .layout { flex:1; }
+ .content { display:grid; grid-template-rows:auto minmax(min-content,1.8fr) minmax(min-content,1fr); }
+ .observatory .moonOrbit { width:clamp(60px,10vh,108px); }
+ .metrics>article { justify-content:center; }
+}
+@media (max-width:600px) and (min-height:660px) {
+ .root { display:flex; flex-direction:column; min-height:var(--journey-vh,100svh); padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+ .header,.layout { width:100%; }
+ .layout,.content,.sky { flex:1; }
+ .content { display:flex; flex-direction:column; }
+ .sky { max-height:46svh; }
+ .sky .moonOrbit { width:clamp(36px,6svh,60px); }
+}
