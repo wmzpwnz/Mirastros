@@ -1,0 +1,194 @@
+[
+  {
+    "key": "left",
+    "label": "Левая вершина",
+    "inputs": [
+      "day"
+    ],
+    "x": 8,
+    "y": 50
+  },
+  {
+    "key": "top",
+    "label": "Верхняя вершина",
+    "inputs": [
+      "month"
+    ],
+    "x": 50,
+    "y": 8
+  },
+  {
+    "key": "right",
+    "label": "Правая вершина",
+    "inputs": [
+      "yearDigits"
+    ],
+    "x": 92,
+    "y": 50
+  },
+  {
+    "key": "bottom",
+    "label": "Нижняя вершина",
+    "inputs": [
+      "left",
+      "top",
+      "right"
+    ],
+    "x": 50,
+    "y": 92
+  },
+  {
+    "key": "core",
+    "label": "Личный центр",
+    "inputs": [
+      "left",
+      "top",
+      "right",
+      "bottom"
+    ],
+    "x": 50,
+    "y": 50
+  },
+  {
+    "key": "nw",
+    "label": "Верхний левый угол",
+    "inputs": [
+      "left",
+      "top"
+    ],
+    "x": 20,
+    "y": 20
+  },
+  {
+    "key": "ne",
+    "label": "Верхний правый угол",
+    "inputs": [
+      "top",
+      "right"
+    ],
+    "x": 80,
+    "y": 20
+  },
+  {
+    "key": "se",
+    "label": "Нижний правый угол",
+    "inputs": [
+      "right",
+      "bottom"
+    ],
+    "x": 80,
+    "y": 80
+  },
+  {
+    "key": "sw",
+    "label": "Нижний левый угол",
+    "inputs": [
+      "bottom",
+      "left"
+    ],
+    "x": 20,
+    "y": 80
+  },
+  {
+    "key": "family",
+    "label": "Родовой центр",
+    "inputs": [
+      "nw",
+      "ne",
+      "se",
+      "sw"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "combined",
+    "label": "Общий центр силы",
+    "inputs": [
+      "core",
+      "family"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "sky",
+    "label": "Небо",
+    "inputs": [
+      "top",
+      "bottom"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "earth",
+    "label": "Земля",
+    "inputs": [
+      "left",
+      "right"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "personal",
+    "label": "Личное предназначение",
+    "inputs": [
+      "sky",
+      "earth"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "father",
+    "label": "Отцовская линия",
+    "inputs": [
+      "nw",
+      "se"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "mother",
+    "label": "Материнская линия",
+    "inputs": [
+      "ne",
+      "sw"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "social",
+    "label": "Социальное предназначение",
+    "inputs": [
+      "father",
+      "mother"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "spirit",
+    "label": "Духовное предназначение",
+    "inputs": [
+      "personal",
+      "social"
+    ],
+    "x": null,
+    "y": null
+  },
+  {
+    "key": "planet",
+    "label": "Планетарное предназначение",
+    "inputs": [
+      "social",
+      "spirit"
+    ],
+    "x": null,
+    "y": null
+  }
+]

@@ -139,3 +139,60 @@ async def get_my_destiny_matrix(
 
 
 
+
+
+@router.get("/atlas")
+async def read_atlas(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from sqlalchemy import select
+    from app.models.journal_entry import JournalEntry
+    result = await db.execute(
+        select(JournalEntry).where(
+            JournalEntry.user_id == current_user.id,
+            JournalEntry.title == "Моя матрица · matrix-reference-1",
+        ).order_by(JournalEntry.created_at.desc())
+    )
+    entry = result.scalars().first()
+    return entry.entry_metadata if entry else None
+
+
+@router.post("/atlas")
+async def save_atlas(
+    request: DestinyMatrixCalculateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    import json
+    from sqlalchemy import select
+    from app.models.journal_entry import JournalEntry, EntryType
+    from app.services.matrix_atlas import calculate_atlas
+    try:
+        payload = calculate_atlas(request.birth_date)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Проверьте дату рождения.")
+    # Serialize saves for this account so simultaneous requests cannot create duplicates.
+    await db.execute(select(User.id).where(User.id == current_user.id).with_for_update())
+    result = await db.execute(
+        select(JournalEntry).where(
+            JournalEntry.user_id == current_user.id,
+            JournalEntry.title == "Моя матрица · matrix-reference-1",
+        ).order_by(JournalEntry.created_at.desc())
+    )
+    entry = result.scalars().first()
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+    if entry:
+        entry.entry_metadata = payload
+        entry.content = content
+    else:
+        db.add(JournalEntry(
+            user_id=current_user.id,
+            title="Моя матрица · matrix-reference-1",
+            content=content,
+            entry_type=EntryType.READING,
+            tags=["matrix"],
+            entry_metadata=payload,
+        ))
+    await db.commit()
+    return payload
