@@ -20,7 +20,7 @@ export default function MatrixAtlas() {
       .then(([saved, user]) => {
         if (!active) return;
         setMatrix(saved);
-        setDate(saved?.birth_date || user.birth_date?.split('T')[0] || '');
+        setDate(saved?.birth_date || user.birthDate?.split('T')[0] || '');
       })
       .catch(() => { if (active) setError('Войдите в аккаунт, чтобы открыть и сохранить свою матрицу.'); })
       .finally(() => { if (active) setBusy(false); });
