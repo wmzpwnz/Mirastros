@@ -1,43 +1,8 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
-<title>Матрица судьбы · Mirastros</title>
-<style>
-*{box-sizing:border-box}body{margin:0;color:#edeafa;background:radial-gradient(ellipse at 33% 45%,#2e2348,transparent 58%),#0d0c1d;font:16px/1.5 system-ui,sans-serif;min-height:100svh}main{max-width:1150px;margin:auto;padding:22px clamp(16px,4vw,54px) 44px}header,.row{display:flex;align-items:center;justify-content:space-between;gap:12px}header{padding-bottom:15px;border-bottom:1px solid #ada1ca47;color:#c2bad8;font-size:13px}header img{width:128px;display:block}h1,h2,.number{font:normal clamp(36px,5vw,70px)/1.1 Georgia,serif;margin:.45em 0;color:#f1eafa}h2{font-size:32px}section{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);align-items:center;gap:clamp(20px,5vw,75px)}.chart{position:relative;aspect-ratio:1;isolation:isolate;border:1px solid #a79abd;border-radius:4px;overflow:hidden;background:#1b1632 url('/images/portals/destiny-matrix.webp') center/cover}.chart video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:-2}.chart.open video{opacity:.34}.chart svg{position:absolute;inset:0;width:100%;height:100%;stroke:#d7c9ff;fill:none;stroke-width:.5;pointer-events:none}.node{position:absolute;transform:translate(-50%,-50%);height:clamp(44px,5vw,58px);width:clamp(44px,5vw,58px);border-radius:50%;background:#241c40;color:#ede6ff;border:1px solid #baaad9;font:22px Georgia,serif;box-shadow:0 0 0 3px #221b3ecc}.node[aria-pressed=true]{color:#211932;background:#e6dcfa;box-shadow:0 0 19px #e9ddff}.chart.open svg{animation:reveal .85s ease-out}@keyframes reveal{from{opacity:0}to{opacity:1}}.label{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#c4b4da}.number{font-size:56px}.action{border:1px solid #c2afd6;border-radius:30px;background:#382950;color:#f5ecff;padding:12px 24px;font:inherit}button,summary{cursor:pointer}button:focus-visible,summary:focus-visible{outline:3px solid white;outline-offset:4px}aside{border-block:1px solid #b9a6d144;padding:24px 0}p{color:#d1c8dc}summary{color:#e8dcfa}small{color:#b9afc9;display:block;margin-top:22px}footer{margin-top:24px;color:#ada4bf;font-size:13px}@media(max-width:680px){section{grid-template-columns:1fr;gap:16px}.chart{width:min(100%,430px);justify-self:center}aside{padding:16px 0}.number{font-size:38px}h1{font-size:36px}}@media(prefers-reduced-motion:reduce){.chart video{display:none}.chart.open svg{animation:none}}
-</style></head><body><main>
-<header><img src="/logo.png" alt="Mirastros"><span>Тестовая страница</span></header>
-<h1>Матрица судьбы</h1>
-<section><div class="chart" id="chart"><video muted autoplay loop playsinline poster="/images/portals/destiny-matrix.webp" aria-hidden="true" src="/matrix_destiny.mp4"></video></div>
-<aside><div class="row"><span class="label">Дата рождения</span><time datetime="1990-05-15">15.05.1990</time></div>
-<div id="intro"><h2>Ваша матрица</h2><p>Откройте карту, чтобы увидеть центральный аркан и исследовать пять связанных позиций.</p><button class="action" id="open">Открыть матрицу</button></div>
-<div id="reading" hidden><div aria-live="polite"><p class="label" id="position"></p><h2 id="arcana"></h2><p id="meaning"></p></div><details id="details"><summary>Как рассчитано</summary><p id="formula"></p></details><small id="progress"></small></div>
-</aside></section><footer>Демонстрационный пример по формулам Mirastros. Значения арканов даны как символические трактовки.</footer>
-</main><script>
-const nodes=[
- ['Центр',12,'Повешенный','Пауза и смена точки зрения. Как выглядит знакомая ситуация, если посмотреть на неё с другой стороны?','Сумма четырёх базовых значений: 20 + 16 + 6 + 15 = 57 → 5 + 7 = 12.',50,50],
- ['Душа',9,'Отшельник','Время прислушаться к собственному суждению. На какой вопрос вам хочется ответить в тишине?','Судьба + характер: 20 + 16 = 36 → 3 + 6 = 9.',50,16],
- ['Реализация',21,'Мир','Завершение и целостность. Какое дело уже можно собрать воедино и показать другим?','Предназначение + четвёртое базовое значение: 6 + 15 = 21.',82,39],
- ['Талант',22,'Шут','Любопытство и свобода первого шага. Что вы попробовали бы, если бы разрешили себе быть новичком?','Характер + предназначение: 16 + 6 = 22.',70,78],
- ['Кармическая позиция',8,'Сила','Мягкая настойчивость. Где терпение поможет вам больше, чем напор?','Судьба + четвёртое базовое значение: 20 + 15 = 35 → 3 + 5 = 8.',30,78],
- ['Тень',7,'Колесница','Направление и контроль. Где стремление ускориться мешает заметить развилку?','Центр + талант: 12 + 22 = 34 → 3 + 4 = 7.',18,39]
-];
-const get=id=>document.getElementById(id),seen=new Set(),buttons=[];
-function select(i){
- const [title,n,name,text,calc]=nodes[i];seen.add(i);
- buttons.forEach((b,k)=>b.setAttribute('aria-pressed',String(i===k)));
- get('position').textContent=title;get('arcana').textContent=n+' · '+name;get('meaning').textContent=text;
- get('formula').textContent=calc;get('details').open=false;get('progress').textContent='Изучено позиций: '+seen.size+' из '+nodes.length;
- try{localStorage.setItem('mirastros.matrix.demo.v1',JSON.stringify({seen:[...seen],last:i}))}catch{}
-}
-function openMap(i){
- const chart=get('chart');chart.classList.add('open');get('intro').hidden=true;get('reading').hidden=false;
- const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('aria-hidden','true');
- const points=nodes.slice(1).map(n=>n.slice(5).join(','));
- svg.innerHTML='<circle cx="50" cy="50" r="34"/><polygon points="'+points.join(' ')+'"/>'+points.map(p=>'<path d="M50,50 L'+p+'"/>').join('');chart.append(svg);
- nodes.forEach(([label,n,,, ,x,y],k)=>{const b=document.createElement('button');b.className='node';b.style.left=x+'%';b.style.top=y+'%';b.textContent=n;b.setAttribute('aria-label',label+', аркан '+n);b.onclick=()=>select(k);chart.append(b);buttons.push(b)});select(i);
-}
-get('open').onclick=()=>{openMap(0);buttons[0].focus()};
-try{const saved=JSON.parse(localStorage.getItem('mirastros.matrix.demo.v1'));if(saved&&nodes[saved.last]&&Array.isArray(saved.seen)){saved.seen.filter(i=>Number.isInteger(i)&&nodes[i]).forEach(i=>seen.add(i));openMap(saved.last)}}catch{}
-if(matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelector('video').pause();
-</script></body></html>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Личная матрица · Mirastros</title><link rel="stylesheet" href="/matrix-atlas.css"></head>
+<body><main>
+<header><a href="/dashboard"><img src="/logo.png" alt="Mirastros"></a><a href="/dashboard">В кабинет ↗</a></header>
+<section class="mast"><div><p class="label">Атлас 22 арканов</p><h1>Матрица судьбы</h1></div><form id="form"><label for="date">Дата рождения</label><div><input id="date" type="date" required><button>Построить</button></div></form></section>
+<div class="spread"><section class="plate"><div class="caption"><span>Личная карта</span><time id="stamp"></time></div><div id="wheel" aria-label="Позиции матрицы"></div><div class="legend">◇ Основания　·　✧ Личные позиции　·　⊙ Оси</div></section>
+<aside><div class="caption">Чтение карты</div><div id="reading" aria-live="polite"><p class="label" id="group"></p><h2 id="position"></h2><div class="arc"><span id="roman"></span><strong id="name"></strong></div><p id="interpretation"></p></div><details open><summary>Как получилось число</summary><p id="source"></p><output id="formula"></output></details><label for="list">Перейти к позиции</label><select id="list"></select></aside></div>
+<section class="axes"><h2>Линии матрицы</h2><div id="lines"></div></section>
+<details class="method"><summary>О методике и сохранении</summary><p>Модель Mirastros v2. Основания вычисляются из дня, месяца и полного года рождения. Если сумма больше 22, складываются её цифры до значения от 1 до 22. В этой системе VIII — Сила, XI — Справедливость. Здесь представлены символические трактовки Mirastros. Соответствие авторской методике Ладини не подтверждено.</p><p>При первом входе показан пример за 15 мая 1990 года. Введённая дата и выбранная позиция сохраняются в этом браузере. При отключённом хранилище карта работает до закрытия страницы.</p></details></main><script type="module" src="/matrix-atlas.js"></script></body></html>
