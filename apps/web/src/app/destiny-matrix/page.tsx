@@ -1,7 +1,5 @@
-'use client';
-
-import DestinyMatrixSection from '../../components/sections/DestinyMatrixSection';
+import MatrixAtlas from '../../components/destiny/MatrixAtlas';
 
 export default function DestinyMatrixPage() {
-  return <DestinyMatrixSection />;
+  return <MatrixAtlas />;
 }
