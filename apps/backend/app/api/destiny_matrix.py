@@ -165,6 +165,7 @@ async def save_atlas(
     current_user: User = Depends(get_current_user),
 ):
     import json
+    from datetime import datetime
     from sqlalchemy import select
     from app.models.journal_entry import JournalEntry, EntryType
     from app.services.matrix_atlas import calculate_atlas
@@ -185,6 +186,7 @@ async def save_atlas(
     if entry:
         entry.entry_metadata = payload
         entry.content = content
+        entry.updated_at = datetime.utcnow()
     else:
         db.add(JournalEntry(
             user_id=current_user.id,
@@ -193,6 +195,8 @@ async def save_atlas(
             entry_type=EntryType.READING,
             tags=["matrix"],
             entry_metadata=payload,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         ))
     await db.commit()
     return payload
