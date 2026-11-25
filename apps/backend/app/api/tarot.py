@@ -195,3 +195,7 @@ async def get_reading_history(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve reading history: {str(e)}"
         )
+
+# Thematic base sessions share saved TarotReading records and the paid explanation layer.
+from app.api.tarot_rituals import router as rituals_router
+router.include_router(rituals_router)
