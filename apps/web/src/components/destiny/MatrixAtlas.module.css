@@ -48,3 +48,24 @@
  .dock { position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:space-around; background:#151020f5; padding:15px 8px calc(15px + env(safe-area-inset-bottom)); border-top:1px solid #a796bf88; z-index:20; font-size:13px; }
 }
 @media(prefers-reduced-motion:no-preference) { .node { transition:background .3s,box-shadow .3s; } }
+/* The matrix's silver/lavender identity follows its animated portal artwork. */
+.root { background:radial-gradient(ellipse at 15% 20%,#3a275b88,transparent 55%),radial-gradient(ellipse at 90% 70%,#29214977,transparent 50%),#090a19; }
+.root * { box-sizing:border-box; }
+.root p { line-height:1.7; }
+.root h1 { font-size:clamp(34px,4.5vw,56px); }
+.intro { display:flex; align-items:center; justify-content:space-between; gap:28px; margin:0 0 28px; padding:22px 0; border-block:1px solid #baaad633; }
+.intro>div { max-width:700px; }.intro p { color:#c4b7d5; font-size:14px; margin-bottom:0; }.intro h2 { font-size:34px; }.intro>button { flex-shrink:0; background:linear-gradient(110deg,#39274e,#624675,#332244); padding:16px 20px; border-color:#cfb8e5; }
+.spread { align-items:start; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:28px; }
+.plate { position:sticky; top:24px; padding:30px 25px; border-radius:140px 140px 8px 8px; padding-top:48px; background:linear-gradient(#171125b5,#100d20ed),url('/images/portals/destiny-matrix.webp') center/cover; box-shadow:inset 0 0 0 6px #151023,inset 0 0 0 7px #ad96c550,0 15px 80px #a28bd315; }
+.plate>.caption { justify-content:center; flex-wrap:wrap; margin-bottom:25px; }
+.wheel { margin:0 10px 30px; filter:drop-shadow(0 0 9px #bd9cfb35); }
+.wheel svg { opacity:.7; }.root .node { width:11%; min-width:36px; min-height:36px; border:1px solid #d0bce6; box-shadow:0 0 0 4px #1c142d,0 0 0 5px #a58bb74d,0 0 20px #9a72d244; }
+.node small { position:absolute; font:9px var(--font-inter),sans-serif; color:#e4d6f3; white-space:nowrap; top:calc(100% + 7px); left:50%; transform:translateX(-50%); background:#171024dd; padding:2px 4px; border-radius:3px; pointer-events:none; }
+.root .node[aria-pressed=true] { background:radial-gradient(#fcf1ff,#c8a8ed); color:#261438; box-shadow:0 0 0 5px #8d68b333,0 0 35px #d4b6ff88; }
+.reading { padding:30px; border-radius:3px; box-shadow:inset 0 0 0 5px #171322,inset 0 0 0 6px #b9a1d128; scroll-margin-top:20px; }
+.reading .caption { align-items:start; flex-wrap:wrap; font-size:10px; }.reading .caption span { letter-spacing:0; }
+.reading h2 { font-size:34px; line-height:1.15; }.reading h3 { font-size:13px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:#d9c5ef; margin:24px 0 8px; }.reading p { font-size:14px; color:#d0c4df; }.energy { display:flex; align-items:center; gap:20px; font-size:64px; margin:22px 0 10px; }.energy span { margin:0; font:26px var(--font-display),Georgia,serif; }.reading blockquote { margin:24px 0; border-left:2px solid #c6a7e2; padding:8px 0 8px 18px; color:#f0e2ff; font:italic 23px/1.4 var(--font-display),Georgia,serif; }.practice { background:#b597dc0c; border:1px solid #b597dc44; padding:18px; border-radius:5px; }.practice span { font-size:10px; letter-spacing:.12em; color:#c3aedb; }.practice p { margin-bottom:0; }.steps { display:flex; justify-content:space-between; gap:12px; margin-top:25px; }.steps button { font-size:13px; }.reading .hint { font-size:11px; }.axes { margin-top:40px; }.axes button { background:linear-gradient(135deg,#30213d,#141020); min-height:105px; padding:20px; border-radius:3px; }.axes button:hover { border-color:#e3c6ff; }.axes span { line-height:1.4; }.method { line-height:1.8; color:#bfb2cf; }
+@media(min-width:701px) and (prefers-reduced-motion:no-preference) { .wheel svg { animation:matrixGlow 5s ease-in-out infinite alternate; } @keyframes matrixGlow { to { opacity:1; filter:drop-shadow(0 0 4px #d6baff); } } }
+@media(max-width:700px) { .intro { display:block; }.intro>button { width:100%; margin-top:20px; }.spread { grid-template-columns:1fr; }.plate { position:relative; top:auto; border-radius:90px 90px 6px 6px; padding:36px 18px 18px; }.reading { padding:25px; }.reading h2 { font-size:30px; }.node small { font-size:8px; }.wheel { margin:0 8px 30px; }.root .node { min-width:36px; min-height:36px; }.axes>div { grid-template-columns:1fr 1fr; }.heading form>div { flex-wrap:wrap; }.heading input { width:140px; }.intro h2 { font-size:30px; } }
+.plate { background:radial-gradient(ellipse at 50% 45%,#51366a55,transparent 65%),linear-gradient(#171125ee,#100d20f5),url('/images/portals/destiny-matrix.webp') center/cover; }
+.dock a { display:block; color:#ede0ff!important; font-size:13px!important; opacity:1!important; text-decoration:none; }
