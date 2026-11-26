@@ -379,7 +379,10 @@ export default function TarotRitual() {
                         key={card.id}
                         role="tab"
                         aria-selected={activeCard === i}
-                        onClick={() => setActiveCard(i)}
+                        onClick={() => {
+                          setActiveCard(i);
+                          setMeaningOpen(true);
+                        }}
                       >
                         {i + 1} · {card.position}
                       </button>
@@ -438,81 +441,117 @@ export default function TarotRitual() {
             </section>
           ) : spread ? (
             <section className={styles.session}>
-              <button
-                className={styles.backButton}
-                disabled={busy}
-                onClick={reset}
-              >
-                ← Все ситуации
-              </button>
-              <p className={styles.eyebrow}>
-                ШАГ {picking ? 2 : 1} ИЗ 2 · {spread.positions.length}{' '}
-                {cardCount(spread.positions.length).toUpperCase()}
-              </p>
-              <h2>{spread.title}</h2>
-              <p className={styles.sessionDescription}>{spread.description}</p>
+              <div className={styles.sessionTop}>
+                <button
+                  className={styles.backButton}
+                  disabled={busy}
+                  onClick={reset}
+                >
+                  ← Все темы
+                </button>
+                <div className={styles.ritualProgress} aria-label={picking ? 'Шаг 2 из 2: выбор карт' : 'Шаг 1 из 2: намерение'}>
+                  <span className={!picking ? styles.progressActive : styles.progressDone}>01 <small>Намерение</small></span>
+                  <i aria-hidden="true" />
+                  <span className={picking ? styles.progressActive : ''}>02 <small>Карты</small></span>
+                </div>
+              </div>
+              <div className={styles.sessionTitle}>
+                <p className={styles.eyebrow}>
+                  {picking ? 'СОСРЕДОТОЧЬСЯ НА ВОПРОСЕ' : `${spread.positions.length} ${cardCount(spread.positions.length).toUpperCase()} · ЛИЧНЫЙ РАСКЛАД`}
+                </p>
+                <h2>{spread.title}</h2>
+                <p className={styles.sessionDescription}>{spread.description}</p>
+              </div>
               {!picking ? (
                 <>
-                  <ol className={styles.positions}>
-                    {spread.positions.map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ol>
-                  <label htmlFor="tarot-question">
-                    Твой вопрос или намерение · необязательно
-                  </label>
-                  <textarea
-                    id="tarot-question"
-                    maxLength={1000}
-                    rows={2}
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Что я хочу понять в этой ситуации?"
-                  />
-                  <label className={styles.check}>
-                    <input
-                      type="checkbox"
-                      checked={reversed}
-                      onChange={(e) => setReversed(e.target.checked)}
-                    />{' '}
-                    Использовать перевёрнутые карты
-                  </label>
-                  <p className={styles.note}>
-                    Перевёрнутая карта — другой угол взгляда.
-                  </p>
-                  {spread.category === 'team' && (
-                    <p className={styles.note}>
-                      Для добровольной рефлексии о своих действиях. Не
-                      используйте карты для оценки кандидатов, найма или
-                      увольнения.
-                    </p>
-                  )}
-                  <button
-                    className={styles.primary}
-                    onClick={() => setPicking(true)}
-                  >
-                    Перейти к колоде ✧
-                  </button>
+                  <div className={styles.setupGrid}>
+                    <div className={styles.positionsPanel}>
+                      <p className={styles.panelEyebrow}>ПУТЬ РАСКЛАДА</p>
+                      <ol className={styles.positions}>
+                        {spread.positions.map((p, i) => (
+                          <li key={p}><span>{String(i + 1).padStart(2, '0')}</span>{p}</li>
+                        ))}
+                      </ol>
+                      <p className={styles.positionsHint}>Каждая карта откроет отдельную грань вопроса.</p>
+                    </div>
+                    <div className={styles.intentPanel}>
+                      <label htmlFor="tarot-question">
+                        Твоё намерение <small>необязательно</small>
+                      </label>
+                      <textarea
+                        id="tarot-question"
+                        maxLength={1000}
+                        rows={2}
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder="Что хочется увидеть яснее?"
+                      />
+                      <label className={styles.check}>
+                        <input
+                          type="checkbox"
+                          checked={reversed}
+                          onChange={(e) => setReversed(e.target.checked)}
+                        />{' '}
+                        Учитывать перевёрнутые карты
+                      </label>
+                      <p className={styles.note}>
+                        Перевёрнутое положение покажет тему с другого ракурса.
+                      </p>
+                      {spread.category === 'team' && (
+                        <p className={styles.teamNote}>
+                          Используй расклад для личной рефлексии, не для оценки кандидатов, найма или увольнения.
+                        </p>
+                      )}
+                      <button
+                        className={styles.primary}
+                        onClick={() => setPicking(true)}
+                      >
+                        Перейти к выбору карт <span aria-hidden="true">✧</span>
+                      </button>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
                   <p className={styles.drawProgress} aria-live="polite">
-                    Выбрано {choices.length} из {spread.positions.length} ·{' '}
-                    {choices.length < spread.positions.length
-                      ? `следующая: ${spread.positions[choices.length]}`
-                      : 'выбор готов'}
+                    <span>
+                      Выбрано {choices.length} из {spread.positions.length}
+                      {choices.length < spread.positions.length
+                        ? ` · следующая: ${spread.positions[choices.length]}`
+                        : ' · выбор готов'}
+                    </span>
+                    <i className={styles.drawTrack} aria-hidden="true">
+                      <b style={{ width: `${(choices.length / spread.positions.length) * 100}%` }} />
+                    </i>
                   </p>
                   <div className={styles.drawStage}>
-                    <div
-                      className={`${styles.deckStack} ${
-                        drawPulse ? styles.drawPulse : ''
-                      }`}
-                      aria-hidden="true"
-                    >
-                      <CardArt back={catalog.deck.back} />
+                    <div className={styles.drawOffer}>
+                      <div
+                        className={`${styles.deckStack} ${
+                          drawPulse ? styles.drawPulse : ''
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <CardArt back={catalog.deck.back} />
+                      </div>
+                      <div className={styles.drawInvitation}>
+                        <p className={styles.panelEyebrow}>СЛЕДУЮЩИЙ СИМВОЛ</p>
+                        <h3>{choices.length < spread.positions.length ? spread.positions[choices.length] : 'Карты выбраны'}</h3>
+                        <p>Сохрани вопрос в мыслях и позволь карте лечь на своё место.</p>
+                      </div>
+                      {choices.length < spread.positions.length && (
+                        <button
+                          className={styles.drawButton}
+                          disabled={busy}
+                          onClick={drawOne}
+                        >
+                          Вытянуть карту <span aria-hidden="true">✧</span>
+                        </button>
+                      )}
                     </div>
                     <div
                       className={styles.pickedCards}
+                      role="list"
                       aria-label="Выбранные карты"
                     >
                       {Array.from(
@@ -520,9 +559,11 @@ export default function TarotRitual() {
                         (_, i) => (
                           <div
                             key={i}
+                            role="listitem"
                             className={`${styles.pickedCard} ${
                               choices[i] !== undefined ? styles.picked : ''
                             }`}
+                            aria-label={`${spread.positions[i]}: ${choices[i] !== undefined ? 'карта выбрана' : 'ожидает карты'}`}
                           >
                             <span>
                               {choices[i] !== undefined ? i + 1 : '✧'}
@@ -532,15 +573,6 @@ export default function TarotRitual() {
                         )
                       )}
                     </div>
-                    {choices.length < spread.positions.length && (
-                      <button
-                        className={styles.drawButton}
-                        disabled={busy}
-                        onClick={drawOne}
-                      >
-                        Вытянуть карту ✧
-                      </button>
-                    )}
                     {choices.length > 0 && (
                       <button
                         className={styles.undoButton}
@@ -558,7 +590,7 @@ export default function TarotRitual() {
                     }
                     onClick={draw}
                   >
-                    {busy ? 'Сохраняем твой расклад…' : 'Открыть мой расклад'}
+                    {busy ? 'Сохраняем расклад…' : 'Сохранить и открыть расклад'}
                   </button>
                   <button
                     className={styles.backButton}
