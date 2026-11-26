@@ -14,7 +14,7 @@ export default function ServicesLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const accent = journeyModules.find(item => item.href === pathname)?.accent;
+  const accent = journeyModules.find((item) => item.href === pathname)?.accent;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +60,17 @@ export default function ServicesLayout({
   }
 
   return (
-    <div className="mira-module-page min-h-screen py-12 px-4" style={{ '--mira-module-accent': accent || '#9d78d4' } as React.CSSProperties}>
+    <div
+      className={`mira-module-page min-h-screen ${
+        pathname === '/services/tarot' ? '' : 'py-12 px-4'
+      }`}
+      style={
+        {
+          '--mira-module-accent': accent || '#9d78d4',
+          padding: pathname === '/services/tarot' ? 0 : undefined,
+        } as React.CSSProperties
+      }
+    >
       {children}
     </div>
   );
