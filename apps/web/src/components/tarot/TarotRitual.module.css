@@ -931,10 +931,10 @@
     height: 50px;
     min-height: 50px;
     padding: 2px 4px;
-    left: 14px;
-    right: 14px;
+    left: 0;
+    right: 0;
     bottom: 4px;
-    width: auto;
+    width: min(520px, calc(100vw - 28px));
     max-width: 520px;
     margin-inline: auto;
     transform: none;
@@ -944,4 +944,135 @@
   .mobileDock small { font-size: 7px; }
   .mobileDock .dockHome { width: 42px; height: 42px; min-height: 42px; margin-top: -9px; }
   .mobileDock .dockHome > span { font-size: 19px; }
+}
+
+/* The Tarot start screen is a single app-like viewport: choose a life theme,
+   then browse compact spreads in a horizontal rail. */
+.rootCatalog {
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px clamp(20px, 4vw, 54px) 14px;
+}
+.rootCatalog .header { width: 100%; padding-bottom: 7px; flex: 0 0 auto; }
+.rootCatalog .header img { width: 104px; }
+.rootCatalog .hero { width: 100%; max-width: 1440px; margin: 0 auto; padding: 9px 82px 9px 2px; flex: 0 0 auto; text-align: left; }
+.rootCatalog .heroArtifact { display: block; position: absolute; right: 8px; top: 50%; width: 68px; aspect-ratio: 1; overflow: hidden; transform: translateY(-50%); border: 1px solid #d4aa755e; border-radius: 50%; background: radial-gradient(circle,#49253c,#0d0b19 72%); box-shadow: 0 0 0 4px #1a1427,0 0 22px #b15d7440; }
+.rootCatalog .heroArtifact img { width: 100%; height: 100%; object-fit: cover; }
+.rootCatalog .hero .eyebrow { margin: 0; font-size: 9px; }
+.rootCatalog .hero h1 { margin: 2px 0; font-size: clamp(25px,3vw,38px); }
+.rootCatalog .hero p:not(.eyebrow) { margin: 2px 0; font-size: 12px; line-height: 1.35; }
+.rootCatalog .hero > span { font-size: 9px; }
+.rootCatalog .sectionHead { width: 100%; max-width: 1440px; margin: 0 auto 8px; flex: 0 0 auto; gap: 10px; }
+.rootCatalog .sectionHead .eyebrow { margin: 0; font-size: 8px; }
+.rootCatalog .sectionHead h2 { margin: 2px 0; font-size: clamp(18px,2vw,24px); }
+.rootCatalog .sectionHead > button { min-height: 38px; padding: 6px 12px; font-size: 11px; }
+.situationGrid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: minmax(68px,1fr); gap: 8px; width: 100%; max-width: 1440px; margin: 0 auto; flex: 0 1 auto; min-height: 0; }
+.situationCard { display: grid; grid-template-columns: 30px minmax(0,1fr); grid-template-rows: auto auto; align-content: center; align-items: center; column-gap: 9px; row-gap: 2px; min-width: 0; min-height: 0; padding: 8px 12px !important; text-align: left; border: 1px solid #c39b7055 !important; border-radius: 3px 12px 3px 12px !important; background: radial-gradient(ellipse at 0 0,#81415a44,transparent 68%),linear-gradient(145deg,#251628,#100d19) !important; box-shadow: inset 0 0 0 3px #140e19,inset 0 0 0 4px #c19a6d1c,0 6px 16px #0004; transition: border-color .2s ease,transform .2s ease,box-shadow .2s ease; }
+.situationCard[aria-pressed='true'] { border-color: #e1bd7c !important; background: radial-gradient(ellipse at 0 0,#a75c744f,transparent 70%),linear-gradient(145deg,#382039,#17101f) !important; box-shadow: inset 0 0 0 3px #190f1d,0 0 18px #d59a5b22; }
+.situationCard:hover { transform: translateY(-2px); }
+.situationGlyph { grid-row: 1 / span 2; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #d8b77866; border-radius: 50%; color: #f0d19a; font: 16px Georgia,serif; background: radial-gradient(circle,#78475b88,#1a1222 72%); }
+.situationCard strong { overflow: hidden; color: #f0d5af; font: 500 clamp(11px,1.15vw,15px)/1.15 var(--font-display),Georgia,serif; text-overflow: ellipsis; white-space: nowrap; }
+.situationCard small { display: -webkit-box; overflow: hidden; color: #bcaebe; font-size: clamp(8px,.8vw,10px); line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.spreadSection { display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; max-width: 1440px; min-height: 0; margin: 8px auto 0; }
+.spreadHead { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; }
+.spreadHead h2 { margin: 0; color: #f0d5af; font: 500 17px/1.2 var(--font-display),Georgia,serif; }
+.spreadHead > span { margin-left: auto; color: #aa9aab; font-size: 9px; }
+.spreadHead button { min-height: 30px; padding: 4px 8px; border: 1px solid #a77b6144; border-radius: 3px; background: transparent; color: #d9b778; font-size: 10px; }
+.rootCatalog .catalog { display: flex; flex: 1 1 auto; align-items: stretch; width: 100%; min-height: 0; max-width: none; gap: 10px; margin: 5px 0 0; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: #a9826644 transparent; }
+.rootCatalog .catalog > button { display: flex; flex: 0 0 clamp(168px,18vw,210px); flex-direction: column; min-width: 0; min-height: 0; height: auto; max-height: 122px; padding: 9px 11px; scroll-snap-align: start; }
+.rootCatalog .catalog .sigil { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #d2ae7144; border-radius: 50%; font-size: 15px; }
+.rootCatalog .catalog small { margin-top: 4px; font-size: 9px; }
+.rootCatalog .catalog h3 { margin: 4px 0 3px; font-size: clamp(13px,1.2vw,16px); line-height: 1.15; }
+.rootCatalog .catalog p { display: -webkit-box; flex: 1 1 auto; overflow: hidden; margin: 0; font-size: 10px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.rootCatalog .catalog .enter { margin-top: 4px; padding: 0; font-size: 10px; }
+.rootCatalog .history { display: none; }
+.rootCatalog:not(.rootLibraryOpen) .library { display: none; }
+.rootLibraryOpen { height: auto; min-height: 100svh; overflow: auto; }
+.rootLibraryOpen .hero,.rootLibraryOpen .sectionHead,.rootLibraryOpen .situationGrid,.rootLibraryOpen .spreadSection { display: none; }
+.rootLibraryOpen .library { display: block; width: 100%; max-width: 900px; margin: 24px auto; }
+.rootLibraryOpen .library > button { min-height: 42px; }
+
+@media (max-width: 850px) {
+  .rootCatalog { padding-inline: 18px; }
+  .situationGrid { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: minmax(62px,1fr); gap: 7px; }
+  .situationCard { grid-template-columns: 25px minmax(0,1fr); column-gap: 6px; padding-inline: 8px !important; }
+  .situationGlyph { width: 24px; height: 24px; font-size: 14px; }
+  .situationCard small { font-size: 8px; }
+  .rootCatalog .catalog > button { flex-basis: clamp(170px,28vw,230px); }
+}
+
+@media (max-width: 600px) {
+  .rootCatalog { padding: max(7px,env(safe-area-inset-top)) 12px calc(76px + env(safe-area-inset-bottom)); }
+  .rootCatalog .header { padding-bottom: 5px; }
+  .rootCatalog .header img { width: 92px; }
+  .rootCatalog .header > a:last-child { font-size: 11px; }
+  .rootCatalog .hero { padding: 6px 66px 7px 1px; }
+  .rootCatalog .hero .eyebrow,.rootCatalog .hero > span { display: none; }
+  .rootCatalog .hero h1 { margin: 0; font-size: 25px; }
+  .rootCatalog .hero p:not(.eyebrow) { margin: 2px 0 0; font-size: 10px; }
+  .rootCatalog .heroArtifact { right: 1px; width: 54px; }
+  .rootCatalog .sectionHead { margin-bottom: 6px; }
+  .rootCatalog .sectionHead .eyebrow { display: none; }
+  .rootCatalog .sectionHead h2 { font-size: 18px; }
+  .rootCatalog .sectionHead > button { min-height: 34px; padding: 5px 9px; font-size: 10px; }
+  .situationGrid { grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-rows: clamp(54px,8svh,68px); gap: 6px; }
+  .situationCard { grid-template-columns: 25px minmax(0,1fr); padding: 6px 9px !important; border-radius: 3px 10px !important; }
+  .situationGlyph { width: 23px; height: 23px; }
+  .situationCard strong { font-size: clamp(11px,3.2vw,13px); }
+  .situationCard small { font-size: 8px; }
+  .spreadSection { margin-top: 6px; }
+  .spreadHead { min-height: 24px; }
+  .spreadHead h2 { font-size: 15px; }
+  .spreadHead > span { font-size: 8px; }
+  .spreadHead button { min-height: 28px; font-size: 9px; }
+  .rootCatalog .catalog { gap: 8px; margin-top: 3px; padding-bottom: 5px; }
+  .rootCatalog .catalog > button { flex-basis: min(42vw,176px); max-height: 96px; padding: 7px 9px; }
+  .rootCatalog .catalog .sigil { width: 21px; height: 21px; font-size: 13px; }
+  .rootCatalog .catalog small { margin-top: 3px; font-size: 8px; }
+  .rootCatalog .catalog h3 { margin: 3px 0; font-size: 13px; }
+  .rootCatalog .catalog p { display: none; }
+  .rootCatalog .catalog .enter { font-size: 9px; }
+  .rootLibraryOpen { padding-bottom: 20px; }
+  .rootLibraryOpen .header { position: sticky; top: 0; z-index: 5; background: #0b0913; }
+}
+
+@media (max-width: 360px) {
+  .rootCatalog { padding-inline: 9px; }
+  .rootCatalog .hero { padding-right: 58px; }
+  .situationGrid { grid-auto-rows: clamp(49px,7.3svh,58px); }
+  .situationCard { grid-template-columns: 22px minmax(0,1fr); column-gap: 5px; padding-inline: 6px !important; }
+  .situationGlyph { width: 21px; height: 21px; font-size: 12px; }
+  .situationCard small { font-size: 7px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .rootCatalog { padding: 4px 14px 58px; }
+  .rootCatalog .header { padding-bottom: 3px; }
+  .rootCatalog .hero { display: none; }
+  .rootCatalog .sectionHead { margin-bottom: 4px; }
+  .rootCatalog .sectionHead h2 { font-size: 17px; }
+  .situationGrid { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: clamp(42px,13svh,56px); gap: 6px; }
+  .situationCard small { display: none; }
+  .situationCard { grid-template-rows: auto; }
+  .situationGlyph { grid-row: 1; }
+  .spreadSection { margin-top: 4px; }
+  .spreadHead { min-height: 22px; }
+  .spreadHead h2 { font-size: 14px; }
+  .spreadHead > span { display: none; }
+  .rootCatalog .catalog > button { flex-basis: clamp(140px,24vw,200px); max-height: 88px; padding: 5px 8px; }
+  .rootCatalog .catalog p { display: none; }
+  .rootCatalog .catalog .sigil { width: 18px; height: 18px; font-size: 11px; }
+  .rootCatalog .catalog small { font-size: 7px; }
+  .rootCatalog .catalog h3 { font-size: 11px; }
+  .rootCatalog .catalog p { font-size: 8px; }
+  .rootCatalog .catalog .enter { font-size: 8px; }
+}
+
+@media (max-height: 720px) and (min-width: 601px) {
+  .rootCatalog { padding-block: 5px 10px; }
+  .rootCatalog .hero { padding-block: 5px; }
+  .situationGrid { grid-auto-rows: minmax(54px,1fr); }
 }

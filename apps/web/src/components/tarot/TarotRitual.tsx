@@ -46,6 +46,16 @@ const cardCount = (n: number) => (n === 1 ? 'карта' : n < 5 ? 'карты' 
 const categoryGlyph: Record<string, string> = {
   day: '✦', love: '♡', work: '✧', projects: '◇', choice: '⇄', self: '☾', team: '⊙',
 };
+const situationDescription: Record<string, string> = {
+  all: 'Подобрать расклад по своему вопросу',
+  day: 'Настроение и ориентир на сегодня',
+  love: 'Чувства, близость и отношения',
+  work: 'Призвание, задачи и развитие',
+  projects: 'Деньги, ресурсы и новые идеи',
+  choice: 'Варианты и внутренний выбор',
+  self: 'Опоры, привычки и самопознание',
+  team: 'Команда, диалог и лидерство',
+};
 
 function CardArt({ card, back }: { card?: Card | Drawn; back: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -218,7 +228,7 @@ export default function TarotRitual() {
   }
   const complete = reading && revealed.length === reading.cards.length;
   return (
-    <main className={`${styles.root} ${reading ? styles.rootReading : ''} ${spread ? styles.rootSession : ''}`}>
+    <main className={`${styles.root} ${reading ? styles.rootReading : ''} ${spread ? styles.rootSession : ''} ${catalog && !reading && !spread ? styles.rootCatalog : ''} ${library ? styles.rootLibraryOpen : ''}`}>
       <header className={styles.header}>
         <Link href="/dashboard">
           <img src="/logo.png" width="145" alt="Mirastros" />
@@ -555,7 +565,10 @@ export default function TarotRitual() {
           ) : (
             <>
               <div className={styles.sectionHead}>
-                <h2>С чем ты пришёл сегодня?</h2>
+                <div>
+                  <p className={styles.eyebrow}>ТВОЯ ТОЧКА ВНИМАНИЯ</p>
+                  <h2>Что тебя волнует?</h2>
+                </div>
                 <button
                   onClick={() => {
                     const daily = catalog.spreads.find((s) => s.id === 'daily');
@@ -566,50 +579,51 @@ export default function TarotRitual() {
                 </button>
               </div>
               <div
-                className={styles.categories}
+                className={styles.situationGrid}
                 role="group"
                 aria-label="Темы раскладов"
               >
-                <button
-                  aria-pressed={category === 'all'}
-                  onClick={() => setCategory('all')}
-                >
-                  Все ситуации
-                </button>
-                {catalog.categories.map((c) => (
+                {[{ id: 'all', title: 'Любая тема' }, ...catalog.categories].map((c) => (
                   <button
                     key={c.id}
+                    className={styles.situationCard}
                     aria-pressed={category === c.id}
                     onClick={() => setCategory(c.id)}
                   >
-                    <span>{categoryGlyph[c.id] || '✧'}</span>
-                    {c.title}
+                    <span className={styles.situationGlyph} aria-hidden="true">{categoryGlyph[c.id] || '✧'}</span>
+                    <strong>{c.title}</strong>
+                    <small>{situationDescription[c.id] || 'Посмотри на тему с новой стороны'}</small>
                   </button>
                 ))}
               </div>
-              <div className={styles.catalog}>
-                {catalog.spreads
-                  .filter((s) => category === 'all' || s.category === category)
-                  .map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => selectSpread(s)}
-                      aria-label={`${s.title}, ${
-                        s.positions.length
-                      } ${cardCount(s.positions.length)}`}
-                    >
-                      <span className={styles.sigil}>
-                        {categoryGlyph[s.category] || '✧'}
-                      </span>
-                      <small>
-                        {s.positions.length} {cardCount(s.positions.length)} ·{' '}
-                        {s.positions.length === 1 ? '1–2' : '3–5'} мин
-                      </small>
-                      <h3>{s.title}</h3>
-                      <p>{s.description}</p>
-                      <span className={styles.enter}>Начать сеанс →</span>
-                    </button>
-                  ))}
+              <div className={styles.spreadSection}>
+                <div className={styles.spreadHead}>
+                  <h2>Варианты расклада</h2>
+                  <span>Листай варианты →</span>
+                  <button onClick={() => setLibrary(true)}>Колода · 78 карт ↗</button>
+                </div>
+                <div className={styles.catalog} role="region" aria-label="Карусель раскладов" aria-roledescription="карусель">
+                  {catalog.spreads
+                    .filter((s) => category === 'all' || s.category === category)
+                    .map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => selectSpread(s)}
+                        aria-label={`${s.title}, ${
+                          s.positions.length
+                        } ${cardCount(s.positions.length)}`}
+                      >
+                        <span className={styles.sigil} aria-hidden="true">{categoryGlyph[s.category] || '✧'}</span>
+                        <small>
+                          {s.positions.length} {cardCount(s.positions.length)} ·{' '}
+                          {s.positions.length === 1 ? '1–2' : '3–5'} мин
+                        </small>
+                        <h3>{s.title}</h3>
+                        <p>{s.description}</p>
+                        <span className={styles.enter}>Выбрать расклад →</span>
+                      </button>
+                    ))}
+                </div>
               </div>
             </>
           )}
