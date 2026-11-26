@@ -12,12 +12,12 @@ beforeEach(() => {
   });
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
-it('waits for the short entrance and completes exactly once without fake percentages', async () => {
+it('waits only for the short entrance and completes exactly once without fake percentages', async () => {
   const done = vi.fn(); const { container } = render(<Preloader onComplete={done} />);
   expect(container.querySelector('[data-preloader-wheel]')).toHaveAttribute('src', '/images/preloader-zodiac-gold.webp');
   expect(container.querySelector('video')).toBeNull();
   expect(container.textContent).not.toMatch(/\d+%/);
-  await act(async () => { await vi.advanceTimersByTimeAsync(1599); });
+  await act(async () => { await vi.advanceTimersByTimeAsync(649); });
   expect(done).not.toHaveBeenCalled();
   await act(async () => { await vi.advanceTimersByTimeAsync(401); });
   expect(done).toHaveBeenCalledTimes(1);
@@ -26,7 +26,7 @@ it('waits for the short entrance and completes exactly once without fake percent
 });
 it('releases the entrance even if an essential image never loads', async () => {
   settleImages = false; const done = vi.fn(); render(<Preloader onComplete={done} />);
-  await act(async () => { await vi.advanceTimersByTimeAsync(6900); });
+  await act(async () => { await vi.advanceTimersByTimeAsync(3400); });
   expect(done).toHaveBeenCalledTimes(1);
 });
 it('does not complete a disposed entrance', async () => {
