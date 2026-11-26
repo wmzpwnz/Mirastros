@@ -65,7 +65,7 @@ function CardArt({ card, back }: { card?: Card | Drawn; back: string | null }) {
 }
 export default function TarotRitual() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('day');
   const [spread, setSpread] = useState<Spread | null>(null);
   const [question, setQuestion] = useState('');
   const [reversed, setReversed] = useState(false);
@@ -73,6 +73,9 @@ export default function TarotRitual() {
   const [choices, setChoices] = useState<number[]>([]);
   const [reading, setReading] = useState<Reading | null>(null);
   const [revealed, setRevealed] = useState<number[]>([]);
+  const [activeCard, setActiveCard] = useState(0);
+  const [meaningOpen, setMeaningOpen] = useState(false);
+  const [drawPulse, setDrawPulse] = useState(false);
   const [history, setHistory] = useState<Reading[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -127,11 +130,23 @@ export default function TarotRitual() {
   function open(value: Reading) {
     setReading(value);
     setRevealed(value.cards.map((_, i) => i));
+    setActiveCard(0);
+    setMeaningOpen(false);
     setPicking(false);
     setSpread(null);
     setError('');
     window.history.replaceState(null, '', '?reading=' + value.reading_id);
     window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  function drawOne() {
+    if (!spread || choices.length >= spread.positions.length) return;
+    const available =
+      catalog?.cards.map((_, i) => i).filter((i) => !choices.includes(i)) || [];
+    const index = available[Math.floor(Math.random() * available.length)];
+    if (index === undefined) return;
+    setChoices((old) => [...old, index]);
+    setDrawPulse(true);
+    window.setTimeout(() => setDrawPulse(false), 520);
   }
   function reset() {
     if (pending.current) return;
@@ -139,6 +154,8 @@ export default function TarotRitual() {
     setSpread(null);
     setPicking(false);
     setChoices([]);
+    setActiveCard(0);
+    setMeaningOpen(false);
     setError('');
     window.history.replaceState(null, '', window.location.pathname);
   }
@@ -173,6 +190,8 @@ export default function TarotRitual() {
       });
       setReading(value);
       setRevealed([]);
+      setActiveCard(0);
+      setMeaningOpen(false);
       setPicking(false);
       setHistory((old) =>
         [value, ...old.filter((r) => r.reading_id !== value.reading_id)].slice(
@@ -195,7 +214,7 @@ export default function TarotRitual() {
   }
   const complete = reading && revealed.length === reading.cards.length;
   return (
-    <main className={styles.root}>
+    <main className={`${styles.root} ${reading ? styles.rootReading : ''}`}>
       <header className={styles.header}>
         <Link href="/dashboard">
           <img src="/logo.png" width="145" alt="Mirastros" />
@@ -225,7 +244,7 @@ export default function TarotRitual() {
       {catalog && (
         <>
           {reading ? (
-            <section>
+            <section className={styles.resultScreen}>
               <div className={styles.sectionHead}>
                 <div>
                   <p className={styles.eyebrow}>ТВОЙ СОХРАНЁННЫЙ РАСКЛАД</p>
@@ -238,14 +257,17 @@ export default function TarotRitual() {
                 <button onClick={reset}>К раскладам</button>
               </div>
               {reading.question && <blockquote>{reading.question}</blockquote>}
-              <p aria-live="polite">
+              <p className={styles.revealHint} aria-live="polite">
                 {complete
-                  ? 'Все карты раскрыты. Прочитай их как одну историю.'
-                  : 'Коснись каждой карты, чтобы раскрыть её.'}
+                  ? 'Все символы открыты'
+                  : 'Коснись карт, чтобы раскрыть'}
               </p>
               <div className={styles.table}>
                 {reading.cards.map((card, i) => (
-                  <div key={card.id} className={styles.cardSlot}>
+                  <div
+                    key={card.id}
+                    className={`${styles.cardSlot} ${styles.cardSlotCompact}`}
+                  >
                     <p>
                       {i + 1}. {card.position}
                     </p>
@@ -288,64 +310,122 @@ export default function TarotRitual() {
                         </div>
                       </div>
                     </button>
-                    <h3>{revealed.includes(i) ? card.name : 'Твоя карта'}</h3>
-                    {revealed.includes(i) && (
-                      <small>{card.reversed ? 'Перевёрнутая' : 'Прямая'}</small>
-                    )}
+                    <button
+                      className={styles.cardLabel}
+                      onClick={() => {
+                        setActiveCard(i);
+                        setMeaningOpen(true);
+                        if (!revealed.includes(i))
+                          setRevealed((old) => [...old, i]);
+                      }}
+                      aria-pressed={activeCard === i}
+                      aria-label={
+                        revealed.includes(i)
+                          ? `Разобрать: ${card.name}`
+                          : `Открыть карту ${i + 1}`
+                      }
+                    >
+                      {revealed.includes(i) ? 'Разобрать ↗' : 'Открыть'}
+                    </button>
                   </div>
                 ))}
               </div>
               {!complete && (
                 <button
                   className={styles.primary}
-                  onClick={() => setRevealed(reading.cards.map((_, i) => i))}
+                  onClick={() => {
+                    setRevealed(reading.cards.map((_, i) => i));
+                    setActiveCard(0);
+                    setMeaningOpen(true);
+                  }}
                 >
                   Раскрыть весь расклад ✧
                 </button>
               )}
               {complete && (
                 <>
-                  <section className={styles.summary}>
-                    <p className={styles.eyebrow}>ОБЩАЯ НИТЬ</p>
-                    <h2>Собери свою историю</h2>
-                    <p>{reading.interpretation}</p>
-                  </section>
-                  <div className={styles.meanings}>
+                  <div
+                    className={styles.cardTabs}
+                    role="tablist"
+                    aria-label="Толкование карт"
+                  >
                     {reading.cards.map((card, i) => (
-                      <article key={card.id}>
-                        <p className={styles.eyebrow}>
-                          {i + 1} · {card.position}
-                        </p>
-                        <h3>{card.name}</h3>
-                        <p>{card.interpretation}</p>
-                        <p className={styles.prompt}>
-                          Что в этом образе связано с твоим вопросом, а что не
-                          откликается?
-                        </p>
-                      </article>
+                      <button
+                        key={card.id}
+                        role="tab"
+                        aria-selected={activeCard === i}
+                        onClick={() => setActiveCard(i)}
+                      >
+                        {i + 1} · {card.position}
+                      </button>
                     ))}
                   </div>
-                  <ClarifyButton contextType="tarot" contextData={reading} />
+                  {meaningOpen && (
+                    <button
+                      className={styles.meaningBackdrop}
+                      aria-label="Закрыть значение карты"
+                      onClick={() => setMeaningOpen(false)}
+                    />
+                  )}
+                  <section
+                    className={styles.meaningPanel}
+                    role="tabpanel"
+                    key={activeCard}
+                    data-expanded={meaningOpen}
+                  >
+                    <button
+                      className={styles.closeMeaning}
+                      onClick={() => setMeaningOpen(false)}
+                    >
+                      Закрыть
+                    </button>
+                    <p className={styles.eyebrow}>
+                      {activeCard + 1} · {reading.cards[activeCard].position}
+                    </p>
+                    <h2>
+                      {reading.cards[activeCard].name}{' '}
+                      <small>
+                        {reading.cards[activeCard].reversed
+                          ? 'Перевёрнутая'
+                          : 'Прямая'}
+                      </small>
+                    </h2>
+                    <p>{reading.cards[activeCard].interpretation}</p>
+                    <p className={styles.prompt}>
+                      Что в этом образе связано с твоим вопросом, а что не
+                      откликается?
+                    </p>
+                  </section>
+                  <details className={styles.fullReading}>
+                    <summary>Общая нить расклада</summary>
+                    <p>{reading.interpretation}</p>
+                  </details>
+                  <details className={styles.explainDisclosure}>
+                    <summary>Попросить Mirastros разъяснить расклад</summary>
+                    <ClarifyButton contextType="tarot" contextData={reading} />
+                  </details>
                   <p className={styles.note}>
-                    Расклад уже сохранён. Повторное открытие не меняет карты.
-                    Базовые значения доступны без ИИ; Оракул разъясняет
-                    сохранённый расклад по условиям твоего доступа.
+                    Расклад сохранён. Оракул разъясняет его по условиям твоего
+                    доступа.
                   </p>
                 </>
               )}
             </section>
           ) : spread ? (
             <section className={styles.session}>
-              <button disabled={busy} onClick={reset}>
+              <button
+                className={styles.backButton}
+                disabled={busy}
+                onClick={reset}
+              >
                 ← Все ситуации
               </button>
               <p className={styles.eyebrow}>
-                {spread.positions.length}{' '}
-                {cardCount(spread.positions.length).toUpperCase()} · ЛИЧНЫЙ
-                СЕАНС
+                ШАГ {picking ? 2 : 1} ИЗ 2 · {spread.positions.length}{' '}
+                {cardCount(spread.positions.length).toUpperCase()}
               </p>
               <h2>{spread.title}</h2>
-              <p>{spread.description}</p>
+              <p className={styles.sessionDescription}>{spread.description}</p>
               {!picking ? (
                 <>
                   <ol className={styles.positions}>
@@ -359,7 +439,7 @@ export default function TarotRitual() {
                   <textarea
                     id="tarot-question"
                     maxLength={1000}
-                    rows={3}
+                    rows={2}
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="Что я хочу понять в этой ситуации?"
@@ -373,8 +453,7 @@ export default function TarotRitual() {
                     Использовать перевёрнутые карты
                   </label>
                   <p className={styles.note}>
-                    Перевёрнутая карта предлагает рассмотреть затруднение или
-                    другой аспект, а не «плохой исход».
+                    Перевёрнутая карта — другой угол взгляда.
                   </p>
                   {spread.category === 'team' && (
                     <p className={styles.note}>
@@ -392,41 +471,60 @@ export default function TarotRitual() {
                 </>
               ) : (
                 <>
-                  <p aria-live="polite">
-                    Выбрано {choices.length} из {spread.positions.length}.{' '}
+                  <p className={styles.drawProgress} aria-live="polite">
+                    Выбрано {choices.length} из {spread.positions.length} ·{' '}
                     {choices.length < spread.positions.length
-                      ? `Следующая позиция: ${spread.positions[choices.length]}`
-                      : 'Твой выбор готов.'}
+                      ? `следующая: ${spread.positions[choices.length]}`
+                      : 'выбор готов'}
                   </p>
-                  <p className={styles.note}>
-                    В колоде 78 рубашек. Листай её в сторону и выбирай.
-                    Повторное нажатие отменяет выбор.
-                  </p>
-                  <div className={styles.deck}>
-                    {catalog.cards.map((card, i) => (
+                  <div className={styles.drawStage}>
+                    <div
+                      className={`${styles.deckStack} ${
+                        drawPulse ? styles.drawPulse : ''
+                      }`}
+                      aria-hidden="true"
+                    >
+                      <CardArt back={catalog.deck.back} />
+                    </div>
+                    <div
+                      className={styles.pickedCards}
+                      aria-label="Выбранные карты"
+                    >
+                      {Array.from(
+                        { length: spread.positions.length },
+                        (_, i) => (
+                          <div
+                            key={i}
+                            className={`${styles.pickedCard} ${
+                              choices[i] !== undefined ? styles.picked : ''
+                            }`}
+                          >
+                            <span>
+                              {choices[i] !== undefined ? i + 1 : '✧'}
+                            </span>
+                            <small>{spread.positions[i]}</small>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    {choices.length < spread.positions.length && (
                       <button
-                        key={card.id}
-                        aria-label={`Карта в колоде ${i + 1}`}
-                        aria-pressed={choices.includes(i)}
-                        disabled={
-                          busy ||
-                          (!choices.includes(i) &&
-                            choices.length >= spread.positions.length)
-                        }
-                        onClick={() =>
-                          setChoices((old) =>
-                            old.includes(i)
-                              ? old.filter((v) => v !== i)
-                              : [...old, i]
-                          )
-                        }
+                        className={styles.drawButton}
+                        disabled={busy}
+                        onClick={drawOne}
                       >
-                        <CardArt back={catalog.deck.back} />
-                        <b>
-                          {choices.includes(i) ? choices.indexOf(i) + 1 : '✧'}
-                        </b>
+                        Вытянуть карту ✧
                       </button>
-                    ))}
+                    )}
+                    {choices.length > 0 && (
+                      <button
+                        className={styles.undoButton}
+                        disabled={busy}
+                        onClick={() => setChoices((old) => old.slice(0, -1))}
+                      >
+                        Вернуть последнюю
+                      </button>
+                    )}
                   </div>
                   <button
                     className={styles.primary}
@@ -438,13 +536,11 @@ export default function TarotRitual() {
                     {busy ? 'Сохраняем твой расклад…' : 'Открыть мой расклад'}
                   </button>
                   <button
+                    className={styles.backButton}
                     disabled={busy}
-                    onClick={() => {
-                      setPicking(false);
-                      requestId.current = crypto.randomUUID();
-                    }}
+                    onClick={() => setPicking(false)}
                   >
-                    Изменить вопрос
+                    ← К вопросу
                   </button>
                 </>
               )}
@@ -488,7 +584,13 @@ export default function TarotRitual() {
                 {catalog.spreads
                   .filter((s) => category === 'all' || s.category === category)
                   .map((s) => (
-                    <button key={s.id} onClick={() => selectSpread(s)}>
+                    <button
+                      key={s.id}
+                      onClick={() => selectSpread(s)}
+                      aria-label={`${s.title}, ${
+                        s.positions.length
+                      } ${cardCount(s.positions.length)}`}
+                    >
                       <span className={styles.sigil}>
                         {
                           catalog.categories.find((c) => c.id === s.category)
@@ -546,8 +648,8 @@ export default function TarotRitual() {
               )}
             </section>
           )}
-          <section className={styles.history}>
-            <h2>Твои сохранённые расклады</h2>
+          <details className={styles.history}>
+            <summary>Моя история · {history.length}</summary>
             {historyError && (
               <p>
                 {historyError} <Link href="/auth/login">Войти</Link>
@@ -579,7 +681,7 @@ export default function TarotRitual() {
                 </button>
               ))}
             </div>
-          </section>
+          </details>
         </>
       )}
       <footer className={styles.note}>

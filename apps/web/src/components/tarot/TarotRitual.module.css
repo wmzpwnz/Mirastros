@@ -6,6 +6,7 @@
     radial-gradient(ellipse at 10% 60%, #37192e66, transparent 50%), #0d0913;
   font-family: var(--font-inter), sans-serif;
 }
+.rootReading .hero { display: none; }
 .root * {
   box-sizing: border-box;
 }
@@ -502,4 +503,293 @@
   .cardInner {
     transition: none;
   }
+}
+
+/* Tarot is composed for the mobile app first; web uses the same focused screens. */
+.root {
+  min-height: 100svh;
+  padding-block: 14px 24px;
+  background: radial-gradient(ellipse at 82% 0%, #73324850, transparent 42%),
+    radial-gradient(ellipse at 12% 75%, #421c3c66, transparent 48%), #0b0913;
+}
+.header { max-width: 1200px; margin: 0 auto; padding-bottom: 10px; border-color: #d1a76a55; }
+.header img { width: 116px; height: auto; }
+.hero { padding: 32px 10px 28px; animation: tarot-arrive 0.7s cubic-bezier(.2,.75,.25,1) both; }
+.hero h1 { text-shadow: 0 0 32px #d2768e44; }
+.categories button { min-height: 44px; border-radius: 3px 10px 3px 10px; background: linear-gradient(140deg,#281728,#14101b); }
+.catalog > button {
+  border-radius: 3px;
+  border-color: #c39b7055;
+  background: radial-gradient(ellipse at 85% 10%,#a5496444,transparent 62%), linear-gradient(145deg,#271523,#100d19);
+  box-shadow: inset 0 0 0 4px #140e19, inset 0 0 0 5px #c19a6d22, 0 10px 24px #0004;
+  transition: transform .32s ease, border-color .32s ease, box-shadow .32s ease;
+  animation: tarot-arrive .45s ease both;
+}
+.catalog > button:nth-child(2) { animation-delay: .05s; }
+.catalog > button:nth-child(3) { animation-delay: .1s; }
+.catalog > button:nth-child(4) { animation-delay: .15s; }
+.catalog > button:nth-child(5) { animation-delay: .2s; }
+.catalog > button:nth-child(6) { animation-delay: .25s; }
+.catalog > button:hover {
+  transform: translateY(-3px);
+  border-color: #e7bd83;
+  box-shadow: inset 0 0 0 4px #140e19, inset 0 0 0 5px #dfb47855, 0 14px 28px #0006;
+}
+.sigil { text-shadow: 0 0 16px #dc869866; }
+.session {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: min(740px, calc(100svh - 92px));
+  padding: 24px;
+  border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 0%,#6f32454d,transparent 55%), linear-gradient(145deg,#291725,#100d18);
+  animation: tarot-arrive .36s ease both;
+}
+.session h2 { margin: 4px 0; }
+.sessionDescription { margin: 0; font-size: 13px; }
+.session label { margin-top: 12px; }
+.session .positions { margin: 7px 0; line-height: 1.55; font-size: 13px; }
+.session textarea { margin: 4px 0; padding: 10px 12px; min-height: 58px; }
+.session .check { margin-top: 8px; font-size: 12px; }
+.session .note { margin: 5px 0; }
+.session .primary { margin: 12px auto 4px; }
+.backButton { align-self: flex-start; min-height: 44px; padding: 8px 12px !important; background: transparent !important; border-color: transparent !important; color: #d7b47f !important; }
+.drawProgress { text-align: center; font-size: 13px; margin: 10px 0; }
+.drawStage { min-height: 310px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; }
+.deckStack { width: 110px; height: 164px; border: 1px solid #d2aa76; border-radius: 7px; box-shadow: 5px 5px 0 #32192c, 9px 9px 0 #784051, 0 0 35px #dc789344; transform: rotate(-3deg); animation: card-float 3.6s ease-in-out infinite; }
+.deckStack > .art { border: 4px double #d5b17d88; }
+.drawPulse { animation: card-draw .52s cubic-bezier(.2,.8,.2,1); }
+.pickedCards { width: 100%; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+.pickedCard { height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed #b38c7655; border-radius: 4px; color: #b69ba5; }
+.pickedCard span { font: 20px Georgia,serif; }
+.pickedCard small { max-width: 100%; padding: 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+.picked { border-style: solid; color: #ecd0aa; background: linear-gradient(145deg,#643149,#261728); box-shadow: 0 0 16px #db879033; animation: card-slot-in .34s ease both; }
+.drawButton { min-height: 50px; min-width: min(250px,100%); color: #f6dfb8 !important; border-color: #d2a96e !important; background: linear-gradient(110deg,#4c2034,#7a3049,#4c2034) !important; box-shadow: 0 0 25px #a5446533; }
+.undoButton { border: 0 !important; background: transparent !important; color: #c0aaba !important; font-size: 12px; min-height: 44px; }
+.resultScreen { animation: tarot-arrive .38s ease both; }
+.resultScreen > .sectionHead { padding: 12px 16px; border: 1px solid #bb95634d; background: linear-gradient(130deg,#231526,#100d18); }
+.resultScreen .sectionHead h2 { margin: 3px 0; font-size: 30px; }
+.resultScreen .sectionHead > button { min-height: 44px; }
+.revealHint { text-align: center; font-size: 12px; margin: 9px 0 0; }
+.resultScreen blockquote { max-width: 800px; margin: 8px auto; }
+.table { gap: 8px; margin: 12px auto; max-width: 800px; width: 100%; align-items: start; }
+.cardSlotCompact { flex: 1 1 0; max-width: 150px; }
+.cardSlotCompact > p { min-height: 32px; margin: 0 0 5px; font-size: 10px; line-height: 1.3; }
+.cardSlotCompact h3 { display: none; }
+.cardSlotCompact .art { gap: 4px; padding: 5px 2px; }
+.cardSlotCompact .art i { font-size: clamp(18px,7vw,28px); }
+.cardSlotCompact .art span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: clamp(8px,2.5vw,12px); }
+.cardSlotCompact .art small { display: none; }
+.root .card { border-radius: 5px; }
+.front, .back { border-radius: 5px; border-color: #cba46e; }
+.cardLabel { width: 100%; min-height: 40px; padding: 4px 2px !important; border: 0 !important; background: transparent !important; font: 12px var(--font-inter),sans-serif !important; color: #e6c897 !important; }
+.cardTabs { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
+.cardTabs::-webkit-scrollbar { display: none; }
+.cardTabs button { flex: 1 0 auto; min-height: 42px; padding: 7px 10px; font-size: 11px; }
+.meaningPanel { min-height: 0; padding: 12px 16px; border: 1px solid #bd95604c; background: radial-gradient(ellipse at 100% 0%,#74354b33,transparent 55%), linear-gradient(145deg,#221523,#100d18); animation: meaning-in .3s ease both; }
+.meaningBackdrop, .closeMeaning { display: none; }
+.meaningPanel h2 { font-size: clamp(24px,5vw,32px); margin: 2px 0 8px; }
+.meaningPanel h2 small { font: 11px var(--font-inter),sans-serif; color: #c5a798; }
+.meaningPanel p { font-size: 13px; margin: 6px 0; }
+.meaningPanel .prompt { font-size: 12px; }
+.fullReading, .explainDisclosure { margin: 8px 0; border: 1px solid #bd956044; background: #19111d; }
+.fullReading > summary, .explainDisclosure > summary { min-height: 40px; display: flex; align-items: center; padding: 6px 12px; color: #d5b47f; font-size: 12px; cursor: pointer; }
+.fullReading > p { padding: 0 12px 8px; font-size: 12px; }
+.explainDisclosure .root { min-height: 0; margin: 0; padding: 10px 12px; border: 0; border-top: 1px solid #c7a57530; }
+.explainDisclosure .header h3 { font-size: 18px; }
+.explainDisclosure .header p { display: none; }
+.explainDisclosure .sigil { width: 30px; height: 30px; font-size: 18px; }
+.explainDisclosure .button { min-height: 42px; margin-top: 8px; }
+.resultScreen .summary { margin: 12px 0; padding: 16px; }
+.resultScreen .meanings { display: none; }
+.resultScreen > .note { margin: 8px 0; }
+.categories, .catalog { max-width: 1200px; margin-left: auto; margin-right: auto; }
+.library { max-width: 1200px; margin: 26px auto 0; }
+.history { max-width: 1200px; margin: 18px auto 0; padding: 12px 0 0; }
+.history > summary, .library > button { min-height: 44px; color: #d5b47f; }
+.history > div { margin-top: 10px; }
+.root footer { max-width: 1200px; margin: 22px auto 0; }
+
+@keyframes tarot-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes card-float { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-7px) rotate(1deg); } }
+@keyframes card-draw { 0% { transform: translateY(12px) rotate(-8deg) scale(.94); filter: brightness(.8); } 55% { transform: translateY(-12px) rotate(4deg) scale(1.04); filter: brightness(1.3); } 100% { transform: translateY(0) rotate(-3deg) scale(1); filter: brightness(1); } }
+@keyframes card-slot-in { from { opacity: .3; transform: translateY(9px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes meaning-in { from { opacity: .5; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+
+@media (max-width: 600px) {
+  .root { min-height: 100svh; padding: calc(8px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom)); overflow-x: hidden; }
+  .header { padding: 0 2px 8px; font-size: 12px; }
+  .header img { width: 98px; }
+  .header a:last-child { min-height: 40px; display: flex; align-items: center; }
+  .hero { text-align: left; padding: 15px 2px 10px; }
+  .hero .eyebrow { margin: 0; font-size: 8px; }
+  .hero h1 { font-size: 32px; margin: 4px 0; }
+  .hero p:not(.eyebrow) { display: none; }
+  .hero > span { font-size: 10px; }
+  .sectionHead { gap: 8px; }
+  .sectionHead h2 { font-size: 21px; margin: 8px 0; }
+  .categories { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin: 7px -2px 10px; padding: 2px 2px 7px; scrollbar-width: none; }
+  .categories::-webkit-scrollbar { display: none; }
+  .categories button { flex: 0 0 auto; min-height: 40px; padding: 7px 10px; font-size: 11px; }
+  .categories span { margin-right: 5px; }
+  .catalog { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .catalog > button { min-height: 0; height: 132px; padding: 11px 12px; border-radius: 3px; }
+  .catalog .sigil { font-size: 22px; line-height: 1; }
+  .catalog small { margin-top: 5px; font-size: 9px; }
+  .catalog h3 { font-size: 16px; margin: 6px 0 2px; line-height: 1.12; }
+  .catalog p { display: none; }
+  .enter { font-size: 10px; margin-top: auto; }
+  .library { margin-top: 8px; padding-top: 7px; font-size: 12px; }
+  .library > button { min-height: 38px; padding: 7px 8px; background: transparent; border: 0; }
+  .history { margin-top: 4px; border-top: 0; padding-top: 0; }
+  .rootReading .history { display: none; }
+  .history > summary { min-height: 38px; font-size: 12px; }
+  .root footer { display: none; }
+  .session { min-height: calc(100svh - 74px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); margin: 8px 0 0; padding: 16px 14px; gap: 2px; justify-content: space-between; }
+  .session .backButton { min-height: 38px; }
+  .session > .eyebrow { margin: 2px 0; font-size: 9px; }
+  .session h2 { font-size: 25px; }
+  .sessionDescription { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.4 !important; }
+  .session label { margin-top: 9px; font-size: 12px; }
+  .session textarea { min-height: 54px; padding: 9px; }
+  .session .positions { margin: 3px 0; padding-left: 20px; font-size: 12px; line-height: 1.45; }
+  .session .check { font-size: 11px; }
+  .session .note { font-size: 10px; line-height: 1.4 !important; }
+  .session .primary { min-height: 48px; margin: 8px 0 0; padding: 10px; }
+  .drawStage { min-height: 0; flex: 1; gap: 9px; }
+  .deckStack { width: 90px; height: 132px; }
+  .pickedCard { height: 54px; }
+  .pickedCard small { font-size: 7px; }
+  .drawButton { min-height: 48px; }
+  .drawProgress { font-size: 12px; margin: 6px 0; }
+  .resultScreen .sectionHead { flex-direction: row; align-items: center; }
+  .resultScreen .sectionHead h2 { font-size: 22px; }
+  .resultScreen .sectionHead .eyebrow { margin: 3px 0; }
+  .resultScreen .sectionHead > button { padding: 7px 10px; font-size: 11px; }
+  .resultScreen .sectionHead > div > p:last-child { display: none; }
+  .revealHint { margin: 5px 0; font-size: 10px; }
+  .table { gap: 5px; margin: 6px auto 4px; }
+  .cardSlotCompact { flex-basis: 0; }
+  .cardSlotCompact > p { font-size: 8px; min-height: 29px; }
+  .cardLabel { min-height: 35px; font-size: 9px !important; line-height: 1.1; }
+  .cardTabs { gap: 4px; padding: 2px 0 6px; }
+  .cardTabs button { min-height: 38px; padding: 6px 8px; font-size: 10px; }
+  .meaningPanel { padding: 10px 12px; }
+  .meaningPanel h2 { font-size: 23px; }
+  .meaningPanel p { font-size: 12px; line-height: 1.45; }
+  .meaningPanel .prompt { font-size: 10px; }
+  .fullReading, .explainDisclosure { margin: 5px 0; }
+  .fullReading > summary, .explainDisclosure > summary { min-height: 36px; font-size: 11px; }
+  .explainDisclosure .root { padding: 8px 10px; }
+  .explainDisclosure .header h3 { font-size: 16px; }
+  .explainDisclosure .header .sigil { display: none; }
+  .explainDisclosure .answer { margin-top: 10px; padding-top: 10px; font-size: 12px; }
+  .resultScreen > .primary { min-height: 42px; margin: 8px auto; padding: 9px; }
+  .resultScreen .note { display: none; }
+}
+
+@media (max-height: 720px) and (max-width: 850px) {
+  .session { min-height: calc(100svh - 62px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 10px 14px; }
+  .deckStack { width: 72px; height: 106px; }
+  .drawStage { gap: 5px; }
+  .session .note { display: none; }
+  .meaningPanel { padding: 8px 10px; }
+  .meaningPanel p { margin: 3px 0; }
+  .meaningPanel:not([data-expanded='true']) { display: none; }
+  .meaningPanel[data-expanded='true'] {
+    position: fixed;
+    z-index: 120;
+    inset: auto 10px calc(10px + env(safe-area-inset-bottom));
+    max-height: 45svh;
+    overflow-y: auto;
+    padding: 14px;
+    border-color: #d4ab74;
+    background: #1b1220;
+    box-shadow: 0 0 0 1px #d0a76b66, 0 -20px 50px #000a;
+    animation: tarot-arrive .22s ease both;
+  }
+  .meaningBackdrop {
+    display: block;
+    position: fixed;
+    z-index: 119;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: #05040bd9;
+  }
+  .closeMeaning { display: block; float: right; min-height: 36px; padding: 5px 9px !important; font-size: 11px !important; }
+  .table { max-width: 540px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .root { padding: 4px 14px 8px; }
+  .root .header { padding-bottom: 4px; }
+  .root .header img { width: 86px; }
+  .root .hero { display: none; }
+  .root .sectionHead { margin: 4px auto; }
+  .root .sectionHead h2 { font-size: 20px; }
+  .root .categories { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 4px 0 6px; padding: 2px 0; scrollbar-width: none; }
+  .categories::-webkit-scrollbar { display: none; }
+  .root .categories button { flex: 0 0 auto; min-height: 36px; padding: 5px 9px; font-size: 10px; }
+  .root .catalog { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; }
+  .root .catalog > button { min-height: 0; height: 112px; padding: 7px 9px; }
+  .root .catalog .sigil { font-size: 19px; }
+  .root .catalog small { margin-top: 2px; font-size: 8px; }
+  .root .catalog h3 { margin: 4px 0 0; font-size: 13px; }
+  .root .catalog p { display: none; }
+  .root .library { margin-top: 3px; padding-top: 0; }
+  .root .library > button { min-height: 32px; padding: 4px 8px; }
+  .root .history { display: none; }
+  .root footer { display: none; }
+  .root .session { min-height: calc(100svh - 52px); margin: 3px auto 0; padding: 8px 14px; gap: 0; }
+  .root .session > .eyebrow { margin: 0; font-size: 8px; }
+  .root .session h2 { margin: 2px 0; font-size: 20px; }
+  .sessionDescription { font-size: 10px; }
+  .session .positions { margin: 2px 0; font-size: 10px; line-height: 1.3; }
+  .session label { margin-top: 4px; font-size: 10px; }
+  .session textarea { min-height: 38px; margin: 2px 0; padding: 5px 8px; }
+  .session .check, .session .note { margin: 2px 0; font-size: 9px; }
+  .session .primary { min-height: 38px; margin: 4px auto 0; padding: 6px 12px; }
+  .drawProgress { margin: 2px 0; font-size: 10px; }
+  .drawStage { min-height: 0; flex-direction: row; flex-wrap: wrap; gap: 7px; }
+  .deckStack { width: 54px; height: 80px; }
+  .pickedCards { max-width: 400px; }
+  .pickedCard { height: 36px; }
+  .drawButton { min-height: 36px; min-width: 140px; padding: 6px 10px !important; font-size: 11px !important; }
+  .undoButton, .session .backButton { min-height: 34px; padding: 4px 8px !important; font-size: 10px !important; }
+  .resultScreen .sectionHead { padding: 5px 10px; }
+  .resultScreen .sectionHead h2 { font-size: 18px; }
+  .root .resultScreen .sectionHead .eyebrow,
+  .root .resultScreen .sectionHead > div > p:last-child { display: none; }
+  .resultScreen .sectionHead > button { min-height: 34px; padding: 4px 8px; font-size: 10px; }
+  .revealHint { margin: 2px; font-size: 9px; }
+  .root .table { max-width: 620px; margin: 3px auto; gap: 4px; }
+  .root .cardSlotCompact { flex: 0 1 72px; max-width: 72px; }
+  .cardSlotCompact > p { min-height: 18px; margin-bottom: 2px; font-size: 7px; }
+  .cardLabel { min-height: 26px; font-size: 8px !important; }
+  .cardTabs { padding: 0 0 3px; }
+  .cardTabs button { min-height: 30px; padding: 3px 7px; font-size: 9px; }
+  .meaningPanel { padding: 5px 9px; }
+  .meaningPanel h2 { margin: 0 0 3px; font-size: 18px; }
+  .meaningPanel p { margin: 2px 0; font-size: 9px; line-height: 1.25; }
+  .meaningPanel .prompt { display: none; }
+  .fullReading, .explainDisclosure { margin: 3px 0; }
+  .fullReading > summary, .explainDisclosure > summary { min-height: 28px; padding: 3px 8px; font-size: 9px; }
+  .root .resultScreen > .note { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog > button, .session, .hero, .resultScreen, .meaningPanel, .picked { animation: none !important; transition: none !important; }
+  .deckStack { animation: none !important; }
+  .cardInner { transition: none !important; }
+}
+
+@media (min-width: 601px) and (max-width: 850px) {
+  .catalog { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+  .catalog > button { min-height: 220px; padding: 18px; }
+  .hero { padding: 34px 10px 25px; }
 }
