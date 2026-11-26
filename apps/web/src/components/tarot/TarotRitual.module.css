@@ -5,6 +5,7 @@
   background: radial-gradient(ellipse at 75% 10%, #681e344a, transparent 45%),
     radial-gradient(ellipse at 10% 60%, #37192e66, transparent 50%), #0d0913;
   font-family: var(--font-inter), sans-serif;
+  overflow-anchor: none;
 }
 .rootReading .hero { display: none; }
 .root * {
@@ -792,4 +793,155 @@
   .catalog { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
   .catalog > button { min-height: 220px; padding: 18px; }
   .hero { padding: 34px 10px 25px; }
+}
+
+.heroArtifact, .mobileDock { display: none; }
+
+/* The phone experience uses the same five-item dock as the account tunnel. */
+@media (max-width: 600px) {
+  .root {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(ellipse at 82% 0%, #5d2a473b, transparent 38%),
+      radial-gradient(ellipse at 8% 58%, #261a4a4f, transparent 48%),
+      #090b19;
+  }
+  .rootSession { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .rootSession .hero, .rootSession .history { display: none; }
+  .rootSession .session {
+    height: calc(100svh - 160px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .hero { position: relative; padding: 13px 78px 9px 2px; }
+  .heroArtifact {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 1px;
+    width: 68px;
+    aspect-ratio: 1;
+    transform: translateY(-50%);
+    overflow: hidden;
+    border: 1px solid #d4aa755e;
+    border-radius: 50%;
+    background: radial-gradient(circle, #49253c, #0d0b19 72%);
+    box-shadow: 0 0 0 4px #1a1427, 0 0 22px #b15d7440;
+  }
+  .heroArtifact img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .hero h1 { font-size: clamp(28px, 7vw, 34px); }
+  .hero p:not(.eyebrow) { display: block; font-size: 12px; line-height: 1.4; }
+  .sectionHead { flex-direction: row; align-items: center; justify-content: space-between; }
+  .sectionHead h2 { margin: 7px 0; font-size: clamp(17px, 4.6vw, 20px); }
+  .sectionHead > button { flex: 0 0 auto; min-height: 40px; padding: 6px 9px; font-size: 10px; }
+  .catalog > button { height: 158px; padding: 12px 11px; border-radius: 3px 11px; }
+  .catalog .sigil {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #d2ae7144;
+    border-radius: 50%;
+    background: radial-gradient(circle, #8242575c, #23192c 70%);
+    animation: tarot-sigil-drift 4s ease-in-out infinite;
+  }
+  .catalog h3 { font-size: 16px; margin: 5px 0 3px; }
+  .catalog p {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .enter { margin-top: auto; padding-top: 4px; }
+  .session {
+    height: calc(100svh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-bottom: 0;
+  }
+  .mobileDock {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: end;
+    position: fixed;
+    z-index: 30;
+    left: 14px;
+    right: 14px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    min-height: 62px;
+    padding: 6px 4px 4px;
+    border: 1px solid #b996644f;
+    border-radius: 24px 24px 16px 16px / 18px 18px 14px 14px;
+    background: radial-gradient(ellipse at 50% 0%, #3a2a48, #100f20 72%);
+    box-shadow: inset 0 1px #f3d69a20, 0 8px 26px #0009;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .mobileDock a {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: #bcaec7;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobileDock a > span { font-size: 19px; line-height: 1; color: #d4b176; }
+  .mobileDock small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+  .mobileDock .dockHome {
+    width: 54px;
+    height: 54px;
+    min-height: 54px;
+    justify-self: center;
+    margin-top: -20px;
+    border: 1px solid #d0ae75;
+    border-radius: 50%;
+    background: radial-gradient(circle at 48% 28%, #60486b, #20172f 70%);
+    box-shadow: 0 0 0 3px #100f20, 0 0 18px #b7834b55;
+    color: #f2d7a8;
+  }
+  .mobileDock .dockHome > span { font-size: 23px; }
+}
+
+@keyframes tarot-sigil-drift {
+  0%, 100% { transform: translateY(0) rotate(-3deg); filter: drop-shadow(0 0 5px #dc869844); }
+  50% { transform: translateY(-2px) rotate(3deg); filter: drop-shadow(0 0 11px #dc869899); }
+}
+
+@media (max-width: 360px) {
+  .hero { padding-right: 66px; }
+  .heroArtifact { width: 58px; }
+  .mobileDock { display: grid; }
+  .catalog > button { height: 150px; padding-inline: 8px; }
+  .catalog h3 { font-size: 14px; }
+  .mobileDock { left: 8px; right: 8px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .root { min-height: 100svh; padding: 4px 14px 60px; }
+  .rootSession .session { height: calc(100svh - 104px - env(safe-area-inset-bottom)); }
+  .root .session { min-height: 0; overflow-y: auto; }
+  .mobileDock {
+    display: grid;
+    height: 50px;
+    min-height: 50px;
+    padding: 2px 4px;
+    left: 14px;
+    right: 14px;
+    bottom: 4px;
+    width: auto;
+    max-width: 520px;
+    margin-inline: auto;
+    transform: none;
+  }
+  .mobileDock a { min-height: 42px; gap: 0; }
+  .mobileDock a > span { font-size: 15px; }
+  .mobileDock small { font-size: 7px; }
+  .mobileDock .dockHome { width: 42px; height: 42px; min-height: 42px; margin-top: -9px; }
+  .mobileDock .dockHome > span { font-size: 19px; }
 }

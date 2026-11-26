@@ -43,6 +43,9 @@ type Reading = {
 };
 
 const cardCount = (n: number) => (n === 1 ? 'карта' : n < 5 ? 'карты' : 'карт');
+const categoryGlyph: Record<string, string> = {
+  day: '✦', love: '♡', work: '✧', projects: '◇', choice: '⇄', self: '☾', team: '⊙',
+};
 
 function CardArt({ card, back }: { card?: Card | Drawn; back: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -166,6 +169,7 @@ export default function TarotRitual() {
     setPicking(false);
     setError('');
     requestId.current = crypto.randomUUID();
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
   async function draw() {
     if (
@@ -214,7 +218,7 @@ export default function TarotRitual() {
   }
   const complete = reading && revealed.length === reading.cards.length;
   return (
-    <main className={`${styles.root} ${reading ? styles.rootReading : ''}`}>
+    <main className={`${styles.root} ${reading ? styles.rootReading : ''} ${spread ? styles.rootSession : ''}`}>
       <header className={styles.header}>
         <Link href="/dashboard">
           <img src="/logo.png" width="145" alt="Mirastros" />
@@ -222,6 +226,9 @@ export default function TarotRitual() {
         <Link href="/dashboard">← Сводка дня</Link>
       </header>
       <div className={styles.hero}>
+        <div className={styles.heroArtifact} aria-hidden="true">
+          <img src="/images/portals/tarot.webp" alt="" width="640" height="640" />
+        </div>
         <p className={styles.eyebrow}>МИР ОБРАЗОВ · ПРОСТРАНСТВО ВЫБОРА</p>
         <h1>Таро Mirastros</h1>
         <p>Необязательно знать ответ. Начни с того, что волнует тебя сейчас.</p>
@@ -555,7 +562,7 @@ export default function TarotRitual() {
                     if (daily) selectSpread(daily);
                   }}
                 >
-                  ☀ Карта дня
+                  ✦ Карта дня
                 </button>
               </div>
               <div
@@ -575,7 +582,7 @@ export default function TarotRitual() {
                     aria-pressed={category === c.id}
                     onClick={() => setCategory(c.id)}
                   >
-                    <span>{c.symbol}</span>
+                    <span>{categoryGlyph[c.id] || '✧'}</span>
                     {c.title}
                   </button>
                 ))}
@@ -592,10 +599,7 @@ export default function TarotRitual() {
                       } ${cardCount(s.positions.length)}`}
                     >
                       <span className={styles.sigil}>
-                        {
-                          catalog.categories.find((c) => c.id === s.category)
-                            ?.symbol
-                        }
+                        {categoryGlyph[s.category] || '✧'}
                       </span>
                       <small>
                         {s.positions.length} {cardCount(s.positions.length)} ·{' '}
@@ -690,6 +694,23 @@ export default function TarotRitual() {
         оформлена символами Mirastros; авторские иллюстрации будут добавлены
         позже.
       </footer>
+      <nav className={styles.mobileDock} aria-label="Основная навигация">
+        <Link href="/services" aria-label="Направления">
+          <span aria-hidden="true">✧</span><small>Направления</small>
+        </Link>
+        <Link href="/services/lunar" aria-label="Календарь">
+          <span aria-hidden="true">☾</span><small>Календарь</small>
+        </Link>
+        <Link className={styles.dockHome} href="/dashboard" aria-label="Главная">
+          <span aria-hidden="true">⌂</span><small>Главная</small>
+        </Link>
+        <Link href="/history" aria-label="История">
+          <span aria-hidden="true">▤</span><small>История</small>
+        </Link>
+        <Link href="/profile" aria-label="Профиль">
+          <span aria-hidden="true">♙</span><small>Профиль</small>
+        </Link>
+      </nav>
     </main>
   );
 }
