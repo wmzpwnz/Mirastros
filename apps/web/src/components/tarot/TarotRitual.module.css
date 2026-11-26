@@ -1076,3 +1076,327 @@
   .rootCatalog .hero { padding-block: 5px; }
   .situationGrid { grid-auto-rows: minmax(54px,1fr); }
 }
+
+/* Tarot observatory: an editorial dashboard rather than a menu of generic tiles. */
+.rootCatalog {
+  --tarot-wine: #6f2848;
+  --tarot-rose: #cf8294;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 76% 17%, #71314742, transparent 34%),
+    radial-gradient(ellipse at 11% 75%, #30193b52, transparent 42%),
+    #080a18;
+}
+.rootCatalog::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('/images/mirastros-cosmos.webp') center / cover;
+  content: '';
+  opacity: .13;
+  pointer-events: none;
+}
+.rootCatalog .header {
+  border-color: #d0ac784d;
+  padding-inline: 3px;
+}
+.rootCatalog .header > a:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d7bd9f;
+  font-size: 12px;
+}
+.rootCatalog .hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(166px, 27svh, 250px);
+  margin-top: 11px;
+  padding: clamp(18px, 3vw, 38px) clamp(20px, 4vw, 54px);
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid #d1a76c8a;
+  border-radius: 4px 18px 4px 18px;
+  background:
+    linear-gradient(90deg, #110c1bee 0%, #170d1be8 41%, #140b1c8c 68%, #130a1c45 100%),
+    url('/images/portals/tarot.webp') right 39% / auto 170% no-repeat,
+    radial-gradient(ellipse at 80% 45%, #873a5c9c, #170d20 67%);
+  box-shadow: inset 0 0 0 5px #0d0b18, inset 0 0 0 6px #d0a26942,
+    0 15px 34px #03030b80;
+}
+.rootCatalog .hero::before,
+.rootCatalog .hero::after {
+  position: absolute;
+  z-index: 0;
+  inset: 8px;
+  border: 1px solid #d7b57b32;
+  border-radius: 2px 13px;
+  content: '';
+  pointer-events: none;
+}
+.rootCatalog .hero::after {
+  inset: auto 24% -44% auto;
+  width: min(28vw, 290px);
+  aspect-ratio: 1;
+  border: 1px solid #dfb97637;
+  border-radius: 50%;
+  box-shadow: 0 0 0 13px #c2788620, 0 0 0 28px #d2a66d12,
+    0 0 68px #d4638440;
+}
+.rootCatalog .heroCopy {
+  position: relative;
+  z-index: 1;
+  width: min(65%, 700px);
+}
+.rootCatalog .heroArtifact { display: none; }
+.rootCatalog .hero .eyebrow {
+  margin: 0 0 8px;
+  color: #d5ae76;
+  font-size: 10px;
+  letter-spacing: .19em;
+}
+.rootCatalog .hero h1 {
+  max-width: 16ch;
+  margin: 0;
+  color: #f5dfc0;
+  font-size: clamp(34px, 4.1vw, 59px);
+  line-height: .99;
+  text-wrap: balance;
+  text-shadow: 0 4px 24px #08030c;
+}
+.rootCatalog .hero p:not(.eyebrow) {
+  max-width: 56ch;
+  margin: 10px 0 0;
+  color: #d0c1cc;
+  font-size: clamp(12px, 1.05vw, 15px);
+  line-height: 1.5;
+}
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 15px;
+}
+.heroActions > span {
+  color: #c3aeb8;
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+.heroActions > span i { margin-inline: 5px; color: #dcb77b; font-style: normal; }
+.root .heroPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 17px;
+  min-height: 38px;
+  padding: 7px 16px;
+  border: 1px solid #e0bb80 !important;
+  border-radius: 3px 12px;
+  color: #f6dfb8;
+  background: linear-gradient(110deg, #612542, #8e3855 53%, #48203e) !important;
+  box-shadow: inset 0 1px #fff3d62b, 0 0 22px #cb648433;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 12px;
+  letter-spacing: .07em;
+}
+.root .heroPrimary:hover { transform: translateY(-1px); box-shadow: inset 0 1px #fff5, 0 5px 24px #cb64845c; }
+.rootCatalog .sectionHead { margin: 12px auto 8px; }
+.rootCatalog .sectionHead .eyebrow { margin: 0 0 3px; color: #bd9a69; font-size: 9px; letter-spacing: .17em; }
+.rootCatalog .sectionHead h2 { margin: 0; color: #f2e3d0; font-size: clamp(19px, 2vw, 27px); }
+.rootCatalog .sectionHead > button {
+  border-color: #b88b6b73;
+  border-radius: 3px 10px;
+  color: #e7c796;
+  background: #211426c9;
+}
+.categoryHint {
+  max-width: 32%;
+  padding: 6px 11px;
+  border: 1px solid #c6a16b4c;
+  border-radius: 2px 9px;
+  color: #d7b989;
+  background: linear-gradient(100deg,#28182cba,#15111dba);
+  font-size: 10px;
+  text-align: right;
+}
+.situationGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: clamp(62px, 8.2svh, 83px);
+  gap: 9px;
+}
+.situationCard {
+  position: relative;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 10px 16px !important;
+  overflow: hidden;
+  border: 1px solid #c39b7066 !important;
+  border-radius: 3px 16px 3px 16px !important;
+  background:
+    radial-gradient(ellipse at 0 50%, #8e3b5a42, transparent 75%),
+    linear-gradient(125deg, #241627f2, #120f1c 78%) !important;
+  box-shadow: inset 0 0 0 4px #100c17, inset 0 0 0 5px #c49b6a20,
+    0 7px 18px #02020a77;
+  transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+}
+.situationCard::after {
+  position: absolute;
+  right: -18px;
+  bottom: -30px;
+  width: 84px;
+  aspect-ratio: 1;
+  border: 1px solid #c9a26e22;
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px #c2788610, 0 0 0 17px #c2788609;
+  content: '';
+  pointer-events: none;
+}
+.situationCard[aria-pressed='true'] {
+  border-color: #e4c287 !important;
+  background:
+    radial-gradient(ellipse at 0 50%, #a746685e, transparent 77%),
+    linear-gradient(125deg, #38203a, #17111f 78%) !important;
+  box-shadow: inset 0 0 0 4px #170f1b, inset 0 0 0 5px #e1bd7b42,
+    0 0 0 1px #e4c2874d, 0 0 25px #d26a8740;
+}
+.situationCard:hover { transform: translateY(-3px); border-color: #e0bb80 !important; }
+.situationGlyph {
+  width: 38px;
+  height: 38px;
+  border-color: #e0bc7b88;
+  color: #f1d9a8;
+  font-size: 19px;
+  background: radial-gradient(circle at 35% 30%, #8c4b5d88, #211523 76%);
+  box-shadow: inset 0 1px #fff3d622, 0 0 15px #a4425b29;
+}
+.situationCard strong { position: relative; z-index: 1; display: -webkit-box; overflow: hidden; font-size: clamp(12px, 1.1vw, 15px); line-height: 1.08; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.situationCard small { position: relative; z-index: 1; color: #c5b3bc; font-size: clamp(9px, .78vw, 11px); line-height: 1.35; }
+.situationCard:nth-child(2) .situationGlyph { color: #f0d29a; }
+.situationCard:nth-child(3) { background: radial-gradient(ellipse at 0 50%,#a449693e,transparent 75%),linear-gradient(125deg,#2a1725f2,#120f1c 78%) !important; }
+.situationCard:nth-child(3) .situationGlyph { color: #f1bdc8; border-color: #d994a288; background: radial-gradient(circle at 35% 30%,#984c6b88,#241522 76%); }
+.situationCard:nth-child(4) .situationGlyph { color: #edcf98; }
+.situationCard:nth-child(5) .situationGlyph { color: #dfc18e; }
+.situationCard:nth-child(6) .situationGlyph { color: #f3d6ae; }
+.situationCard:nth-child(7) .situationGlyph { color: #e5c4c9; }
+.situationCard:nth-child(8) .situationGlyph { color: #d8bce3; }
+.spreadSection {
+  flex: 1 1 130px;
+  min-height: 112px;
+  margin-top: 12px;
+}
+.spreadHead { min-height: 30px; }
+.spreadHead h2 { color: #efdec4; font-size: 18px; }
+.spreadHead > span { color: #af9eaa; font-size: 10px; letter-spacing: .06em; }
+.spreadHead button { border-color: #bf966b66; border-radius: 2px 8px; color: #dfbe8b; }
+.rootCatalog .catalog { gap: 12px; margin-top: 6px; padding: 2px 3px 9px; }
+.rootCatalog .catalog > button {
+  position: relative;
+  flex-basis: clamp(190px, 19vw, 245px);
+  max-height: 126px;
+  padding: 10px 14px;
+  border: 1px solid #b68d634d;
+  border-radius: 2px 12px;
+  background: linear-gradient(145deg, #211528ed, #0e0d19f2 75%);
+  box-shadow: inset 0 0 0 3px #100c17, inset 0 0 0 4px #c1976820,
+    0 5px 14px #02020a66;
+  transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+}
+.rootCatalog .catalog > button:hover {
+  transform: translateY(-3px);
+  border-color: #ddb678;
+  box-shadow: inset 0 0 0 3px #100c17, 0 8px 22px #0009, 0 0 18px #b65c7433;
+}
+.rootCatalog .catalog .sigil { border-color: #d4aa7777; color: #e4c48f; background: #211427; }
+.rootCatalog .catalog small { color: #bba6ac; }
+.rootCatalog .catalog h3 { color: #f0d5af; }
+.rootCatalog .catalog p { color: #c4b4c1; }
+.rootCatalog .catalog .enter { color: #e1bd80; }
+
+@media (max-width: 850px) {
+  .rootCatalog { padding-inline: 18px; }
+  .situationGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: clamp(57px, 8.5svh, 76px); }
+  .situationCard { grid-template-columns: 31px minmax(0,1fr); column-gap: 8px; padding-inline: 10px !important; }
+  .situationGlyph { width: 30px; height: 30px; font-size: 16px; }
+}
+@media (max-width: 600px) {
+  .rootCatalog { padding: max(7px,env(safe-area-inset-top)) 12px calc(76px + env(safe-area-inset-bottom)); }
+  .rootCatalog .header { padding-bottom: 5px; }
+  .rootCatalog .header img { width: 92px; }
+  .rootCatalog .header > a:last-child { font-size: 11px; }
+  .rootCatalog .hero {
+    min-height: clamp(132px, 20svh, 176px);
+    margin-top: 8px;
+    padding: 15px 96px 14px 16px;
+    border-radius: 3px 14px;
+    background:
+      linear-gradient(90deg,#100b19f5 0%,#170d1be8 52%,#140b1c71 100%),
+      url('/images/portals/tarot.webp') 76% center / auto 125% no-repeat,
+      #170d20;
+  }
+  .rootCatalog .hero::before { inset: 5px; }
+  .rootCatalog .hero::after { right: 1%; bottom: -62%; width: 44%; }
+  .rootCatalog .heroCopy { width: 100%; }
+  .rootCatalog .hero .eyebrow { display: block; margin-bottom: 5px; font-size: 7px; letter-spacing: .14em; }
+  .rootCatalog .hero h1 { max-width: 13ch; font-size: clamp(24px, 7vw, 32px); line-height: 1.02; }
+  .rootCatalog .hero p:not(.eyebrow) { max-width: 35ch; margin-top: 5px; font-size: 9px; line-height: 1.35; }
+  .heroActions { gap: 8px; margin-top: 7px; }
+  .root .heroPrimary { min-height: 29px; gap: 7px; padding: 4px 9px; font-size: 9px; }
+  .heroActions > span { font-size: 7px; }
+  .rootCatalog .sectionHead { margin: 8px auto 6px; }
+  .rootCatalog .sectionHead .eyebrow { font-size: 7px; }
+  .rootCatalog .sectionHead h2 { font-size: 18px; }
+  .categoryHint { max-width: 42%; padding: 5px 7px; font-size: 8px; }
+  .situationGrid { grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-rows: clamp(48px, 6.8svh, 58px); gap: 6px; }
+  .situationCard { grid-template-columns: 28px minmax(0,1fr); column-gap: 7px; padding: 5px 8px !important; border-radius: 2px 11px !important; }
+  .situationGlyph { width: 27px; height: 27px; font-size: 14px; }
+  .situationCard strong { font-size: clamp(10px, 3.1vw, 12px); }
+  .situationCard small { font-size: 7px; line-height: 1.2; }
+  .spreadSection { flex: 1 1 98px; min-height: 88px; margin-top: 8px; }
+  .spreadHead { min-height: 23px; gap: 6px; }
+  .spreadHead h2 { font-size: 14px; }
+  .spreadHead > span { font-size: 7px; }
+  .spreadHead button { min-height: 25px; padding: 3px 6px; font-size: 8px; }
+  .rootCatalog .catalog { gap: 8px; margin-top: 4px; padding-bottom: 5px; }
+  .rootCatalog .catalog > button { flex-basis: min(48vw, 196px); max-height: 88px; padding: 6px 8px; }
+  .rootCatalog .catalog .sigil { width: 19px; height: 19px; font-size: 11px; }
+  .rootCatalog .catalog small { margin-top: 2px; font-size: 7px; }
+  .rootCatalog .catalog h3 { margin: 2px 0; font-size: 12px; }
+  .rootCatalog .catalog p { display: none; }
+  .rootCatalog .catalog .enter { margin-top: 2px; font-size: 8px; }
+  .rootLibraryOpen { padding-bottom: 20px; }
+  .rootLibraryOpen .header { position: sticky; top: 0; z-index: 5; background: #0b0913; }
+}
+@media (max-width: 360px) {
+  .rootCatalog { padding-inline: 9px; }
+  .rootCatalog .hero { padding-right: 78px; }
+  .rootCatalog .hero h1 { font-size: 23px; }
+  .rootCatalog .hero p:not(.eyebrow) { font-size: 8px; }
+  .categoryHint { max-width: 40%; padding: 4px 5px; font-size: 7px; }
+  .situationGrid { grid-auto-rows: clamp(44px, 6.4svh, 53px); }
+  .situationCard { grid-template-columns: 24px minmax(0,1fr); column-gap: 5px; padding-inline: 6px !important; }
+  .situationGlyph { width: 23px; height: 23px; font-size: 12px; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .rootCatalog { padding: 4px 14px 58px; }
+  .rootCatalog .header { padding-bottom: 3px; }
+  .rootCatalog .hero { display: none; }
+  .rootCatalog .sectionHead { margin: 3px auto; }
+  .rootCatalog .sectionHead h2 { font-size: 16px; }
+  .situationGrid { grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: clamp(40px, 12svh, 54px); gap: 6px; }
+  .situationCard { grid-template-columns: 24px minmax(0,1fr); padding: 4px 7px !important; }
+  .situationCard small { display: none; }
+  .situationGlyph { grid-row: 1; width: 22px; height: 22px; font-size: 12px; }
+  .spreadSection { margin-top: 4px; }
+  .spreadHead { min-height: 22px; }
+  .spreadHead h2 { font-size: 13px; }
+  .spreadHead > span { display: none; }
+  .rootCatalog .catalog > button { flex-basis: clamp(140px,24vw,200px); max-height: 78px; padding: 5px 8px; }
+  .rootCatalog .catalog p { display: none; }
+  .rootCatalog .catalog .sigil { width: 17px; height: 17px; font-size: 10px; }
+  .rootCatalog .catalog small,.rootCatalog .catalog .enter { font-size: 7px; }
+  .rootCatalog .catalog h3 { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .situationCard,.rootCatalog .catalog > button,.root .heroPrimary { transition: none; }
+}

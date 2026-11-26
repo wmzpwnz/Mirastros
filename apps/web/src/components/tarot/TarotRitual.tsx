@@ -239,10 +239,18 @@ export default function TarotRitual() {
         <div className={styles.heroArtifact} aria-hidden="true">
           <img src="/images/portals/tarot.webp" alt="" width="640" height="640" />
         </div>
-        <p className={styles.eyebrow}>МИР ОБРАЗОВ · ПРОСТРАНСТВО ВЫБОРА</p>
-        <h1>Таро Mirastros</h1>
-        <p>Необязательно знать ответ. Начни с того, что волнует тебя сейчас.</p>
-        <span>78 карт · 22 старших и 56 младших арканов</span>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>ТИХОЕ ПРОСТРАНСТВО ДЛЯ ВАЖНОГО</p>
+          <h1>Услышь, что уже зреет внутри</h1>
+          <p>Выбери тему или начни с одной карты дня. Таро здесь — способ посмотреть на ситуацию под новым углом.</p>
+          <div className={styles.heroActions}>
+            <button className={styles.heroPrimary} onClick={() => {
+              const daily = catalog?.spreads.find((s) => s.id === 'daily');
+              if (daily) selectSpread(daily);
+            }}>Открыть карту дня <span aria-hidden="true">↗</span></button>
+            <span>78 карт <i aria-hidden="true">✦</i> личный ритуал за минуту</span>
+          </div>
+        </div>
       </div>
       {error && (
         <div className={styles.error} role="alert">
@@ -566,17 +574,12 @@ export default function TarotRitual() {
             <>
               <div className={styles.sectionHead}>
                 <div>
-                  <p className={styles.eyebrow}>ТВОЯ ТОЧКА ВНИМАНИЯ</p>
-                  <h2>Что тебя волнует?</h2>
+                  <p className={styles.eyebrow}>НАЧНИ С ТОГО, ЧТО БЛИЖЕ</p>
+                  <h2>О чём хочется спросить?</h2>
                 </div>
-                <button
-                  onClick={() => {
-                    const daily = catalog.spreads.find((s) => s.id === 'daily');
-                    if (daily) selectSpread(daily);
-                  }}
-                >
-                  ✦ Карта дня
-                </button>
+                <span className={styles.categoryHint} aria-live="polite">
+                  {category === 'all' ? 'Все темы' : catalog.categories.find((item) => item.id === category)?.title}
+                </span>
               </div>
               <div
                 className={styles.situationGrid}
