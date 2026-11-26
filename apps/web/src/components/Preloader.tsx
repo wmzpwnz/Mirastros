@@ -27,15 +27,13 @@ export const Preloader = ({ onComplete }: { onComplete?: () => void }) => {
       asset.src = src;
     });
     let minimumTimer: ReturnType<typeof setTimeout>;
-    const minimum = new Promise<void>(resolve => { minimumTimer = setTimeout(resolve, 1600); });
+    const minimum = new Promise<void>(resolve => { minimumTimer = setTimeout(resolve, 650); });
     const assets = Promise.allSettled([
       image('/logo.png'),
       image('/images/preloader-zodiac-gold.webp'),
-      image(typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px), (max-width: 1024px) and (orientation: portrait)').matches ? '/images/mirastros-reference-mobile.webp' : '/images/mirastros-reference-desktop.webp'),
-      document.fonts?.ready ?? Promise.resolve(),
     ]);
     void Promise.all([minimum, assets]).then(finish);
-    const deadline = setTimeout(finish, 6500);
+    const deadline = setTimeout(finish, 3000);
     return () => { cancelled = true; clearTimeout(deadline); clearTimeout(minimumTimer); clearTimeout(fadeTimer); };
   }, []);
 

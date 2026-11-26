@@ -46,7 +46,8 @@ export function PortalArtwork({ id, media, eager, active, focused = true, poster
     const measure = () => {
       frame = 0;
       const bounds = posterRef.current?.getBoundingClientRect();
-      setInView(Boolean(bounds && bounds.bottom > -80 && bounds.top < innerHeight + 80 && bounds.right > 0 && bounds.left < innerWidth));
+      const lookAhead = Math.max(300, Math.min(600, innerHeight));
+      setInView(Boolean(bounds && bounds.bottom > -lookAhead && bounds.top < innerHeight + lookAhead && bounds.right > 0 && bounds.left < innerWidth));
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
     schedule();
@@ -82,8 +83,9 @@ export function PortalArtwork({ id, media, eager, active, focused = true, poster
   // Only the focused flight card downloads the larger image fallback; list mode
   // already limits resources using the viewport bounds above.
   const imageAnimation = animate && focused && fallback && !imageFailed;
+  const loadPoster = eager || (listMode ? inView : Boolean(active));
   return <>
-    <img ref={posterRef} src={poster} alt="" width="640" height="640" loading={eager ? 'eager' : 'lazy'} fetchPriority={id === 'circle' ? 'high' : undefined} data-animation="poster" />
+    <img ref={posterRef} src={loadPoster ? poster : undefined} alt="" width="640" height="640" loading={eager ? 'eager' : 'lazy'} fetchPriority={eager || id === 'circle' ? 'high' : 'low'} data-animation="poster" data-deferred={!loadPoster} />
     {imageAnimation && <AnimatedLoop src={`/animations/${media}.webp`} onError={() => setImageFailed(true)} />}
     {animate && !fallback && <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={poster} aria-hidden="true" tabIndex={-1} onError={event => { if (event.target === event.currentTarget && event.currentTarget.error) setFallback(true); }}>
       <source src={`/${media}.mp4`} type="video/mp4" onError={() => sourceFailed('mp4')} />

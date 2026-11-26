@@ -199,7 +199,7 @@ export function DepthJourney({ intro, authenticated = false }: { intro?: (openDi
           <div className={styles.cardBody}>
           <Link className={styles.cardLink} href={item.href} aria-label={`Открыть: ${item.title}`} />
           <PortalCover title={item.title} description={item.subtitle} accent={item.accent} featured={view === 'flight'} artwork={
-            <PortalArtwork id={item.id} media={item.media} eager={i < 5} focused={view === 'list' || exploring && !ending && active === i} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} />
+            <PortalArtwork id={item.id} media={item.media} eager={view === 'flight' && i < 2} focused={view === 'list' || exploring && !ending && active === i} active={view === 'list' ? undefined : exploring && !ending && Math.abs(active - i) <= 1} />
           } />
           </div>
         </article>)}
