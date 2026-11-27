@@ -43,6 +43,19 @@ type Reading = {
 };
 
 const cardCount = (n: number) => (n === 1 ? 'карта' : n < 5 ? 'карты' : 'карт');
+const categoryGlyph: Record<string, string> = {
+  day: '✦', love: '♡', work: '✧', projects: '◇', choice: '⇄', self: '☾', team: '⊙',
+};
+const situationDescription: Record<string, string> = {
+  all: 'Подобрать расклад по своему вопросу',
+  day: 'Настроение и ориентир на сегодня',
+  love: 'Чувства, близость и отношения',
+  work: 'Призвание, задачи и развитие',
+  projects: 'Деньги, ресурсы и новые идеи',
+  choice: 'Варианты и внутренний выбор',
+  self: 'Опоры, привычки и самопознание',
+  team: 'Команда, диалог и лидерство',
+};
 
 function CardArt({ card, back }: { card?: Card | Drawn; back: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -166,6 +179,7 @@ export default function TarotRitual() {
     setPicking(false);
     setError('');
     requestId.current = crypto.randomUUID();
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
   async function draw() {
     if (
@@ -214,7 +228,7 @@ export default function TarotRitual() {
   }
   const complete = reading && revealed.length === reading.cards.length;
   return (
-    <main className={`${styles.root} ${reading ? styles.rootReading : ''}`}>
+    <main className={`${styles.root} ${reading ? styles.rootReading : ''} ${spread ? styles.rootSession : ''} ${catalog && !reading && !spread ? styles.rootCatalog : ''} ${library ? styles.rootLibraryOpen : ''}`}>
       <header className={styles.header}>
         <Link href="/dashboard">
           <img src="/logo.png" width="145" alt="Mirastros" />
@@ -222,10 +236,21 @@ export default function TarotRitual() {
         <Link href="/dashboard">← Сводка дня</Link>
       </header>
       <div className={styles.hero}>
-        <p className={styles.eyebrow}>МИР ОБРАЗОВ · ПРОСТРАНСТВО ВЫБОРА</p>
-        <h1>Таро Mirastros</h1>
-        <p>Необязательно знать ответ. Начни с того, что волнует тебя сейчас.</p>
-        <span>78 карт · 22 старших и 56 младших арканов</span>
+        <div className={styles.heroArtifact} aria-hidden="true">
+          <img src="/images/portals/tarot.webp" alt="" width="640" height="640" />
+        </div>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>ТИХОЕ ПРОСТРАНСТВО ДЛЯ ВАЖНОГО</p>
+          <h1>Услышь, что уже зреет внутри</h1>
+          <p>Выбери тему или начни с одной карты дня. Таро здесь — способ посмотреть на ситуацию под новым углом.</p>
+          <div className={styles.heroActions}>
+            <button className={styles.heroPrimary} onClick={() => {
+              const daily = catalog?.spreads.find((s) => s.id === 'daily');
+              if (daily) selectSpread(daily);
+            }}>Открыть карту дня <span aria-hidden="true">↗</span></button>
+            <span>78 карт <i aria-hidden="true">✦</i> личный ритуал за минуту</span>
+          </div>
+        </div>
       </div>
       {error && (
         <div className={styles.error} role="alert">
@@ -354,7 +379,10 @@ export default function TarotRitual() {
                         key={card.id}
                         role="tab"
                         aria-selected={activeCard === i}
-                        onClick={() => setActiveCard(i)}
+                        onClick={() => {
+                          setActiveCard(i);
+                          setMeaningOpen(true);
+                        }}
                       >
                         {i + 1} · {card.position}
                       </button>
@@ -413,81 +441,117 @@ export default function TarotRitual() {
             </section>
           ) : spread ? (
             <section className={styles.session}>
-              <button
-                className={styles.backButton}
-                disabled={busy}
-                onClick={reset}
-              >
-                ← Все ситуации
-              </button>
-              <p className={styles.eyebrow}>
-                ШАГ {picking ? 2 : 1} ИЗ 2 · {spread.positions.length}{' '}
-                {cardCount(spread.positions.length).toUpperCase()}
-              </p>
-              <h2>{spread.title}</h2>
-              <p className={styles.sessionDescription}>{spread.description}</p>
+              <div className={styles.sessionTop}>
+                <button
+                  className={styles.backButton}
+                  disabled={busy}
+                  onClick={reset}
+                >
+                  ← Все темы
+                </button>
+                <div className={styles.ritualProgress} aria-label={picking ? 'Шаг 2 из 2: выбор карт' : 'Шаг 1 из 2: намерение'}>
+                  <span className={!picking ? styles.progressActive : styles.progressDone}>01 <small>Намерение</small></span>
+                  <i aria-hidden="true" />
+                  <span className={picking ? styles.progressActive : ''}>02 <small>Карты</small></span>
+                </div>
+              </div>
+              <div className={styles.sessionTitle}>
+                <p className={styles.eyebrow}>
+                  {picking ? 'СОСРЕДОТОЧЬСЯ НА ВОПРОСЕ' : `${spread.positions.length} ${cardCount(spread.positions.length).toUpperCase()} · ЛИЧНЫЙ РАСКЛАД`}
+                </p>
+                <h2>{spread.title}</h2>
+                <p className={styles.sessionDescription}>{spread.description}</p>
+              </div>
               {!picking ? (
                 <>
-                  <ol className={styles.positions}>
-                    {spread.positions.map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ol>
-                  <label htmlFor="tarot-question">
-                    Твой вопрос или намерение · необязательно
-                  </label>
-                  <textarea
-                    id="tarot-question"
-                    maxLength={1000}
-                    rows={2}
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Что я хочу понять в этой ситуации?"
-                  />
-                  <label className={styles.check}>
-                    <input
-                      type="checkbox"
-                      checked={reversed}
-                      onChange={(e) => setReversed(e.target.checked)}
-                    />{' '}
-                    Использовать перевёрнутые карты
-                  </label>
-                  <p className={styles.note}>
-                    Перевёрнутая карта — другой угол взгляда.
-                  </p>
-                  {spread.category === 'team' && (
-                    <p className={styles.note}>
-                      Для добровольной рефлексии о своих действиях. Не
-                      используйте карты для оценки кандидатов, найма или
-                      увольнения.
-                    </p>
-                  )}
-                  <button
-                    className={styles.primary}
-                    onClick={() => setPicking(true)}
-                  >
-                    Перейти к колоде ✧
-                  </button>
+                  <div className={styles.setupGrid}>
+                    <div className={styles.positionsPanel}>
+                      <p className={styles.panelEyebrow}>ПУТЬ РАСКЛАДА</p>
+                      <ol className={styles.positions}>
+                        {spread.positions.map((p, i) => (
+                          <li key={p}><span>{String(i + 1).padStart(2, '0')}</span>{p}</li>
+                        ))}
+                      </ol>
+                      <p className={styles.positionsHint}>Каждая карта откроет отдельную грань вопроса.</p>
+                    </div>
+                    <div className={styles.intentPanel}>
+                      <label htmlFor="tarot-question">
+                        Твоё намерение <small>необязательно</small>
+                      </label>
+                      <textarea
+                        id="tarot-question"
+                        maxLength={1000}
+                        rows={2}
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder="Что хочется увидеть яснее?"
+                      />
+                      <label className={styles.check}>
+                        <input
+                          type="checkbox"
+                          checked={reversed}
+                          onChange={(e) => setReversed(e.target.checked)}
+                        />{' '}
+                        Учитывать перевёрнутые карты
+                      </label>
+                      <p className={styles.note}>
+                        Перевёрнутое положение покажет тему с другого ракурса.
+                      </p>
+                      {spread.category === 'team' && (
+                        <p className={styles.teamNote}>
+                          Используй расклад для личной рефлексии, не для оценки кандидатов, найма или увольнения.
+                        </p>
+                      )}
+                      <button
+                        className={styles.primary}
+                        onClick={() => setPicking(true)}
+                      >
+                        Перейти к выбору карт <span aria-hidden="true">✧</span>
+                      </button>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
                   <p className={styles.drawProgress} aria-live="polite">
-                    Выбрано {choices.length} из {spread.positions.length} ·{' '}
-                    {choices.length < spread.positions.length
-                      ? `следующая: ${spread.positions[choices.length]}`
-                      : 'выбор готов'}
+                    <span>
+                      Выбрано {choices.length} из {spread.positions.length}
+                      {choices.length < spread.positions.length
+                        ? ` · следующая: ${spread.positions[choices.length]}`
+                        : ' · выбор готов'}
+                    </span>
+                    <i className={styles.drawTrack} aria-hidden="true">
+                      <b style={{ width: `${(choices.length / spread.positions.length) * 100}%` }} />
+                    </i>
                   </p>
                   <div className={styles.drawStage}>
-                    <div
-                      className={`${styles.deckStack} ${
-                        drawPulse ? styles.drawPulse : ''
-                      }`}
-                      aria-hidden="true"
-                    >
-                      <CardArt back={catalog.deck.back} />
+                    <div className={styles.drawOffer}>
+                      <div
+                        className={`${styles.deckStack} ${
+                          drawPulse ? styles.drawPulse : ''
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <CardArt back={catalog.deck.back} />
+                      </div>
+                      <div className={styles.drawInvitation}>
+                        <p className={styles.panelEyebrow}>СЛЕДУЮЩИЙ СИМВОЛ</p>
+                        <h3>{choices.length < spread.positions.length ? spread.positions[choices.length] : 'Карты выбраны'}</h3>
+                        <p>Сохрани вопрос в мыслях и позволь карте лечь на своё место.</p>
+                      </div>
+                      {choices.length < spread.positions.length && (
+                        <button
+                          className={styles.drawButton}
+                          disabled={busy}
+                          onClick={drawOne}
+                        >
+                          Вытянуть карту <span aria-hidden="true">✧</span>
+                        </button>
+                      )}
                     </div>
                     <div
                       className={styles.pickedCards}
+                      role="list"
                       aria-label="Выбранные карты"
                     >
                       {Array.from(
@@ -495,9 +559,11 @@ export default function TarotRitual() {
                         (_, i) => (
                           <div
                             key={i}
+                            role="listitem"
                             className={`${styles.pickedCard} ${
                               choices[i] !== undefined ? styles.picked : ''
                             }`}
+                            aria-label={`${spread.positions[i]}: ${choices[i] !== undefined ? 'карта выбрана' : 'ожидает карты'}`}
                           >
                             <span>
                               {choices[i] !== undefined ? i + 1 : '✧'}
@@ -507,15 +573,6 @@ export default function TarotRitual() {
                         )
                       )}
                     </div>
-                    {choices.length < spread.positions.length && (
-                      <button
-                        className={styles.drawButton}
-                        disabled={busy}
-                        onClick={drawOne}
-                      >
-                        Вытянуть карту ✧
-                      </button>
-                    )}
                     {choices.length > 0 && (
                       <button
                         className={styles.undoButton}
@@ -533,7 +590,7 @@ export default function TarotRitual() {
                     }
                     onClick={draw}
                   >
-                    {busy ? 'Сохраняем твой расклад…' : 'Открыть мой расклад'}
+                    {busy ? 'Сохраняем расклад…' : 'Сохранить и открыть расклад'}
                   </button>
                   <button
                     className={styles.backButton}
@@ -548,64 +605,60 @@ export default function TarotRitual() {
           ) : (
             <>
               <div className={styles.sectionHead}>
-                <h2>С чем ты пришёл сегодня?</h2>
-                <button
-                  onClick={() => {
-                    const daily = catalog.spreads.find((s) => s.id === 'daily');
-                    if (daily) selectSpread(daily);
-                  }}
-                >
-                  ☀ Карта дня
-                </button>
+                <div>
+                  <p className={styles.eyebrow}>НАЧНИ С ТОГО, ЧТО БЛИЖЕ</p>
+                  <h2>О чём хочется спросить?</h2>
+                </div>
+                <span className={styles.categoryHint} aria-live="polite">
+                  {category === 'all' ? 'Все темы' : catalog.categories.find((item) => item.id === category)?.title}
+                </span>
               </div>
               <div
-                className={styles.categories}
+                className={styles.situationGrid}
                 role="group"
                 aria-label="Темы раскладов"
               >
-                <button
-                  aria-pressed={category === 'all'}
-                  onClick={() => setCategory('all')}
-                >
-                  Все ситуации
-                </button>
-                {catalog.categories.map((c) => (
+                {[{ id: 'all', title: 'Любая тема' }, ...catalog.categories].map((c) => (
                   <button
                     key={c.id}
+                    className={styles.situationCard}
                     aria-pressed={category === c.id}
                     onClick={() => setCategory(c.id)}
                   >
-                    <span>{c.symbol}</span>
-                    {c.title}
+                    <span className={styles.situationGlyph} aria-hidden="true">{categoryGlyph[c.id] || '✧'}</span>
+                    <strong>{c.title}</strong>
+                    <small>{situationDescription[c.id] || 'Посмотри на тему с новой стороны'}</small>
                   </button>
                 ))}
               </div>
-              <div className={styles.catalog}>
-                {catalog.spreads
-                  .filter((s) => category === 'all' || s.category === category)
-                  .map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => selectSpread(s)}
-                      aria-label={`${s.title}, ${
-                        s.positions.length
-                      } ${cardCount(s.positions.length)}`}
-                    >
-                      <span className={styles.sigil}>
-                        {
-                          catalog.categories.find((c) => c.id === s.category)
-                            ?.symbol
-                        }
-                      </span>
-                      <small>
-                        {s.positions.length} {cardCount(s.positions.length)} ·{' '}
-                        {s.positions.length === 1 ? '1–2' : '3–5'} мин
-                      </small>
-                      <h3>{s.title}</h3>
-                      <p>{s.description}</p>
-                      <span className={styles.enter}>Начать сеанс →</span>
-                    </button>
-                  ))}
+              <div className={styles.spreadSection}>
+                <div className={styles.spreadHead}>
+                  <h2>Варианты расклада</h2>
+                  <span>Листай варианты →</span>
+                  <button onClick={() => setLibrary(true)}>Колода · 78 карт ↗</button>
+                </div>
+                <div className={styles.catalog} role="region" aria-label="Карусель раскладов" aria-roledescription="карусель">
+                  {catalog.spreads
+                    .filter((s) => category === 'all' || s.category === category)
+                    .map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => selectSpread(s)}
+                        aria-label={`${s.title}, ${
+                          s.positions.length
+                        } ${cardCount(s.positions.length)}`}
+                      >
+                        <span className={styles.sigil} aria-hidden="true">{categoryGlyph[s.category] || '✧'}</span>
+                        <small>
+                          {s.positions.length} {cardCount(s.positions.length)} ·{' '}
+                          {s.positions.length === 1 ? '1–2' : '3–5'} мин
+                        </small>
+                        <h3>{s.title}</h3>
+                        <p>{s.description}</p>
+                        <span className={styles.enter}>Выбрать расклад →</span>
+                      </button>
+                    ))}
+                </div>
               </div>
             </>
           )}
@@ -690,6 +743,23 @@ export default function TarotRitual() {
         оформлена символами Mirastros; авторские иллюстрации будут добавлены
         позже.
       </footer>
+      <nav className={styles.mobileDock} aria-label="Основная навигация">
+        <Link href="/services" aria-label="Направления">
+          <span aria-hidden="true">✧</span><small>Направления</small>
+        </Link>
+        <Link href="/services/lunar" aria-label="Календарь">
+          <span aria-hidden="true">☾</span><small>Календарь</small>
+        </Link>
+        <Link className={styles.dockHome} href="/dashboard" aria-label="Главная">
+          <span aria-hidden="true">⌂</span><small>Главная</small>
+        </Link>
+        <Link href="/history" aria-label="История">
+          <span aria-hidden="true">▤</span><small>История</small>
+        </Link>
+        <Link href="/profile" aria-label="Профиль">
+          <span aria-hidden="true">♙</span><small>Профиль</small>
+        </Link>
+      </nav>
     </main>
   );
 }
