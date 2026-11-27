@@ -34,6 +34,21 @@ export interface NatalChart {
   houses: HousePosition[];
   aspects: Aspect[];
   calculatedAt: string;
+  calculationMetadata?: {
+    version?: string;
+    engine?: string;
+    engine_version?: string;
+    ephemeris?: string;
+    ephemeris_version?: string;
+    lunar_node?: string;
+    zodiac?: string;
+    perspective?: string;
+    house_system?: string;
+    birth_timezone?: string;
+    timezone_database_version?: string;
+    birth_datetime_utc?: string;
+    coordinates?: { latitude: number; longitude: number };
+  };
 }
 
 export interface PlanetPosition {

@@ -223,7 +223,9 @@ export const NatalChartWheel: React.FC<{
   chart: NatalChart;
   variant?: WheelVariant;
   className?: string;
-}> = ({ chart, variant = 'mini', className }) => {
+  selectedPlanet?: string;
+  onSelectPlanet?: (planet: string) => void;
+}> = ({ chart, variant = 'mini', className, selectedPlanet, onSelectPlanet }) => {
   const cfg = useMemo(() => {
     if (variant === 'full') {
       return {
@@ -358,7 +360,7 @@ export const NatalChartWheel: React.FC<{
       height={cfg.size}
       viewBox={`0 0 ${cfg.size} ${cfg.size}`}
       className={className}
-      role="img"
+      role={onSelectPlanet ? 'group' : 'img'}
       aria-label="Natal chart wheel"
     >
       {/* Outer rings */}
@@ -529,14 +531,27 @@ export const NatalChartWheel: React.FC<{
         const glyph =
           PLANET_GLYPHS[key] || PLANET_GLYPHS[key.toLowerCase()] || '●';
         const retro = !!p?.retrograde;
+        const selected = selectedPlanet?.toLowerCase() === key.toLowerCase();
         return (
-          <g key={`pl-${key}`}>
+          <g
+            key={`pl-${key}`}
+            role={onSelectPlanet ? 'button' : undefined}
+            tabIndex={onSelectPlanet ? 0 : undefined}
+            aria-label={onSelectPlanet ? `Выбрать ${key}` : undefined}
+            aria-pressed={onSelectPlanet ? selected : undefined}
+            onClick={onSelectPlanet ? () => onSelectPlanet(key) : undefined}
+            onKeyDown={onSelectPlanet ? event => {
+              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectPlanet(key); }
+            } : undefined}
+            style={onSelectPlanet ? { cursor: 'pointer', outline: 'none' } : undefined}
+          >
+            {selected && <circle cx={x} cy={y} r={variant === 'full' ? 16 : 11} fill="none" stroke="rgba(137,180,231,0.9)" strokeWidth={variant === 'full' ? 2 : 1.4} />}
             <circle
               cx={x}
               cy={y}
-              r={variant === 'full' ? 10 : 7}
-              fill={retro ? 'rgba(255,120,0,0.85)' : 'rgba(190,143,68,0.78)'}
-              stroke="rgba(0,0,0,0.35)"
+              r={variant === 'full' ? (selected ? 11 : 10) : (selected ? 8 : 7)}
+              fill={selected ? 'rgba(137,180,231,0.98)' : retro ? 'rgba(255,120,0,0.85)' : 'rgba(190,143,68,0.78)'}
+              stroke={selected ? 'rgba(235,245,255,0.95)' : 'rgba(0,0,0,0.35)'}
               strokeWidth={1}
               opacity={0.98}
             />
@@ -545,7 +560,7 @@ export const NatalChartWheel: React.FC<{
               y={y + (variant === 'full' ? 1 : 0.5)}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="rgba(255,255,255,0.95)"
+              fill={selected ? '#08101f' : 'rgba(255,255,255,0.95)'}
               fontSize={cfg.fontPlanet}
               fontWeight={800}
             >

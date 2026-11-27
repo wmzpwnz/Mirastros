@@ -114,13 +114,21 @@ def _user_tier_allows_natal(user: User) -> bool:
 def _normalize_house(value) -> int:
     try:
         if isinstance(value, int):
-            return value
+            if 1 <= value <= 12:
+                return value
+            raise ValueError(f"Некорректный номер дома планеты: {value!r}")
         if isinstance(value, float) and value.is_integer():
-            return int(value)
+            number = int(value)
+            if 1 <= number <= 12:
+                return number
+            raise ValueError(f"Некорректный номер дома планеты: {value!r}")
         if isinstance(value, str):
             raw = value.strip()
             if raw.isdigit():
-                return int(raw)
+                number = int(raw)
+                if 1 <= number <= 12:
+                    return number
+                raise ValueError(f"Некорректный номер дома планеты: {value!r}")
             lowered = raw.lower()
             ordinals = {
                 "first": 1,
@@ -141,7 +149,7 @@ def _normalize_house(value) -> int:
                     return v
     except Exception:
         pass
-    return 1
+    raise ValueError(f"Не удалось однозначно определить дом планеты: {value!r}")
 
 
 @router.get("/me", response_model=Optional[NatalChartResponse])
@@ -162,7 +170,9 @@ async def get_my_natal_chart(
             user_id=str(current_user.id)
         )
 
-        if not natal_chart and _user_tier_allows_natal(current_user):
+        stored_version = (getattr(natal_chart, "calculation_metadata", None) or {}).get("version") if natal_chart else None
+        needs_calculation = natal_chart is None or stored_version != natal_chart_service.calculation_version
+        if needs_calculation and _user_tier_allows_natal(current_user):
             loc = current_user.birth_location or {}
             lat = loc.get("latitude")
             lng = loc.get("longitude")
@@ -188,9 +198,16 @@ async def get_my_natal_chart(
                         user_id=str(current_user.id),
                         chart_data=chart_data,
                     )
+                    stored_version = natal_chart_service.calculation_version
                     logger.info("Auto-calculated natal chart for user %s on GET /natal/me", current_user.id)
                 except Exception as calc_err:
                     logger.warning("Could not auto-calculate natal chart for user %s: %s", current_user.id, calc_err)
+                    natal_chart = None
+
+        # Never present an unversioned result as if it used the corrected
+        # birthplace time zone and explicit calculation convention.
+        if natal_chart and stored_version != natal_chart_service.calculation_version:
+            natal_chart = None
 
         if not natal_chart:
             return None
@@ -213,7 +230,8 @@ async def get_my_natal_chart(
             "ascendant": natal_chart.ascendant,
             "midheaven": natal_chart.midheaven,
             "lunar_nodes": natal_chart.lunar_nodes,
-            "house_system": natal_chart.house_system
+            "house_system": natal_chart.house_system,
+            "calculation_metadata": getattr(natal_chart, "calculation_metadata", None) or {},
         }
 
         return NatalChartResponse(

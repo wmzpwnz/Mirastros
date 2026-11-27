@@ -30,6 +30,7 @@ class NatalChart(Base):
     
     # Calculation metadata
     house_system = Column(JSON, nullable=True)  # Placidus, Koch, Equal, etc.
+    calculation_metadata = Column(JSON, nullable=False, default=dict)
     calculated_at = Column(DateTime, default=_utc_now, nullable=False)
     updated_at = Column(DateTime, default=_utc_now, onupdate=_utc_now, nullable=False)
     
