@@ -21,10 +21,14 @@ async def initialize():
             await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await connection.run_sync(Base.metadata.create_all)
     await engine.dispose()
+    return existing_database
+
+
+if __name__ == '__main__':
+    existing_database = asyncio.run(initialize())
     if existing_database:
-        # Production releases call this script with --if-empty before switching
-        # the current symlink. Keep user tables intact, but apply reviewed,
-        # versioned Alembic migrations before the new app starts using them.
+        # Run Alembic after asyncio.run has closed the initializer's event
+        # loop. Alembic's async env owns a loop of its own.
         from alembic import command
         from alembic.config import Config
 
@@ -40,7 +44,3 @@ async def initialize():
 
             command.stamp(Config("alembic.ini"), "head")
         print("Empty database initialized successfully")
-
-
-if __name__ == '__main__':
-    asyncio.run(initialize())
