@@ -1048,6 +1048,7 @@ class ApiClient {
       houses: houses.map((h) => ({ number: h.cusp ?? h.number ?? 0, sign: h.sign, degree: h.degree })),
       aspects: (chartData?.aspects as Aspect[]) || [],
       calculatedAt: data.calculated_at || new Date().toISOString(),
+      calculationMetadata: chartData?.calculation_metadata as NatalChart['calculationMetadata'],
       interpretation: data.interpretation,
     };
   }
@@ -1104,6 +1105,7 @@ class ApiClient {
         houses,
         aspects: chartData.aspects || [],
         calculatedAt: data.calculated_at || new Date().toISOString(),
+          calculationMetadata: chartData.calculation_metadata || {},
       };
 
       console.log('[API] getNatalChart: Transformed result:', result);

@@ -27,6 +27,7 @@ google-auth==2.35.0
 
 # Astrology
 kerykeion==5.1.12
+pyswisseph==2.10.3.2
 
 # Payment Gateways
 stripe==11.1.1

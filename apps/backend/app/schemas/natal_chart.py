@@ -14,6 +14,15 @@ class BirthData(BaseModel):
     city: Optional[str] = Field(None, max_length=100, description="City name")
     country: Optional[str] = Field(None, max_length=100, description="Country name")
     house_system: Optional[str] = Field("placidus", description="House system (placidus, koch, equal, whole_sign, campanus, regiomontanus)")
+
+    @field_validator('birth_time')
+    @classmethod
+    def validate_local_birth_time(cls, value: time) -> time:
+        if value.utcoffset() is not None:
+            raise ValueError("Укажите местное время рождения без смещения UTC.")
+        if value.second or value.microsecond:
+            raise ValueError("Укажите время с точностью до минуты.")
+        return value
     
     @field_validator('house_system')
     @classmethod
@@ -71,6 +80,7 @@ class NatalChartData(BaseModel):
     midheaven: SpecialPoint
     lunar_nodes: LunarNodes
     house_system: str
+    calculation_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class NatalChartResponse(BaseModel):
