@@ -63,6 +63,7 @@ export default function NatalChartPage() {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState('');
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [selectedPlanet, setSelectedPlanet] = useState('sun');
   const [showMethod, setShowMethod] = useState(false);
 
@@ -109,7 +110,7 @@ export default function NatalChartPage() {
       setError(!place ? 'Выберите точный город рождения из результатов поиска.' : 'Укажите дату и местное время рождения.');
       return;
     }
-    setCalculating(true); setError('');
+    setCalculating(true); setError(''); setUpgradeRequired(false);
     try {
       const next = await api.calculateNatalChart({
         name: user?.fullName || 'Путник', birthDate: date,
@@ -118,7 +119,17 @@ export default function NatalChartPage() {
         city: place.city, country: place.country, houseSystem: 'placidus', generateInterpretation: false,
       });
       setChart(next); setSelectedPlanet('sun');
-    } catch (e) { setError(e instanceof Error ? e.message : 'Не удалось построить карту. Проверьте данные рождения.'); }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '';
+      if (/requires premium|subscription has expired/i.test(message)) {
+        setUpgradeRequired(true);
+        setError(/expired/i.test(message)
+          ? 'Подписка закончилась. Продлите её, чтобы построить натальную карту.'
+          : 'Расчёт натальной карты доступен в Premium и Platinum.');
+      } else {
+        setError(message || 'Не удалось построить карту. Проверьте данные рождения.');
+      }
+    }
     finally { setCalculating(false); }
   };
 
@@ -130,6 +141,9 @@ export default function NatalChartPage() {
     : planets[selectedPlanet];
   const selectedSign = Object.keys(SIGNS).find(sign => signName(selectedPosition?.sign) === SIGNS[sign]);
   const selectedHouse = selectedPosition?.house;
+  const paidTier = user?.subscriptionTier === 'premium' || user?.subscriptionTier === 'platinum';
+  const expiredTier = Boolean(paidTier && user?.subscriptionExpires && Date.parse(user.subscriptionExpires) <= Date.now());
+  const canCalculate = paidTier && !expiredTier;
 
   if (loading) return <main className={styles.loading}><span className={styles.loadingStar}>✧</span><p>Собираем небесную карту</p></main>;
 
@@ -149,7 +163,15 @@ export default function NatalChartPage() {
         <Link href="/services/natal/methodology" className={styles.methodologyInline}>Открытая методика и формат ссылки <span>→</span></Link>
         {showMethod && <p className={styles.methodHint}>Положения планет и домов рассчитывает Kerykeion по выбранному месту, местному времени и историческому часовому поясу. Трактовка показывается отдельно и не меняет расчёт.</p>}
       </div>
-      <div className={styles.formCard}>
+      {!canCalculate ? <div className={`${styles.formCard} ${styles.accessCard}`}>
+        <div className={styles.formHeading}><span>✧</span><div><h2>{expiredTier ? 'Путь к карте открыт' : 'Откройте натальную карту'}</h2><p>{expiredTier ? 'Подписка завершилась' : 'Персональный расчёт входит в расширенный доступ'}</p></div></div>
+        <p className={styles.accessCopy}>{expiredTier
+          ? 'Продлите подписку, чтобы построить карту по дате, местному времени и месту рождения.'
+          : 'В Premium и Platinum Мирастрос рассчитает положения планет, знаков, домов и аспектов для момента вашего рождения.'}</p>
+        <ul className={styles.accessBenefits}><li>Карта рождения с планетами и 12 домами</li><li>Асцендент и основные аспекты</li><li>Понятные пояснения к ключевым позициям</li></ul>
+        <Link href="/subscription" className={styles.primaryLink}>Выбрать подписку <span>→</span></Link>
+        <Link href="/services/natal/methodology" className={styles.accessMethod}>Посмотреть методику расчёта <span>↗</span></Link>
+      </div> : <div className={styles.formCard}>
         <div className={styles.formHeading}><span>01</span><div><h2>Координаты рождения</h2><p>Точность карты начинается с этих данных</p></div></div>
         <div className={styles.fields}>
           <label className={styles.field}><span>Дата рождения</span><input type="date" value={date} onChange={e => setDate(e.target.value)} /></label>
@@ -163,9 +185,9 @@ export default function NatalChartPage() {
           </div>
         </div>
         <div className={styles.dataNote}><span>✦</span><p>Время вводится как местное историческое время рождения. Часовой пояс вычисляется по выбранному городу и дате.</p></div>
-        {error && <p className={styles.error} role="alert">{error}</p>}
+        {error && <p className={styles.error} role="alert">{error}{upgradeRequired && <> <Link href="/subscription">Перейти к подписке →</Link></>}</p>}
         <button className={styles.primary} onClick={() => void calculate()} disabled={calculating}>{calculating ? <><span className={styles.spin}>✧</span> Вычисляем положения…</> : <>Построить мою карту <span>→</span></>}</button>
-      </div>
+      </div>}
       <p className={styles.footnote}>Символическая астрологическая система · Не предсказание и не научная диагностика</p>
     </section> : <>
       <section className={styles.chartHeader}>
