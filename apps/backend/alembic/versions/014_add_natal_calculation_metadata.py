@@ -15,15 +15,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "natal_charts",
-        sa.Column(
-            "calculation_metadata",
-            postgresql.JSON(astext_type=sa.Text()),
-            nullable=False,
-            server_default=sa.text("'{}'::json"),
-        ),
-    )
+    existing = {
+        column['name']
+        for column in sa.inspect(op.get_bind()).get_columns('natal_charts')
+    }
+    if 'calculation_metadata' not in existing:
+        op.add_column(
+            "natal_charts",
+            sa.Column(
+                "calculation_metadata",
+                postgresql.JSON(astext_type=sa.Text()),
+                nullable=False,
+                server_default=sa.text("'{}'::json"),
+            ),
+        )
     op.alter_column("natal_charts", "calculation_metadata", server_default=None)
 
 
