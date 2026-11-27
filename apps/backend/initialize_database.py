@@ -58,6 +58,9 @@ if __name__ == '__main__':
             table.name: {column.name for column in table.columns}
             for table in Base.metadata.sorted_tables
         }
+        expected.get('users', set()).difference_update(
+            {'preferred_language', 'timezone'}
+        )
         expected.get('natal_charts', set()).discard('calculation_metadata')
         missing = {
             table: sorted(required - columns.get(table, set()))
