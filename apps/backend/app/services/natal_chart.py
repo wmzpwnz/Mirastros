@@ -1,7 +1,11 @@
 """Natal chart calculation service using Kerykeion"""
 from typing import Dict, Any, Optional
 from datetime import datetime, date, time, timezone
+from importlib.metadata import PackageNotFoundError, version as package_version
+from pathlib import Path
+from zoneinfo import TZPATH, ZoneInfo
 from kerykeion import AstrologicalSubject
+from tzfpy import get_tz
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.natal_chart import NatalChart
@@ -11,8 +15,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _timezone_database_version() -> str:
+    """Return the tzdb edition actually used by ZoneInfo where it is discoverable."""
+    # ZoneInfo searches system paths before the Python tzdata wheel. Prefer the
+    # version from those paths so the recorded edition reflects the data used.
+    for root in TZPATH:
+        try:
+            first_line = (Path(root) / "tzdata.zi").read_text(encoding="ascii").splitlines()[0]
+            if first_line.startswith("# version "):
+                return first_line.removeprefix("# version ").strip()
+        except (OSError, IndexError):
+            continue
+    try:
+        return package_version("tzdata")
+    except PackageNotFoundError:
+        return "system-unknown"
+
+
 class NatalChartService:
     """Service for calculating and managing natal charts"""
+
+    calculation_version = "mirastros-natal-2"
     
     def __init__(self):
         self.house_systems = {
@@ -27,14 +50,22 @@ class NatalChartService:
     def _normalize_house(self, value: Any) -> int:
         """Kerykeion versions may return house as int or as 'Second_House' string."""
         if isinstance(value, int):
-            return value
+            if 1 <= value <= 12:
+                return value
+            raise ValueError(f"Некорректный номер дома планеты: {value!r}")
         if isinstance(value, float) and value.is_integer():
-            return int(value)
+            number = int(value)
+            if 1 <= number <= 12:
+                return number
+            raise ValueError(f"Некорректный номер дома планеты: {value!r}")
 
         if isinstance(value, str):
             raw = value.strip()
             if raw.isdigit():
-                return int(raw)
+                number = int(raw)
+                if 1 <= number <= 12:
+                    return number
+                raise ValueError(f"Некорректный номер дома планеты: {value!r}")
 
             lowered = raw.lower()
             # Common Kerykeion style: 'Second_House'
@@ -56,8 +87,7 @@ class NatalChartService:
                 if k in lowered:
                     return v
 
-        # Fallback: keep charts usable rather than crashing validation.
-        return 1
+        raise ValueError(f"Не удалось однозначно определить дом планеты: {value!r}")
     
     def calculate_chart(
         self,
@@ -87,11 +117,29 @@ class NatalChartService:
             Dictionary with natal chart data
         """
         try:
-            # Combine date and time
+            # Birth data stores civil/local time. Resolve its historical IANA
+            # timezone from the selected coordinates before sending it to the
+            # astrology engine; interpreting every birthplace as UTC shifts
+            # planetary positions and angles by hours.
             birth_datetime = datetime.combine(birth_date, birth_time)
+            timezone_name = get_tz(longitude, latitude)
+            if not timezone_name:
+                raise ValueError("Не удалось определить часовой пояс места рождения. Выберите город точнее.")
+            zone = ZoneInfo(timezone_name)
+            utc_candidates = []
+            for fold in (0, 1):
+                candidate = birth_datetime.replace(tzinfo=zone, fold=fold).astimezone(timezone.utc)
+                if candidate.astimezone(zone).replace(tzinfo=None) == birth_datetime and candidate not in utc_candidates:
+                    utc_candidates.append(candidate)
+            if len(utc_candidates) != 1:
+                raise ValueError("Это местное время неоднозначно из-за перевода часов. Уточните время рождения.")
+            birth_datetime_utc = utc_candidates[0]
             
             # Get house system code
-            hs_code = self.house_systems.get(house_system.lower(), "P")
+            normalized_house_system = (house_system or "placidus").lower()
+            if normalized_house_system not in self.house_systems:
+                raise ValueError("Выбрана неизвестная система астрологических домов.")
+            hs_code = self.house_systems[normalized_house_system]
             
             # Create astrological subject
             subject = AstrologicalSubject(
@@ -103,10 +151,12 @@ class NatalChartService:
                 minute=birth_datetime.minute,
                 lat=latitude,
                 lng=longitude,
-                tz_str="UTC",  # Kerykeion handles timezone internally
+                tz_str=timezone_name,
                 city=city,
                 nation=nation,
-                houses_system_identifier=hs_code
+                houses_system_identifier=hs_code,
+                zodiac_type="Tropical",
+                perspective_type="Apparent Geocentric",
             )
             
             # Extract planetary positions
@@ -148,7 +198,22 @@ class NatalChartService:
                 "ascendant": ascendant,
                 "midheaven": midheaven,
                 "lunar_nodes": lunar_nodes,
-                "house_system": house_system
+                "house_system": normalized_house_system,
+                "calculation_metadata": {
+                    "version": self.calculation_version,
+                    "engine": "Kerykeion",
+                    "engine_version": package_version("kerykeion"),
+                    "ephemeris": "Swiss Ephemeris",
+                    "ephemeris_version": package_version("pyswisseph"),
+                    "lunar_node": "Mean Node",
+                    "zodiac": "Tropical",
+                    "perspective": "Apparent Geocentric",
+                    "house_system": normalized_house_system,
+                    "birth_timezone": timezone_name,
+                    "timezone_database_version": _timezone_database_version(),
+                    "birth_datetime_utc": birth_datetime_utc.isoformat(),
+                    "coordinates": {"latitude": latitude, "longitude": longitude},
+                },
             }
             
         except Exception as e:
@@ -296,6 +361,7 @@ class NatalChartService:
                 existing_chart.midheaven = chart_data["midheaven"]
                 existing_chart.lunar_nodes = chart_data["lunar_nodes"]
                 existing_chart.house_system = chart_data["house_system"]
+                existing_chart.calculation_metadata = chart_data.get("calculation_metadata", {})
                 existing_chart.updated_at = datetime.now(timezone.utc)
                 
                 await db.commit()
@@ -311,7 +377,8 @@ class NatalChartService:
                     ascendant=chart_data["ascendant"],
                     midheaven=chart_data["midheaven"],
                     lunar_nodes=chart_data["lunar_nodes"],
-                    house_system=chart_data["house_system"]
+                    house_system=chart_data["house_system"],
+                    calculation_metadata=chart_data.get("calculation_metadata", {})
                 )
                 
                 db.add(new_chart)
